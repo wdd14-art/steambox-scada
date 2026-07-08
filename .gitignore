@@ -1,0 +1,14 @@
+# Ignore SQLite database files and runtime logs
+*.db
+*.history
+
+# Ignore SCADA runtime cache folders
+download-cache/
+userData/
+usergroup/
+history/
+keepvalue/
+
+# Ignore stackdumps or temp files
+*.stackdump
+output.txt
