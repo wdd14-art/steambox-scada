@@ -1,0 +1,24 @@
+// ============================================================================
+// FUNCTION SCRIPT: TRANSFER DATA RESEP DINAMIS (1 S.D. 30)
+// DIPICU OLEH: TOMBOL "TRANSFER RESEP" DI LAYAR 120:RESEP
+// ============================================================================
+
+// Membaca nilai dari tag internal HMI $recipe.pilih_steambox secara langsung
+var pilih_steambox = $recipe.pilih_steambox;
+
+if (pilih_steambox >= 1 && pilih_steambox <= 30)
+{
+    var deviceName = "sb_" + pilih_steambox;
+
+    // Menggunakan Variable.SetValue untuk menulis target menit ke masing-masing sb_i
+    Variable.SetValue(deviceName + ".target_menit", $recipe.durasi);
+
+    // Transfer detail resep aktif ke masing-masing group parameter (lowercase snake_case)
+    Variable.SetValue("recipe_kode." + pilih_steambox, $recipe.kode);
+    Variable.SetValue("recipe_nama." + pilih_steambox, $recipe.nama);
+    Variable.SetValue("recipe_versi." + pilih_steambox, $recipe.versi);
+    Variable.SetValue("recipe_warna." + pilih_steambox, $recipe.warna);
+    Variable.SetValue("recipe_qty." + pilih_steambox, $recipe.qty);
+    Variable.SetValue("recipe_batch." + pilih_steambox, $recipe.batch);
+    Variable.SetValue("recipe_trolly." + pilih_steambox, $recipe.trolly);
+}

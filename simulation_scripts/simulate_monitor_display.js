@@ -43,12 +43,12 @@ var SCADA_Database = {
     "SB_30.tampilDurasiAktual": "00:03:00", "SB_30.tampilJamsSelesai": "11:49:35"
 };
 
-function GetTagValue(tagName) {
+function ReadTag(tagName) {
     if (SCADA_Database.hasOwnProperty(tagName)) return SCADA_Database[tagName];
     throw new Error("Tag not found: " + tagName);
 }
 
-function SetTagValue(tagName, value) {
+function WriteTag(tagName, value) {
     if (SCADA_Database.hasOwnProperty(tagName)) {
         SCADA_Database[tagName] = value;
         return;
@@ -67,20 +67,20 @@ function updateOutdoorDisplay() {
         var deviceName = "SB" + i;
         var hmiGroupName = "SB_" + i;
 
-        var commOperation = GetTagValue(deviceName + "._commOperation");
+        var commOperation = ReadTag(deviceName + "._commOperation");
         if (commOperation === true) {
-            var commStatus = GetTagValue(deviceName + "._commStatus");
+            var commStatus = ReadTag(deviceName + "._commStatus");
             if (commStatus === true) {
-                var isPemasakan = GetTagValue(hmiGroupName + ".statusPemasakan") || false;
-                var sisaDetik = GetTagValue(hmiGroupName + ".sisaDetikMasak") || 0;
+                var isPemasakan = ReadTag(hmiGroupName + ".statusPemasakan") || false;
+                var sisaDetik = ReadTag(hmiGroupName + ".sisaDetikMasak") || 0;
 
                 // Hanya masukkan unit yang statusnya sedang MEMASAK dan sisa waktu > 0
                 if (isPemasakan === true && sisaDetik > 0) {
                     runningRooms.push({
                         name: "Steambox " + i,
                         sisa: sisaDetik,
-                        tampilSisa: GetTagValue(hmiGroupName + ".tampilDurasiAktual"),
-                        tampilSelesai: GetTagValue(hmiGroupName + ".tampilJamsSelesai")
+                        tampilSisa: ReadTag(hmiGroupName + ".tampilDurasiAktual"),
+                        tampilSelesai: ReadTag(hmiGroupName + ".tampilJamsSelesai")
                     });
                 }
             }
@@ -96,14 +96,14 @@ function updateOutdoorDisplay() {
     for (var r = 1; r <= 5; r++) {
         if (r - 1 < runningRooms.length) {
             var room = runningRooms[r - 1];
-            SetTagValue("Sys_Control.monitor_room_" + r, room.name);
-            SetTagValue("Sys_Control.monitor_sisa_" + r, room.tampilSisa);
-            SetTagValue("Sys_Control.monitor_selesai_" + r, room.tampilSelesai);
+            WriteTag("Sys_Control.monitor_room_" + r, room.name);
+            WriteTag("Sys_Control.monitor_sisa_" + r, room.tampilSisa);
+            WriteTag("Sys_Control.monitor_selesai_" + r, room.tampilSelesai);
         } else {
             // Jika unit memasak kurang dari 5, kosongkan sisanya
-            SetTagValue("Sys_Control.monitor_room_" + r, "--");
-            SetTagValue("Sys_Control.monitor_sisa_" + r, "--:--:--");
-            SetTagValue("Sys_Control.monitor_selesai_" + r, "--:--:--");
+            WriteTag("Sys_Control.monitor_room_" + r, "--");
+            WriteTag("Sys_Control.monitor_sisa_" + r, "--:--:--");
+            WriteTag("Sys_Control.monitor_selesai_" + r, "--:--:--");
         }
     }
 }
@@ -115,8 +115,8 @@ updateOutdoorDisplay();
 console.log("=== TOP 5 STEAMBOX AKAN SEGERA SELESAI ===");
 for (var r = 1; r <= 5; r++) {
     console.log("Rank " + r + " -> " + 
-        GetTagValue("Sys_Control.monitor_room_" + r) + " | Sisa: " +
-        GetTagValue("Sys_Control.monitor_sisa_" + r) + " | Estimasi Selesai: " +
-        GetTagValue("Sys_Control.monitor_selesai_" + r)
+        ReadTag("Sys_Control.monitor_room_" + r) + " | Sisa: " +
+        ReadTag("Sys_Control.monitor_sisa_" + r) + " | Estimasi Selesai: " +
+        ReadTag("Sys_Control.monitor_selesai_" + r)
     );
 }

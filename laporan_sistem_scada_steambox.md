@@ -11,10 +11,10 @@ Untuk menjamin performa PC SCADA tetap ringan dan andal, berikut adalah perubaha
 
 *   **Penyederhanaan Tampilan (Single Dashboard HMI):**
     Kita melakukan unifikasi mode kerja. Cukup menggunakan **1 halaman display saja** untuk setiap unit. Skrip secara otomatis mendeteksi mode kerja berdasarkan nilai target resep:
-    *   Jika `targetMenit === 0`, otomatis masuk ke **Mode Pre-heat Harian** (hitung maju, mati otomatis saat suhu > 100°C).
+    *   Jika `targetMenit === 0`, otomatis masuk ke **Mode Pre-heat Harian** (hitung maju, mati otomatis saat suhu > 100Â°C).
     *   Jika `targetMenit > 0`, otomatis masuk ke **Mode Pemasakan Resep** (hitung mundur, kalkulasi estimasi jam selesai, dan matikan otomatis jika waktu habis).
-*   **Optimalisasi Skrip Master Loop (Anti-Lag):**
-    Alih-alih menyalin skrip 250 baris sebanyak 30 kali, sistem dipersingkat menjadi **1 skrip tunggal** yang memproses unit-unit aktif menggunakan perulangan (*for-loop*) berbasis array `activeUnits = [29, 30]`. Hal ini meminimalisir penggunaan CPU SCADA PC.
+*   **Optimalisasi Skrip Master Loop (Anti-Lag & Dinamis):**
+    Alih-alih menyalin skrip 250 baris sebanyak 30 kali, atau menggunakan daftar array statis, skrip tunggal ini secara dinamis melacak keaktifan polling Modbus dari unit 1 s.d 30 via tag `_commOperation` secara langsung saat runtime. Jika dinonaktifkan, unit dilewati (*bypass*), meminimalisir penggunaan CPU SCADA PC.
 *   **Bypass Komunikasi Dinamis (`_commOperation`):**
     Setiap unit dilengkapi sakelar kontrol komunikasi (`_commOperation`). Jika dinonaktifkan, SCADA tidak akan melakukan polling Modbus serial ke unit tersebut. Ini mencegah kemacetan (*clogging*) data dan error timeout komunikasi pada kabel RS485 ketika ada alat yang dimatikan.
 *   **Sistem One-Shot Autoclear Tombol Reset:**
@@ -30,36 +30,50 @@ Untuk menjamin performa PC SCADA tetap ringan dan andal, berikut adalah perubaha
 
 Berikut adalah daftar tag yang wajib didaftarkan di dalam Database Tag SCADA:
 
-### A. Tag Internal HMI per Unit (`$SB_i`)
-*Ganti indeks `i` dengan nomor unit (misal: `$SB_29.targetMenit`, `$SB_30.targetMenit`)*
+### A. Tag Internal HMI per Unit (`$sb_i`)
+*Ganti indeks `i` dengan nomor unit (misal: `$sb_29.target_menit`, `$sb_30.target_menit`)*
 
 | Nama Tag HMI | Tipe Data | Keterangan |
 | :--- | :---: | :--- |
-| **`mode_preHeat`** | Boolean | Toggle HMI untuk mengaktifkan pemanasan awal (Pre-heat). *Catatan: Tidak wajib jika menggunakan skema unifikasi targetMenit = 0.* |
-| **`targetMenit`** | Integer | Input target durasi masak dari menu resep HMI (Menit). |
-| **`adjustMenit`** | Integer | Input koreksi tambah/kurang waktu dari operator saat proses berjalan (Menit). |
-| **`sisaDetikMasak`** | Integer | **(Wajib Keep Value)** Menyimpan sisa waktu memasak berjalan (Detik). |
-| **`totalDetikPemanasan`**| Integer | **(Wajib Keep Value)** Menyimpan total akumulasi waktu pemanasan (Detik). |
-| **`flagInitStart`** | Integer | **(Wajib Keep Value)** Flag penanda inisialisasi awal tombol Start (0 atau 1). |
-| **`flagInitMasak`** | Integer | **(Wajib Keep Value)** Flag penanda pencatatan jam mendidih pertama kali (0 atau 1). |
-| **`statusKosong`** | Boolean | Trigger tombol Reset / Kosongkan Tangki dari layar HMI. |
-| **`statusPemanasan`** | Boolean | Lampu indikator status unit sedang dalam fase pemanasan (< 100°C). |
-| **`statusPemasakan`** | Boolean | Lampu indikator status unit sedang dalam fase mendidih/memasak (>= 100°C). |
-| **`statusSelesai`** | Boolean | Lampu indikator status unit telah menyelesaikan proses memasak. |
-| **`statusBanner`** | String(40) | Teks dinamis yang menampilkan kondisi rill unit (misal: "SEDANG MEMASAK"). |
-| **`tampilJamMulai`** | String(10) | Menampilkan jam mulai proses (Format: `"HH:MM:SS"`). |
-| **`tampilJamMasak`** | String(10) | Menampilkan jam mulai mendidih (Format: `"HH:MM:SS"`). |
-| **`tampilJamsSelesai`** | String(10) | Menampilkan perkiraan jam selesai masak (Format: `"HH:MM:SS"`). |
-| **`tampilPemanasan`** | String(10) | Menampilkan durasi waktu pemanasan berjalan (Format: `"HH:MM:SS"`). |
-| **`tampilDurasiAktual`** | String(10) | Menampilkan sisa waktu hitung mundur masak (Format: `"HH:MM:SS"`). |
+| **`is_active`** | Boolean | Menandakan apakah Steambox unit `i` terpasang dan aktif secara fisik (1 = Aktif, 0 = Nonaktif). Diatur dari layar konfigurasi HMI. |
+| **`maintenance_mode`** | Integer/Boolean | Bit penanda mode perbaikan untuk unit `i`. (0 = Normal, 1 = Maintenance). |
+| **`mode_preHeat`** | Boolean | Toggle HMI untuk mengaktifkan pemanasan awal (Pre-heat). *Catatan: Tidak wajib jika menggunakan skema unifikasi target_menit = 0.* |
+| **`target_menit`** | Integer | Input target durasi masak dari menu resep HMI (Menit). |
+| **`adjust_menit`** | Integer | Input koreksi tambah/kurang waktu dari operator saat proses berjalan (Menit). |
+| **`sisa_detik_masak`** | Integer | **(Wajib Keep Value)** Menyimpan sisa waktu memasak berjalan (Detik). |
+| **`total_detik_pemanasan`**| Integer | **(Wajib Keep Value)** Menyimpan total akumulasi waktu pemanasan (Detik). |
+| **`flag_init_start`** | Integer | **(Wajib Keep Value)** Flag penanda inisialisasi awal tombol Start (0 atau 1). |
+| **`flag_init_masak`** | Integer | **(Wajib Keep Value)** Flag penanda pencatatan jam mendidih pertama kali (0 atau 1). |
+| **`status_kosong`** | Boolean | Trigger tombol Reset / Kosongkan Tangki dari layar HMI. |
+| **`status_pemanasan`** | Boolean | Lampu indikator status unit sedang dalam fase pemanasan (< 100Â°C). |
+| **`status_pemasakan`** | Boolean | Lampu indikator status unit sedang dalam fase mendidih/memasak (>= 100Â°C). |
+| **`status_selesai`** | Boolean | Lampu indikator status unit telah menyelesaikan proses memasak. |
+| **`status_banner`** | String(40) | Teks dinamis yang menampilkan kondisi rill unit (misal: "SEDANG MEMASAK"). |
+| **`tampil_jam_mulai`** | String(10) | Menampilkan jam mulai proses (Format: `"HH:MM:SS"`). |
+| **`tampil_jam_masak`** | String(10) | Menampilkan jam mulai mendidih (Format: `"HH:MM:SS"`). |
+| **`tampil_jam_selesai`** | String(10) | Menampilkan perkiraan jam selesai masak (Format: `"HH:MM:SS"`). |
+| **`tampil_pemanasan`** | String(10) | Menampilkan durasi waktu pemanasan berjalan (Format: `"HH:MM:SS"`). |
+| **`tampil_durasi_actual`** | String(10) | Menampilkan sisa waktu hitung mundur masak (Format: `"HH:MM:SS"`). |
+| **`suhu_awal`** | Integer | **(Wajib Keep Value)** Menyimpan nilai suhu awal saat proses memasak dimulai (Nilai raw, 1000 = 100.0 Â°C). |
+| **`suhu_akhir`** | Integer | **(Wajib Keep Value)** Menyimpan nilai suhu akhir saat proses memasak selesai (Nilai raw, 1000 = 100.0 Â°C). |
+| **`perubahan_waktu`** | Integer | **(Wajib Keep Value)** Menyimpan akumulasi perubahan waktu +/- yang diinput operator (Menit). |
 
 ### B. Tag Kontrol Sistem Global (`$Sys_Control`)
 | Nama Tag HMI | Tipe Data | Keterangan |
 | :--- | :---: | :--- |
-| **`maintenanceMode[i]`** | Integer | Bit penanda mode perbaikan untuk unit `i`. (Contoh: `maintenanceMode29`). |
 | **`monitor_room_[1-5]`** | String(15) | Menampilkan nama Steambox 5 teratas yang akan segera selesai (Rank 1 s.d. 5). |
 | **`monitor_sisa_[1-5]`** | String(15) | Menampilkan sisa waktu Steambox 5 teratas yang akan segera selesai. |
 | **`monitor_selesai_[1-5]`**| String(15) | Menampilkan jam perkiraan selesai Steambox 5 teratas. |
+| **`txt_status_kosong`** | String(50) | Kustomisasi teks status tangki kosong (Default: "TANGKI KOSONG - SIAP MEMULAI"). |
+| **`txt_status_preheat`** | String(50) | Kustomisasi teks status sedang pre-heat (Default: "SEDANG PRE-HEAT (PEMANASAN)"). |
+| **`txt_status_pemanasan`** | String(50) | Kustomisasi teks status menunggu mendidih (Default: "MENUNGGU MENDIDIH (< 100 C)"). |
+| **`txt_status_pemasakan`** | String(50) | Kustomisasi teks status sedang memasak (Default: "SEDANG MEMASAK (MENDIDIH)"). |
+| **`txt_status_selesai`** | String(50) | Kustomisasi teks status proses selesai (Default: "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI"). |
+| **`txt_status_maintenance`**| String(50) | Kustomisasi teks status mode maintenance (Default: "MODE MAINTENANCE (KONTROL MANUAL)"). |
+| **`txt_status_offline`** | String(50) | Kustomisasi teks status offline/mati (Default: "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)"). |
+| **`txt_status_disable`** | String(50) | Kustomisasi teks status polling nonaktif (Default: "KOMUNIKASI UNIT DINONAKTIFKAN"). |
+| **`txt_status_sensor_error`**| String(50) | Kustomisasi teks status sensor error (Default: "ERROR SENSOR (OPENLOOP/HHHH)"). |
+
 
 ### C. Tag Hardware / Modbus PLC External (`$SBi`)
 *Tag ini langsung dipetakan ke register Modbus RTU Autonics TK4M via gateway tGW-735*
@@ -69,8 +83,29 @@ Berikut adalah daftar tag yang wajib didaftarkan di dalam Database Tag SCADA:
 | **`_commOperation`** | Boolean | Internal SCADA / Read & Write | Mengaktifkan (1) atau menonaktifkan (0) polling Modbus ke Autonics. |
 | **`_commStatus`** | Boolean | Internal SCADA / Read Only | Status koneksi fisik kabel serial (1 = Connect, 0 = Disconnect). |
 | **`runStop`** | Boolean | Coil Read & Write / PLC Register | Sinyal RUN/STOP pemanas Autonics (0 = RUN, 1 = STOP). |
-| **`temp`** | Integer | Input Register Read Only / PLC Register| Membaca suhu aktual sensor (Nilai raw, 1000 = 100.0 °C). |
+| **`temp`** | Integer | Input Register Read Only / PLC Register| Membaca suhu aktual sensor (Nilai raw, 1000 = 100.0 Â°C). |
 | **`tempSet`** | Integer | Holding Register Read & Write | Pengaturan batas target suhu pemanasan Autonics. |
+
+### D. Tag Internal HMI Resep & Parameter Aktif (`$recipe` & `$recipe_xxxx`)
+
+| Nama Tag HMI | Tipe Data | Keterangan |
+| :--- | :---: | :--- |
+| **`$recipe.pilih_steambox`** | Integer | Menyimpan nomor kamar target sebelum operator memilih resep. |
+| **`$recipe.durasi`** | Integer | Durasi target memasak dari resep terpilih (Menit). |
+| **`$recipe.kode`** | String | Kode SKU produk resep. |
+| **`$recipe.nama`** | String | Nama produk resep. |
+| **`$recipe.versi`** | Integer | Versi resep. |
+| **`$recipe.warna`** | String | Tanda warna produk resep. |
+| **`$recipe.qty`** | Integer | Jumlah standar quantity resep. |
+| **`$recipe.batch`** | Integer | **(BARU)** Nomor batch produksi resep berjalan. |
+| **`$recipe.trolly`** | String | **(BARU)** Kode identifikasi troli yang digunakan. |
+| **`$recipe_kode.[i]`**  | String | Menyimpan kode resep aktif untuk unit `i`. |
+| **`$recipe_nama.[i]`**  | String | Menyimpan nama produk resep aktif untuk unit `i`. |
+| **`$recipe_versi.[i]`**  | Integer | Menyimpan versi resep aktif untuk unit `i`. |
+| **`$recipe_warna.[i]`**  | String | Menyimpan warna resep aktif untuk unit `i`. |
+| **`$recipe_qty.[i]`**    | Integer | Menyimpan quantity resep aktif untuk unit `i`. |
+| **`$recipe_batch.[i]`**  | Integer | Menyimpan nomor batch aktif untuk unit `i`. |
+| **`$recipe_trolly.[i]`**  | String | Menyimpan kode troli aktif untuk unit `i`. |
 
 ---
 
@@ -87,7 +122,7 @@ flowchart TD
     %% Alur Preheating
     CheckPreheat -- Ya (Awal Hari) --> StartPreheat[Atur Target Menit = 0 & Tekan START]
     StartPreheat --> RunPreheat[Heater Menyala & Durasi Pemanasan Dihitung Maju]
-    RunPreheat --> TempCheck{Suhu > 100.0°C?}
+    RunPreheat --> TempCheck{Suhu > 100.0Â°C?}
     TempCheck -- Belum --> RunPreheat
     TempCheck -- Ya --> StopPreheat[Autonics Berhenti Otomatis & Status SELESAI Menyala]
     StopPreheat --> PressReset[Tekan Tombol RESET sekali untuk membersihkan layar]
@@ -96,7 +131,7 @@ flowchart TD
     PressReset --> ChooseRecipe[4. Operator Pilih Menu Resep di Popup]
     CheckPreheat -- Tidak (Sudah Pre-heat) --> ChooseRecipe
     ChooseRecipe --> StartCook[Tekan Tombol START]
-    StartCook --> MonitorTemp{Suhu >= 100.0°C?}
+    StartCook --> MonitorTemp{Suhu >= 100.0Â°C?}
     
     MonitorTemp -- Belum (Fase Pemanasan) --> HeatCook[Status Pemanasan Aktif, Sisa Waktu Diam, Estimasi Selesai Update]
     MonitorTemp -- Ya (Fase Masak) --> RunCook[Status Memasak Aktif, Sisa Waktu Hitung Mundur, Jam Masak Dicatat]
@@ -123,290 +158,17 @@ flowchart TD
 
 ## 4. Skrip JavaScript Master Loop Final (Copy-Paste Ready)
 
-Skrip tunggal ini menangani pemrosesan logika untuk unit aktif yang didaftarkan pada array `activeUnits`, sekaligus menyortir dan menampilkan 5 unit teratas yang akan segera selesai pada layar luar ruangan.
+Skrip tunggal ini menangani pemrosesan logika untuk unit aktif menggunakan variabel literal $ secara statis untuk memenuhi pembatasan preprocessor Haiwell SCADA Develop, sekaligus menyortir dan menampilkan 5 unit teratas yang akan segera selesai pada layar luar ruangan.
+
+Untuk menghindari beban CPU dan mencegah software Haiwell SCADA freeze, skrip ini dioptimalkan dengan **Early Exit** (hanya memproses unit aktif) serta **Conditional Write-Back** (hanya menulis ke register jika nilai berubah).
 
 Daftarkan skrip ini dengan trigger **Timer 1 Detik (1000ms)** di Haiwell SCADA Develop Anda:
 
-```javascript
-// ============================================================================
-// SYSTEM KONTROL MASTER STEAMBOX & MONITOR OUTDOOR (30 UNIT)
-// Trigger: Timer 1 Detik (1000ms)
-// ============================================================================
+Skrip master loop lengkap dipisahkan ke file tersendiri untuk menjaga keandalan pembacaan dokumen. Anda dapat menyalin dan menggunakan kode dari file berikut:
 
-// 1. Ekstrak Waktu Sistem (Format HH:MM:SS)
-var waktuSekarangString = ("0" + ($Hour || 0)).slice(-2) + ":" + ("0" + ($Minute || 0)).slice(-2) + ":" + ("0" + ($Second || 0)).slice(-2);
-var totalDetikSekarang = (($Hour || 0) * 3600) + (($Minute || 0) * 60) + ($Second || 0);
+- **File Skrip SCADA:** [master_loop_scada.js](file:///d:/Project/PTSIAP/Haiwell/Runtime/Demo2_hp_SB16/master_loop_scada.js)
 
-// 2. DAFTAR UNIT YANG AKTIF DIDAFTARKAN (Uji Coba Trial: Unit 29 & 30)
-// Jika nanti unit lain sudah dipasang & didaftarkan tag-nya, cukup tambahkan nomor unitnya ke array di bawah
-var activeUnits = [29, 30]; 
-
-// Array penampung unit yang sedang memasak untuk sistem monitor luar ruangan
-var runningRooms = [];
-
-// ============================================================================
-// LOOPING UTAMA: PROSES LOGIKA STEAMBOX INDIVIDU
-// ============================================================================
-for (var k = 0; k < activeUnits.length; k++) {
-    var i = activeUnits[k]; // Mendapatkan ID Unit (misal: 29 atau 30)
-
-    var deviceName = "SB" + i;
-    var hmiGroupName = "SB_" + i;
-
-    // Cek Keaktifan Polling dari HMI (Operator Control)
-    var commOperation = GetTagValue(deviceName + "._commOperation");
-    
-    if (commOperation === true) {
-        
-        // Cek Status Hubungan Fisik Modbus (Hardware Connection)
-        var commStatus = GetTagValue(deviceName + "._commStatus");
-        
-        // --- KONDISI ONLINE (KONEKSI NORMAL) ---
-        if (commStatus === true) {
-            
-            // Isolasi Register Data
-            var maintenance_aktif = GetTagValue("Sys_Control.maintenanceMode" + i) || 0;
-            var Run_status = GetTagValue(deviceName + ".runStop"); // true = STOP, false = RUN
-            var raw_pv = GetTagValue(deviceName + ".temp") || 0;
-
-            var modePreHeat = GetTagValue(hmiGroupName + ".mode_preHeat") || false;
-            var target = GetTagValue(hmiGroupName + ".targetMenit") || 0;
-            var adjust = GetTagValue(hmiGroupName + ".adjustMenit") || 0;
-            var sisa = GetTagValue(hmiGroupName + ".sisaDetikMasak") || 0;
-            var pemanasan = GetTagValue(hmiGroupName + ".totalDetikPemanasan") || 0;
-            var fStart = GetTagValue(hmiGroupName + ".flagInitStart") || 0;
-            var fMasak = GetTagValue(hmiGroupName + ".flagInitMasak") || 0;
-
-            var bit_kosong = GetTagValue(hmiGroupName + ".statusKosong") || false;
-            var bit_pemanasan = GetTagValue(hmiGroupName + ".statusPemanasan") || false;
-            var bit_pemasakan = GetTagValue(hmiGroupName + ".statusPemasakan") || false;
-            var bit_selesai = GetTagValue(hmiGroupName + ".statusSelesai") || false;
-
-            var hPre = 0; var mPre = 0; var sPre = 0;
-            var hAct = 0; var mAct = 0; var sAct = 0;
-            var est = 0; var hEst = 0; var mEst = 0; var sEst = 0;
-            
-            var statusText = "";
-
-            if (maintenance_aktif !== 1) {
-                
-                // --- A. KONDISI MESIN STOPPED / STANDBY / PAUSE (runStop === true) ---
-                if (Run_status === true) {
-                    bit_pemanasan = false;
-                    bit_pemasakan = false;
-                    fStart = 0; // Reset flag agar bisa trigger inisialisasi saat di-start kembali
-
-                    if (bit_kosong === true) {
-                        bit_selesai = false;
-                        fStart = 0;
-                        fMasak = 0;
-                        pemanasan = 0;
-                        sisa = 0;
-                        SetTagValue(hmiGroupName + ".targetMenit", 0);
-                        SetTagValue(hmiGroupName + ".adjustMenit", 0);
-
-                        SetTagValue(hmiGroupName + ".tampilJamMulai", "00:00:00");
-                        SetTagValue(hmiGroupName + ".tampilJamMasak", "00:00:00");
-                        SetTagValue(hmiGroupName + ".tampilJamsSelesai", "00:00:00");
-                        SetTagValue(hmiGroupName + ".tampilDurasiAktual", "00:00:00");
-                        SetTagValue(hmiGroupName + ".tampilPemanasan", "00:00:00");
-                        
-                        statusText = "TANGKI KOSONG - SIAP MEMULAI";
-                        bit_kosong = false; // AUTOCLEAR: Tombol Reset kembali OFF secara otomatis
-                    } else if (bit_selesai === true) {
-                        statusText = "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
-                    } else {
-                        statusText = "MESIN BERHENTI (PAUSED)";
-                    }
-                } 
-                
-                // --- B. KONDISI MESIN RUNNING (runStop === false) ---
-                else if (Run_status === false) {
-                    bit_kosong = false;
-                    bit_selesai = false;
-
-                    // MODE PRE-HEAT HARIAN (Jika resep kosong / target = 0)
-                    if (target === 0) {
-                        bit_pemanasan = true;
-                        bit_pemasakan = false;
-                        
-                        statusText = "SEDANG PRE-HEAT (PEMANASAN)";
-
-                        if (fStart === 0) {
-                            SetTagValue(hmiGroupName + ".tampilJamMulai", waktuSekarangString);
-                            SetTagValue(hmiGroupName + ".tampilJamMasak", "--:--:--");
-                            SetTagValue(hmiGroupName + ".tampilJamsSelesai", "--:--:--");
-                            SetTagValue(hmiGroupName + ".tampilDurasiAktual", "--:--:--");
-                            fStart = 1;
-                            pemanasan = 0;
-                        }
-
-                        pemanasan = pemanasan + 1;
-                        hPre = Math.floor(pemanasan / 3600);
-                        mPre = Math.floor((pemanasan % 3600) / 60);
-                        sPre = pemanasan % 60;
-                        SetTagValue(hmiGroupName + ".tampilPemanasan", ("0" + hPre).slice(-2) + ":" + ("0" + mPre).slice(-2) + ":" + ("0" + sPre).slice(-2));
-
-                        // Pemanasan selesai jika suhu Autonics > 100°C (1000 raw)
-                        if (raw_pv > 1000) {
-                            Run_status = true; // Kirim perintah STOP (runStop = true)
-                            bit_selesai = true;
-                            bit_pemanasan = false;
-                            fStart = 0;
-                        }
-                    } 
-                    
-                    // MODE PEMASAKAN RESEP (Jika target > 0)
-                    else {
-                        if (fStart === 0) {
-                            SetTagValue(hmiGroupName + ".tampilJamMulai", waktuSekarangString);
-                            SetTagValue(hmiGroupName + ".tampilJamMasak", "--:--:--");
-                            SetTagValue(hmiGroupName + ".tampilJamsSelesai", "--:--:--");
-                            fStart = 1;
-                            sisa = target * 60;
-                            pemanasan = 0;
-                            fMasak = 0;
-                        }
-
-                        // Fitur Koreksi Waktu (Adjust +/-)
-                        if (adjust !== 0) {
-                            sisa = sisa + (adjust * 60);
-                            if (sisa < 0) { sisa = 0; }
-                            adjust = 0;
-                            SetTagValue(hmiGroupName + ".adjustMenit", 0); // Clear input HMI
-                        }
-
-                        // Fase B1: Suhu Belum Mendidih (Pemanasan Awal Masak)
-                        if (raw_pv < 1000) {
-                            bit_pemanasan = true;
-                            bit_pemasakan = false;
-                            pemanasan = pemanasan + 1;
-                            
-                            statusText = "MENUNGGU MENDIDIH (< 100 C)";
-
-                            hPre = Math.floor(pemanasan / 3600);
-                            mPre = Math.floor((pemanasan % 3600) / 60);
-                            sPre = pemanasan % 60;
-                            SetTagValue(hmiGroupName + ".tampilPemanasan", ("0" + hPre).slice(-2) + ":" + ("0" + mPre).slice(-2) + ":" + ("0" + sPre).slice(-2));
-
-                            hAct = Math.floor(sisa / 3600);
-                            mAct = Math.floor((sisa % 3600) / 60);
-                            sAct = sisa % 60;
-                            SetTagValue(hmiGroupName + ".tampilDurasiAktual", ("0" + hAct).slice(-2) + ":" + ("0" + mAct).slice(-2) + ":" + ("0" + sAct).slice(-2));
-
-                            est = (totalDetikSekarang + sisa) % 86400;
-                            hEst = Math.floor(est / 3600);
-                            mEst = Math.floor((est % 3600) / 60);
-                            sEst = est % 60;
-                            SetTagValue(hmiGroupName + ".tampilJamsSelesai", ("0" + hEst).slice(-2) + ":" + ("0" + mEst).slice(-2) + ":" + ("0" + sEst).slice(-2));
-                        }
-                        // Fase B2: Suhu Mendidih (Proses Memasak Berjalan)
-                        else if (raw_pv >= 1000) {
-                            bit_pemanasan = false;
-                            bit_pemasakan = true;
-                            
-                            statusText = "SEDANG MEMASAK (MENDIDIH)";
-
-                            // Kunci jam mulai memasak pertama kali
-                            if (fMasak === 0) {
-                                SetTagValue(hmiGroupName + ".tampilJamMasak", waktuSekarangString);
-                                fMasak = 1;
-                            }
-
-                            if (sisa > 0) { sisa = sisa - 1; }
-
-                            // Deteksi selesai memasak
-                            if (sisa <= 0) {
-                                sisa = 0;
-                                Run_status = true; // Kirim perintah STOP (runStop = true)
-                                bit_pemasakan = false;
-                                bit_selesai = true;
-                                fStart = 0;
-                                fMasak = 0;
-                            }
-
-                            hAct = Math.floor(sisa / 3600);
-                            mAct = Math.floor((sisa % 3600) / 60);
-                            sAct = sisa % 60;
-                            SetTagValue(hmiGroupName + ".tampilDurasiAktual", ("0" + hAct).slice(-2) + ":" + ("0" + mAct).slice(-2) + ":" + ("0" + sAct).slice(-2));
-
-                            est = (totalDetikSekarang + sisa) % 86400;
-                            hEst = Math.floor(est / 3600);
-                            mEst = Math.floor((est % 3600) / 60);
-                            sEst = est % 60;
-                            SetTagValue(hmiGroupName + ".tampilJamsSelesai", ("0" + hEst).slice(-2) + ":" + ("0" + mEst).slice(-2) + ":" + ("0" + sEst).slice(-2));
-
-                            // Masukkan ke daftar antrean monitor luar jika proses memasak aktif
-                            runningRooms.push({
-                                id: i,
-                                name: "Steambox " + i,
-                                sisa: sisa,
-                                tampilSisa: ("0" + hAct).slice(-2) + ":" + ("0" + mAct).slice(-2) + ":" + ("0" + sAct).slice(-2),
-                                tampilSelesai: ("0" + hEst).slice(-2) + ":" + ("0" + mEst).slice(-2) + ":" + ("0" + sEst).slice(-2)
-                            });
-                        }
-                    }
-                } 
-                // --- C. KONDISI MAINTENANCE ACTIVE ---
-                else {
-                    statusText = "MODE MAINTENANCE (KONTROL MANUAL)";
-                }
-            } 
-            // --- D. KONDISI OFFLINE (KONEKSI PUTUS) ---
-            else {
-                statusText = "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
-                SetTagValue(hmiGroupName + ".statusPemanasan", false);
-                SetTagValue(hmiGroupName + ".statusPemasakan", false);
-            }
-        } 
-        // --- E. KONDISI OPERASI DISABLED ---
-        else {
-            statusText = "KOMUNIKASI UNIT DINONAKTIFKAN";
-            SetTagValue(hmiGroupName + ".statusPemanasan", false);
-            SetTagValue(hmiGroupName + ".statusPemasakan", false);
-            SetTagValue(hmiGroupName + ".statusSelesai", false);
-        }
-
-        // Tulis Banner Status ke HMI
-        SetTagValue(hmiGroupName + ".statusBanner", statusText);
-
-        // Write Back Register Data Utama
-        SetTagValue(deviceName + ".runStop", Run_status);
-        SetTagValue(hmiGroupName + ".statusKosong", bit_kosong);
-        SetTagValue(hmiGroupName + ".statusPemanasan", bit_pemanasan);
-        SetTagValue(hmiGroupName + ".statusPemasakan", bit_pemasakan);
-        SetTagValue(hmiGroupName + ".statusSelesai", bit_selesai);
-        SetTagValue(hmiGroupName + ".sisaDetikMasak", sisa);
-        SetTagValue(hmiGroupName + ".totalDetikPemanasan", pemanasan);
-        SetTagValue(hmiGroupName + ".flagInitStart", fStart);
-        SetTagValue(hmiGroupName + ".flagInitMasak", fMasak);
-    }
-}
-
-// ============================================================================
-// SYSTEM SORTING & FILTER MONITOR OUTDOOR (TOP 5 FINISHING SOON)
-// ============================================================================
-
-// 1. Sortir unit memasak terkecil ke terbesar berdasarkan sisa detik
-runningRooms.sort(function(a, b) {
-    return a.sisa - b.sisa;
-});
-
-// 2. Tulis ke 5 slot tag monitor luar ruangan
-for (var r = 1; r <= 5; r++) {
-    if (r - 1 < runningRooms.length) {
-        var room = runningRooms[r - 1];
-        SetTagValue("Sys_Control.monitor_room_" + r, room.name);
-        SetTagValue("Sys_Control.monitor_sisa_" + r, room.tampilSisa);
-        SetTagValue("Sys_Control.monitor_selesai_" + r, room.tampilSelesai);
-    } else {
-        // Kosongkan baris monitor jika unit aktif kurang dari 5
-        SetTagValue("Sys_Control.monitor_room_" + r, "--");
-        SetTagValue("Sys_Control.monitor_sisa_" + r, "--:--:--");
-        SetTagValue("Sys_Control.monitor_selesai_" + r, "--:--:--");
-    }
-}
-```
+Daftarkan skrip dari file tersebut dengan trigger **Timer 1 Detik (1000ms)** di Haiwell SCADA Develop Anda.
 
 ---
 
@@ -422,3 +184,37 @@ Untuk memastikan kenyamanan operator dan menghindari kesalahan operasional, konf
 3.  **Halaman Layar Luar Ruangan:**
     *   Buat sebuah halaman HMI khusus berisi **Tabel 5 Baris**.
     *   Hubungkan baris 1 s.d 5 dengan tag-tag `$Sys_Control.monitor_room_x`, `$Sys_Control.monitor_sisa_x`, dan `$Sys_Control.monitor_selesai_x`. Halaman ini dapat ditampilkan pada monitor luar ruangan untuk acuan operator lapangan.
+
+---
+
+## 6. Analisis Filosofi Desain: Poka-Yoke, Separation of Concerns, & Kemandirian Pabrik
+
+Untuk menjamin kelangsungan operasional pabrik jangka panjang tanpa ketergantungan pada pihak ketiga (*vendor lock-in*), arsitektur sistem ini dirancang dengan memisahkan wilayah kerja antara **Teknologi Operasional pabrik (OT)** dan **Teknologi Informasi kantor (IT)**.
+
+### A. Perbandingan Keandalan: Web App Vendor vs SCADA Mandiri
+
+| Aspek Kontrol & Desain | Web App Vendor (Laravel + Bridge) <br>`[1.jpeg - 8.jpeg]` | Desain SCADA Mandiri Anda <br>`[Haiwell SCADA Direct]` | **Analisis Poka-Yoke (Error Proofing)** |
+| :--- | :--- | :--- | :--- |
+| **Ketergantungan Jaringan (Wi-Fi/Internet)** | **Sangat Tinggi (Risiko Tinggi)** <br>Tombol kontrol (seperti *Stop Pemasakan*) diakses lewat browser. Perintah harus lewat internet ke Laravel Server, lalu turun ke Bridge App via MQTT/Internet. | **Nol / Mandiri (Sangat Aman)** <br>HMI SCADA terhubung langsung kabel fisik RS485 ke Autonics. Kontrol mati-hidup dikirim langsung tanpa butuh internet. | **Poka-Yoke Fisik:** Jika Wi-Fi pabrik putus saat memasak, sistem vendor gagal mematikan mesin (produk gosong/rusak). Sistem SCADA Anda **tetap berfungsi 100%** mematikan mesin tepat waktu karena logika berjalan lokal. |
+| **Metode Input Resep & Waktu** | **Form Input Web** <br>Memungkinkan pengetikan manual (angka) durasi memasak di halaman web. | **Kunci Database HMI (`120:Resep`)** <br>Operator dipaksa memilih SKU produk yang sudah terdaftar. Waktu diisi otomatis oleh database resep. | **Poka-Yoke Operasional:** Mencegah *typo* operator (misal ingin input `15` menit tapi terketik `150` menit). Pada SCADA Anda, operator tidak bisa mengetik angka durasi secara acak. |
+| **Kunci Kondisi Start (Interlocking)** | **Tombol Selalu Aktif** <br>Tombol "Mulai Tugas Baru" di web bisa diklik kapan saja selama status unit adalah STOP. | **Interlock Visibilitas Tombol** <br>Tombol START di-disable jika tangki belum di-RESET/dikosongkan (`status_selesai = 1`). | **Poka-Yoke Urutan Proses:** Mencegah operator memulai batch memasak baru di tangki yang masih berisi produk batch sebelumnya karena tombol START terkunci sebelum tangki dibilas/kosong. |
+| **Proteksi Gangguan Sensor (Open-Loop)** | **Umumnya Auto-Shutdown** <br>Jika sensor error (pembacaan suhu `32767`), program web biasanya crash atau langsung mematikan pemanas. | **Isolasi Logika Sensor** <br>Suhu `32767` dideteksi sebagai alarm banner, namun status pemanas (`runStop`) dibiarkan di posisi terakhir agar produk tidak rusak. | **Poka-Yoke Kerusakan Produk:** Mencegah produk di dalam tangki menjadi rusak setengah matang akibat sensor error sesaat. Pemanasan tetap jalan, dan operator diberitahu lewat teks banner HMI secara presisi. |
+| **Peralihan Mode (Pre-heat vs Masak)** | **Diatur secara Terpisah** <br>Tampilan dan tombol untuk pemanasan harian dan resep biasanya dipisah di web. | **Unifikasi Target Waktu** <br>Jika target = `0` (Pre-heat), jika target `> 0` (Memasak). Logika ditentukan otomatis oleh HMI. | **Poka-Yoke Pemilihan Mode:** Mengurangi jumlah tombol di layar. Operator tidak akan salah menekan tombol mode karena sistem SCADA Anda yang mendeteksinya secara otomatis dari nilai target resep. |
+
+---
+
+### B. Kemandirian Pabrik (Bebas dari Vendor Lock-In)
+
+Menggunakan standar industri **Haiwell Cloud SCADA** memberikan keunggulan mutlak dibandingkan solusi *custom-coding* berbasis web yang ditawarkan oleh vendor:
+
+1.  **Kemudahan Pemeliharaan (Maintainability):**
+    *   **Masalah Vendor:** Jika ada perubahan logika kontrol pada aplikasi Laravel vendor, pabrik harus memanggil programer web khusus dengan biaya mahal untuk melakukan coding ulang (mengubah rute backend, *controller*, dan *database migration*).
+    *   **Solusi SCADA:** Proyek Haiwell SCADA menggunakan konfigurasi grafis standar industri dan skrip JavaScript ES5 dasar. Teknisi instrumen pabrik atau engineer OT/IT awam sekalipun dapat dengan mudah membaca, memodifikasi, dan memperbaiki logika program menggunakan software Haiwell SCADA Develop yang gratis.
+2.  **Kemudahan Pengembangan (Expandability):**
+    *   **Masalah Vendor:** Penambahan mesin baru (misalnya unit Steambox 31 s.d. 40) membutuhkan penulisan ulang kode database server, pemetaan API baru di Laravel, serta konfigurasi ulang program Bridge serial COM5.
+    *   **Solusi SCADA:** Untuk menambah unit baru di SCADA, engineer pabrik cukup membuat grup tag baru (misal `SB_31`), menduplikasikan kartu visual di layar dashboard, dan memasukkan nomor unit tersebut ke dalam daftar array loop utama. Seluruh proses selesai dalam hitungan menit tanpa menyentuh baris kode IT yang rumit.
+3.  **Separation of Concerns (Pemisahan Tanggung Jawab):**
+    *   Logika kontrol fisik mutlak dikuasai oleh sistem OT pabrik (SCADA/PLC).
+    *   Server Laravel IT milik Owner cukup bertindak sebagai penerima data (membaca file `OperationLog.db` atau menerima JSON) untuk kebutuhan analisis bisnis, statistik produksi, dan rekap manajemen tanpa membebani atau membahayakan keselamatan mesin-mesin di lantai pabrik.
+
+
