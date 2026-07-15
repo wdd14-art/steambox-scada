@@ -1,0 +1,35 @@
+// ============================================================================
+// STARTUP SCRIPT: INITIALIZE COMMUNICATION POLLING TO DISABLED
+// DIPICU OLEH: START EXECUTION EVENT (RUN ONCE)
+// ============================================================================
+
+$sb1._commOperation = 0;
+$sb2._commOperation = 0;
+$sb3._commOperation = 0;
+$sb4._commOperation = 0;
+$sb5._commOperation = 0;
+$sb6._commOperation = 0;
+$sb7._commOperation = 0;
+$sb8._commOperation = 0;
+$sb9._commOperation = 0;
+$sb10._commOperation = 0;
+$sb11._commOperation = 0;
+$sb12._commOperation = 0;
+$sb13._commOperation = 0;
+$sb14._commOperation = 0;
+$sb15._commOperation = 0;
+$sb16._commOperation = 0;
+$sb17._commOperation = 0;
+$sb18._commOperation = 0;
+$sb19._commOperation = 0;
+$sb20._commOperation = 0;
+$sb21._commOperation = 0;
+$sb22._commOperation = 0;
+$sb23._commOperation = 0;
+$sb24._commOperation = 0;
+$sb25._commOperation = 0;
+$sb26._commOperation = 0;
+$sb27._commOperation = 0;
+$sb28._commOperation = 0;
+$sb29._commOperation = 0;
+$sb30._commOperation = 0;
