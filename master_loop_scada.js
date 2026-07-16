@@ -23,6 +23,7 @@ var txtMaintenance = $Sys_Control.txt_status_maintenance || "MODE MAINTENANCE (K
 var txtOffline = $Sys_Control.txt_status_offline || "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
 var txtDisable = $Sys_Control.txt_status_disable || "UNIT TIDAK DIPAKAI";
 var txtSensorError = $Sys_Control.txt_status_sensor_error || "ERROR SENSOR (OPENLOOP/HHHH)";
+var txtSensorErrorCooking = $Sys_Control.txt_sensor_error || "proses memasak, tetapi sensor error, cek segera !";
 var tempErrorLimit = $Sys_Control.temp_error_limit || 30000;
 
 // Array penampung unit yang sedang memasak untuk monitor luar
@@ -55,13 +56,13 @@ if ($sb_1.reset) {
     $sb_1.flag_init_masak = 0;
     $sb_1.total_detik_pemanasan = 0;
     $sb_1.sisa_detik_masak = 0;
-    $sb_1.durasi_aktual_up = 0;
     $sb_1.target_menit = 0;
     $sb_1.adjust_menit = 0;
     $sb_1.tampil_jam_mulai = "--:--:--";
     $sb_1.tampil_jam_masak = "--:--:--";
     $sb_1.tampil_jam_selesai = "--:--:--";
-    $sb_1.tampil_durasi_aktual = "--";
+    $sb_1.durasi_aktual = "--";
+    $sb_1.durasi_aktual_up = "--";
     $sb_1.tampil_pemanasan = "--:--:--";
     $sb_1.suhu_awal = 0;
     $sb_1.suhu_akhir = 0;
@@ -148,7 +149,8 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.tampil_jam_mulai = "--:--:--";
                             $sb_1.tampil_jam_masak = "--:--:--";
                             $sb_1.tampil_jam_selesai = "--:--:--";
-                            $sb_1.tampil_durasi_aktual = "--";
+                            $sb_1.durasi_aktual = "--";
+                            $sb_1.durasi_aktual_up = "--";
                             $sb_1.flag_init_start = 1;
                             $sb_1.total_detik_pemanasan = 0;
                             $sb_1.suhu_awal = $sb1.temp;
@@ -171,7 +173,6 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.tampil_jam_selesai = "--:--:--";
                             $sb_1.flag_init_start = 1;
                             $sb_1.sisa_detik_masak = $sb_1.target_menit * 60;
-                            $sb_1.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_1.total_detik_pemanasan = 0;
                             $sb_1.flag_init_masak = 0;
                             $sb_1.suhu_awal = $sb1.temp;
@@ -192,7 +193,10 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_1.total_detik_pemanasan = $sb_1.total_detik_pemanasan + 1;
                             $sb_1.tampil_pemanasan = formatTime($sb_1.total_detik_pemanasan);
-                            $sb_1.tampil_durasi_aktual = formatTime($sb_1.sisa_detik_masak);
+                            
+                            $sb_1.durasi_aktual = formatTime($sb_1.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak) < 0 ? 0 : scale_up_1;
+                            $sb_1.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_1.flag_init_masak === 1) {
@@ -200,7 +204,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 1, // Hanya nomor Steambox saja
                                     sisa: $sb_1.sisa_detik_masak,
-                                    tampilSisa: $sb_1.tampil_durasi_aktual,
+                                    tampilSisa: $sb_1.durasi_aktual,
                                     tampilSelesai: $sb_1.tampil_jam_selesai
                                 });
                             } else {
@@ -220,12 +224,14 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_1.sisa_detik_masak = $sb_1.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_1.durasi_aktual_up = $sb_1.durasi_aktual_up + 1;
+                            $sb_1.durasi_aktual = formatTime($sb_1.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak) < 0 ? 0 : scale_up_1;
+                            $sb_1.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_1.sisa_detik_masak <= 0) {
                                 $sb_1.sisa_detik_masak = 0;
-                                $sb_1.tampil_durasi_aktual = formatTime(0);
+                                $sb_1.durasi_aktual = formatTime(0);
+                                $sb_1.durasi_aktual_up = formatTime($sb_1.target_menit * 60);
                                 $sb_1.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_1.suhu_akhir = $sb1.temp;
                                 $sb1.run_stop = 1; // STOP otomatis
@@ -234,12 +240,11 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_1.flag_init_masak = 0;
                                 $sb_1.status_selesai = true;
                             } else {
-                                $sb_1.tampil_durasi_aktual = formatTime($sb_1.sisa_detik_masak);
                                 $sb_1.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_1.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 1, // Hanya nomor Steambox saja
                                     sisa: $sb_1.sisa_detik_masak,
-                                    tampilSisa: $sb_1.tampil_durasi_aktual,
+                                    tampilSisa: $sb_1.durasi_aktual,
                                     tampilSelesai: $sb_1.tampil_jam_selesai
                                 });
                             }
@@ -248,10 +253,14 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_1) {
                 $sb_1.sensor_error = true;
-                $sb_1.status_banner = txtSensorError;
+                if ($sb1.run_stop == 0 && $sb_1.flag_init_start === 1) {
+                    $sb_1.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_1.status_banner = txtSensorError;
+                }
             } else {
                 $sb_1.sensor_error = false;
             }
@@ -278,13 +287,13 @@ if ($sb_2.reset) {
     $sb_2.flag_init_masak = 0;
     $sb_2.total_detik_pemanasan = 0;
     $sb_2.sisa_detik_masak = 0;
-    $sb_2.durasi_aktual_up = 0;
     $sb_2.target_menit = 0;
     $sb_2.adjust_menit = 0;
     $sb_2.tampil_jam_mulai = "--:--:--";
     $sb_2.tampil_jam_masak = "--:--:--";
     $sb_2.tampil_jam_selesai = "--:--:--";
-    $sb_2.tampil_durasi_aktual = "--";
+    $sb_2.durasi_aktual = "--";
+    $sb_2.durasi_aktual_up = "--";
     $sb_2.tampil_pemanasan = "--:--:--";
     $sb_2.suhu_awal = 0;
     $sb_2.suhu_akhir = 0;
@@ -371,7 +380,8 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.tampil_jam_mulai = "--:--:--";
                             $sb_2.tampil_jam_masak = "--:--:--";
                             $sb_2.tampil_jam_selesai = "--:--:--";
-                            $sb_2.tampil_durasi_aktual = "--";
+                            $sb_2.durasi_aktual = "--";
+                            $sb_2.durasi_aktual_up = "--";
                             $sb_2.flag_init_start = 1;
                             $sb_2.total_detik_pemanasan = 0;
                             $sb_2.suhu_awal = $sb2.temp;
@@ -394,7 +404,6 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.tampil_jam_selesai = "--:--:--";
                             $sb_2.flag_init_start = 1;
                             $sb_2.sisa_detik_masak = $sb_2.target_menit * 60;
-                            $sb_2.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_2.total_detik_pemanasan = 0;
                             $sb_2.flag_init_masak = 0;
                             $sb_2.suhu_awal = $sb2.temp;
@@ -415,7 +424,10 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_2.total_detik_pemanasan = $sb_2.total_detik_pemanasan + 1;
                             $sb_2.tampil_pemanasan = formatTime($sb_2.total_detik_pemanasan);
-                            $sb_2.tampil_durasi_aktual = formatTime($sb_2.sisa_detik_masak);
+                            
+                            $sb_2.durasi_aktual = formatTime($sb_2.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak) < 0 ? 0 : scale_up_2;
+                            $sb_2.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_2.flag_init_masak === 1) {
@@ -423,7 +435,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 2, // Hanya nomor Steambox saja
                                     sisa: $sb_2.sisa_detik_masak,
-                                    tampilSisa: $sb_2.tampil_durasi_aktual,
+                                    tampilSisa: $sb_2.durasi_aktual,
                                     tampilSelesai: $sb_2.tampil_jam_selesai
                                 });
                             } else {
@@ -443,12 +455,14 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_2.sisa_detik_masak = $sb_2.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_2.durasi_aktual_up = $sb_2.durasi_aktual_up + 1;
+                            $sb_2.durasi_aktual = formatTime($sb_2.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak) < 0 ? 0 : scale_up_2;
+                            $sb_2.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_2.sisa_detik_masak <= 0) {
                                 $sb_2.sisa_detik_masak = 0;
-                                $sb_2.tampil_durasi_aktual = formatTime(0);
+                                $sb_2.durasi_aktual = formatTime(0);
+                                $sb_2.durasi_aktual_up = formatTime($sb_2.target_menit * 60);
                                 $sb_2.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_2.suhu_akhir = $sb2.temp;
                                 $sb2.run_stop = 1; // STOP otomatis
@@ -457,12 +471,11 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_2.flag_init_masak = 0;
                                 $sb_2.status_selesai = true;
                             } else {
-                                $sb_2.tampil_durasi_aktual = formatTime($sb_2.sisa_detik_masak);
                                 $sb_2.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_2.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 2, // Hanya nomor Steambox saja
                                     sisa: $sb_2.sisa_detik_masak,
-                                    tampilSisa: $sb_2.tampil_durasi_aktual,
+                                    tampilSisa: $sb_2.durasi_aktual,
                                     tampilSelesai: $sb_2.tampil_jam_selesai
                                 });
                             }
@@ -471,10 +484,14 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_2) {
                 $sb_2.sensor_error = true;
-                $sb_2.status_banner = txtSensorError;
+                if ($sb2.run_stop == 0 && $sb_2.flag_init_start === 1) {
+                    $sb_2.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_2.status_banner = txtSensorError;
+                }
             } else {
                 $sb_2.sensor_error = false;
             }
@@ -501,13 +518,13 @@ if ($sb_3.reset) {
     $sb_3.flag_init_masak = 0;
     $sb_3.total_detik_pemanasan = 0;
     $sb_3.sisa_detik_masak = 0;
-    $sb_3.durasi_aktual_up = 0;
     $sb_3.target_menit = 0;
     $sb_3.adjust_menit = 0;
     $sb_3.tampil_jam_mulai = "--:--:--";
     $sb_3.tampil_jam_masak = "--:--:--";
     $sb_3.tampil_jam_selesai = "--:--:--";
-    $sb_3.tampil_durasi_aktual = "--";
+    $sb_3.durasi_aktual = "--";
+    $sb_3.durasi_aktual_up = "--";
     $sb_3.tampil_pemanasan = "--:--:--";
     $sb_3.suhu_awal = 0;
     $sb_3.suhu_akhir = 0;
@@ -594,7 +611,8 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.tampil_jam_mulai = "--:--:--";
                             $sb_3.tampil_jam_masak = "--:--:--";
                             $sb_3.tampil_jam_selesai = "--:--:--";
-                            $sb_3.tampil_durasi_aktual = "--";
+                            $sb_3.durasi_aktual = "--";
+                            $sb_3.durasi_aktual_up = "--";
                             $sb_3.flag_init_start = 1;
                             $sb_3.total_detik_pemanasan = 0;
                             $sb_3.suhu_awal = $sb3.temp;
@@ -617,7 +635,6 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.tampil_jam_selesai = "--:--:--";
                             $sb_3.flag_init_start = 1;
                             $sb_3.sisa_detik_masak = $sb_3.target_menit * 60;
-                            $sb_3.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_3.total_detik_pemanasan = 0;
                             $sb_3.flag_init_masak = 0;
                             $sb_3.suhu_awal = $sb3.temp;
@@ -638,7 +655,10 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_3.total_detik_pemanasan = $sb_3.total_detik_pemanasan + 1;
                             $sb_3.tampil_pemanasan = formatTime($sb_3.total_detik_pemanasan);
-                            $sb_3.tampil_durasi_aktual = formatTime($sb_3.sisa_detik_masak);
+                            
+                            $sb_3.durasi_aktual = formatTime($sb_3.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak) < 0 ? 0 : scale_up_3;
+                            $sb_3.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_3.flag_init_masak === 1) {
@@ -646,7 +666,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 3, // Hanya nomor Steambox saja
                                     sisa: $sb_3.sisa_detik_masak,
-                                    tampilSisa: $sb_3.tampil_durasi_aktual,
+                                    tampilSisa: $sb_3.durasi_aktual,
                                     tampilSelesai: $sb_3.tampil_jam_selesai
                                 });
                             } else {
@@ -666,12 +686,14 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_3.sisa_detik_masak = $sb_3.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_3.durasi_aktual_up = $sb_3.durasi_aktual_up + 1;
+                            $sb_3.durasi_aktual = formatTime($sb_3.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak) < 0 ? 0 : scale_up_3;
+                            $sb_3.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_3.sisa_detik_masak <= 0) {
                                 $sb_3.sisa_detik_masak = 0;
-                                $sb_3.tampil_durasi_aktual = formatTime(0);
+                                $sb_3.durasi_aktual = formatTime(0);
+                                $sb_3.durasi_aktual_up = formatTime($sb_3.target_menit * 60);
                                 $sb_3.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_3.suhu_akhir = $sb3.temp;
                                 $sb3.run_stop = 1; // STOP otomatis
@@ -680,12 +702,11 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_3.flag_init_masak = 0;
                                 $sb_3.status_selesai = true;
                             } else {
-                                $sb_3.tampil_durasi_aktual = formatTime($sb_3.sisa_detik_masak);
                                 $sb_3.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_3.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 3, // Hanya nomor Steambox saja
                                     sisa: $sb_3.sisa_detik_masak,
-                                    tampilSisa: $sb_3.tampil_durasi_aktual,
+                                    tampilSisa: $sb_3.durasi_aktual,
                                     tampilSelesai: $sb_3.tampil_jam_selesai
                                 });
                             }
@@ -694,10 +715,14 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_3) {
                 $sb_3.sensor_error = true;
-                $sb_3.status_banner = txtSensorError;
+                if ($sb3.run_stop == 0 && $sb_3.flag_init_start === 1) {
+                    $sb_3.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_3.status_banner = txtSensorError;
+                }
             } else {
                 $sb_3.sensor_error = false;
             }
@@ -724,13 +749,13 @@ if ($sb_4.reset) {
     $sb_4.flag_init_masak = 0;
     $sb_4.total_detik_pemanasan = 0;
     $sb_4.sisa_detik_masak = 0;
-    $sb_4.durasi_aktual_up = 0;
     $sb_4.target_menit = 0;
     $sb_4.adjust_menit = 0;
     $sb_4.tampil_jam_mulai = "--:--:--";
     $sb_4.tampil_jam_masak = "--:--:--";
     $sb_4.tampil_jam_selesai = "--:--:--";
-    $sb_4.tampil_durasi_aktual = "--";
+    $sb_4.durasi_aktual = "--";
+    $sb_4.durasi_aktual_up = "--";
     $sb_4.tampil_pemanasan = "--:--:--";
     $sb_4.suhu_awal = 0;
     $sb_4.suhu_akhir = 0;
@@ -817,7 +842,8 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.tampil_jam_mulai = "--:--:--";
                             $sb_4.tampil_jam_masak = "--:--:--";
                             $sb_4.tampil_jam_selesai = "--:--:--";
-                            $sb_4.tampil_durasi_aktual = "--";
+                            $sb_4.durasi_aktual = "--";
+                            $sb_4.durasi_aktual_up = "--";
                             $sb_4.flag_init_start = 1;
                             $sb_4.total_detik_pemanasan = 0;
                             $sb_4.suhu_awal = $sb4.temp;
@@ -840,7 +866,6 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.tampil_jam_selesai = "--:--:--";
                             $sb_4.flag_init_start = 1;
                             $sb_4.sisa_detik_masak = $sb_4.target_menit * 60;
-                            $sb_4.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_4.total_detik_pemanasan = 0;
                             $sb_4.flag_init_masak = 0;
                             $sb_4.suhu_awal = $sb4.temp;
@@ -861,7 +886,10 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_4.total_detik_pemanasan = $sb_4.total_detik_pemanasan + 1;
                             $sb_4.tampil_pemanasan = formatTime($sb_4.total_detik_pemanasan);
-                            $sb_4.tampil_durasi_aktual = formatTime($sb_4.sisa_detik_masak);
+                            
+                            $sb_4.durasi_aktual = formatTime($sb_4.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak) < 0 ? 0 : scale_up_4;
+                            $sb_4.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_4.flag_init_masak === 1) {
@@ -869,7 +897,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 4, // Hanya nomor Steambox saja
                                     sisa: $sb_4.sisa_detik_masak,
-                                    tampilSisa: $sb_4.tampil_durasi_aktual,
+                                    tampilSisa: $sb_4.durasi_aktual,
                                     tampilSelesai: $sb_4.tampil_jam_selesai
                                 });
                             } else {
@@ -889,12 +917,14 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_4.sisa_detik_masak = $sb_4.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_4.durasi_aktual_up = $sb_4.durasi_aktual_up + 1;
+                            $sb_4.durasi_aktual = formatTime($sb_4.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak) < 0 ? 0 : scale_up_4;
+                            $sb_4.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_4.sisa_detik_masak <= 0) {
                                 $sb_4.sisa_detik_masak = 0;
-                                $sb_4.tampil_durasi_aktual = formatTime(0);
+                                $sb_4.durasi_aktual = formatTime(0);
+                                $sb_4.durasi_aktual_up = formatTime($sb_4.target_menit * 60);
                                 $sb_4.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_4.suhu_akhir = $sb4.temp;
                                 $sb4.run_stop = 1; // STOP otomatis
@@ -903,12 +933,11 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_4.flag_init_masak = 0;
                                 $sb_4.status_selesai = true;
                             } else {
-                                $sb_4.tampil_durasi_aktual = formatTime($sb_4.sisa_detik_masak);
                                 $sb_4.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_4.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 4, // Hanya nomor Steambox saja
                                     sisa: $sb_4.sisa_detik_masak,
-                                    tampilSisa: $sb_4.tampil_durasi_aktual,
+                                    tampilSisa: $sb_4.durasi_aktual,
                                     tampilSelesai: $sb_4.tampil_jam_selesai
                                 });
                             }
@@ -917,10 +946,14 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_4) {
                 $sb_4.sensor_error = true;
-                $sb_4.status_banner = txtSensorError;
+                if ($sb4.run_stop == 0 && $sb_4.flag_init_start === 1) {
+                    $sb_4.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_4.status_banner = txtSensorError;
+                }
             } else {
                 $sb_4.sensor_error = false;
             }
@@ -947,13 +980,13 @@ if ($sb_5.reset) {
     $sb_5.flag_init_masak = 0;
     $sb_5.total_detik_pemanasan = 0;
     $sb_5.sisa_detik_masak = 0;
-    $sb_5.durasi_aktual_up = 0;
     $sb_5.target_menit = 0;
     $sb_5.adjust_menit = 0;
     $sb_5.tampil_jam_mulai = "--:--:--";
     $sb_5.tampil_jam_masak = "--:--:--";
     $sb_5.tampil_jam_selesai = "--:--:--";
-    $sb_5.tampil_durasi_aktual = "--";
+    $sb_5.durasi_aktual = "--";
+    $sb_5.durasi_aktual_up = "--";
     $sb_5.tampil_pemanasan = "--:--:--";
     $sb_5.suhu_awal = 0;
     $sb_5.suhu_akhir = 0;
@@ -1040,7 +1073,8 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.tampil_jam_mulai = "--:--:--";
                             $sb_5.tampil_jam_masak = "--:--:--";
                             $sb_5.tampil_jam_selesai = "--:--:--";
-                            $sb_5.tampil_durasi_aktual = "--";
+                            $sb_5.durasi_aktual = "--";
+                            $sb_5.durasi_aktual_up = "--";
                             $sb_5.flag_init_start = 1;
                             $sb_5.total_detik_pemanasan = 0;
                             $sb_5.suhu_awal = $sb5.temp;
@@ -1063,7 +1097,6 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.tampil_jam_selesai = "--:--:--";
                             $sb_5.flag_init_start = 1;
                             $sb_5.sisa_detik_masak = $sb_5.target_menit * 60;
-                            $sb_5.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_5.total_detik_pemanasan = 0;
                             $sb_5.flag_init_masak = 0;
                             $sb_5.suhu_awal = $sb5.temp;
@@ -1084,7 +1117,10 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_5.total_detik_pemanasan = $sb_5.total_detik_pemanasan + 1;
                             $sb_5.tampil_pemanasan = formatTime($sb_5.total_detik_pemanasan);
-                            $sb_5.tampil_durasi_aktual = formatTime($sb_5.sisa_detik_masak);
+                            
+                            $sb_5.durasi_aktual = formatTime($sb_5.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak) < 0 ? 0 : scale_up_5;
+                            $sb_5.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_5.flag_init_masak === 1) {
@@ -1092,7 +1128,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 5, // Hanya nomor Steambox saja
                                     sisa: $sb_5.sisa_detik_masak,
-                                    tampilSisa: $sb_5.tampil_durasi_aktual,
+                                    tampilSisa: $sb_5.durasi_aktual,
                                     tampilSelesai: $sb_5.tampil_jam_selesai
                                 });
                             } else {
@@ -1112,12 +1148,14 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_5.sisa_detik_masak = $sb_5.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_5.durasi_aktual_up = $sb_5.durasi_aktual_up + 1;
+                            $sb_5.durasi_aktual = formatTime($sb_5.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak) < 0 ? 0 : scale_up_5;
+                            $sb_5.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_5.sisa_detik_masak <= 0) {
                                 $sb_5.sisa_detik_masak = 0;
-                                $sb_5.tampil_durasi_aktual = formatTime(0);
+                                $sb_5.durasi_aktual = formatTime(0);
+                                $sb_5.durasi_aktual_up = formatTime($sb_5.target_menit * 60);
                                 $sb_5.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_5.suhu_akhir = $sb5.temp;
                                 $sb5.run_stop = 1; // STOP otomatis
@@ -1126,12 +1164,11 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_5.flag_init_masak = 0;
                                 $sb_5.status_selesai = true;
                             } else {
-                                $sb_5.tampil_durasi_aktual = formatTime($sb_5.sisa_detik_masak);
                                 $sb_5.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_5.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 5, // Hanya nomor Steambox saja
                                     sisa: $sb_5.sisa_detik_masak,
-                                    tampilSisa: $sb_5.tampil_durasi_aktual,
+                                    tampilSisa: $sb_5.durasi_aktual,
                                     tampilSelesai: $sb_5.tampil_jam_selesai
                                 });
                             }
@@ -1140,10 +1177,14 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_5) {
                 $sb_5.sensor_error = true;
-                $sb_5.status_banner = txtSensorError;
+                if ($sb5.run_stop == 0 && $sb_5.flag_init_start === 1) {
+                    $sb_5.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_5.status_banner = txtSensorError;
+                }
             } else {
                 $sb_5.sensor_error = false;
             }
@@ -1170,13 +1211,13 @@ if ($sb_6.reset) {
     $sb_6.flag_init_masak = 0;
     $sb_6.total_detik_pemanasan = 0;
     $sb_6.sisa_detik_masak = 0;
-    $sb_6.durasi_aktual_up = 0;
     $sb_6.target_menit = 0;
     $sb_6.adjust_menit = 0;
     $sb_6.tampil_jam_mulai = "--:--:--";
     $sb_6.tampil_jam_masak = "--:--:--";
     $sb_6.tampil_jam_selesai = "--:--:--";
-    $sb_6.tampil_durasi_aktual = "--";
+    $sb_6.durasi_aktual = "--";
+    $sb_6.durasi_aktual_up = "--";
     $sb_6.tampil_pemanasan = "--:--:--";
     $sb_6.suhu_awal = 0;
     $sb_6.suhu_akhir = 0;
@@ -1263,7 +1304,8 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.tampil_jam_mulai = "--:--:--";
                             $sb_6.tampil_jam_masak = "--:--:--";
                             $sb_6.tampil_jam_selesai = "--:--:--";
-                            $sb_6.tampil_durasi_aktual = "--";
+                            $sb_6.durasi_aktual = "--";
+                            $sb_6.durasi_aktual_up = "--";
                             $sb_6.flag_init_start = 1;
                             $sb_6.total_detik_pemanasan = 0;
                             $sb_6.suhu_awal = $sb6.temp;
@@ -1286,7 +1328,6 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.tampil_jam_selesai = "--:--:--";
                             $sb_6.flag_init_start = 1;
                             $sb_6.sisa_detik_masak = $sb_6.target_menit * 60;
-                            $sb_6.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_6.total_detik_pemanasan = 0;
                             $sb_6.flag_init_masak = 0;
                             $sb_6.suhu_awal = $sb6.temp;
@@ -1307,7 +1348,10 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_6.total_detik_pemanasan = $sb_6.total_detik_pemanasan + 1;
                             $sb_6.tampil_pemanasan = formatTime($sb_6.total_detik_pemanasan);
-                            $sb_6.tampil_durasi_aktual = formatTime($sb_6.sisa_detik_masak);
+                            
+                            $sb_6.durasi_aktual = formatTime($sb_6.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak) < 0 ? 0 : scale_up_6;
+                            $sb_6.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_6.flag_init_masak === 1) {
@@ -1315,7 +1359,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 6, // Hanya nomor Steambox saja
                                     sisa: $sb_6.sisa_detik_masak,
-                                    tampilSisa: $sb_6.tampil_durasi_aktual,
+                                    tampilSisa: $sb_6.durasi_aktual,
                                     tampilSelesai: $sb_6.tampil_jam_selesai
                                 });
                             } else {
@@ -1335,12 +1379,14 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_6.sisa_detik_masak = $sb_6.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_6.durasi_aktual_up = $sb_6.durasi_aktual_up + 1;
+                            $sb_6.durasi_aktual = formatTime($sb_6.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak) < 0 ? 0 : scale_up_6;
+                            $sb_6.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_6.sisa_detik_masak <= 0) {
                                 $sb_6.sisa_detik_masak = 0;
-                                $sb_6.tampil_durasi_aktual = formatTime(0);
+                                $sb_6.durasi_aktual = formatTime(0);
+                                $sb_6.durasi_aktual_up = formatTime($sb_6.target_menit * 60);
                                 $sb_6.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_6.suhu_akhir = $sb6.temp;
                                 $sb6.run_stop = 1; // STOP otomatis
@@ -1349,12 +1395,11 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_6.flag_init_masak = 0;
                                 $sb_6.status_selesai = true;
                             } else {
-                                $sb_6.tampil_durasi_aktual = formatTime($sb_6.sisa_detik_masak);
                                 $sb_6.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_6.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 6, // Hanya nomor Steambox saja
                                     sisa: $sb_6.sisa_detik_masak,
-                                    tampilSisa: $sb_6.tampil_durasi_aktual,
+                                    tampilSisa: $sb_6.durasi_aktual,
                                     tampilSelesai: $sb_6.tampil_jam_selesai
                                 });
                             }
@@ -1363,10 +1408,14 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_6) {
                 $sb_6.sensor_error = true;
-                $sb_6.status_banner = txtSensorError;
+                if ($sb6.run_stop == 0 && $sb_6.flag_init_start === 1) {
+                    $sb_6.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_6.status_banner = txtSensorError;
+                }
             } else {
                 $sb_6.sensor_error = false;
             }
@@ -1393,13 +1442,13 @@ if ($sb_7.reset) {
     $sb_7.flag_init_masak = 0;
     $sb_7.total_detik_pemanasan = 0;
     $sb_7.sisa_detik_masak = 0;
-    $sb_7.durasi_aktual_up = 0;
     $sb_7.target_menit = 0;
     $sb_7.adjust_menit = 0;
     $sb_7.tampil_jam_mulai = "--:--:--";
     $sb_7.tampil_jam_masak = "--:--:--";
     $sb_7.tampil_jam_selesai = "--:--:--";
-    $sb_7.tampil_durasi_aktual = "--";
+    $sb_7.durasi_aktual = "--";
+    $sb_7.durasi_aktual_up = "--";
     $sb_7.tampil_pemanasan = "--:--:--";
     $sb_7.suhu_awal = 0;
     $sb_7.suhu_akhir = 0;
@@ -1486,7 +1535,8 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.tampil_jam_mulai = "--:--:--";
                             $sb_7.tampil_jam_masak = "--:--:--";
                             $sb_7.tampil_jam_selesai = "--:--:--";
-                            $sb_7.tampil_durasi_aktual = "--";
+                            $sb_7.durasi_aktual = "--";
+                            $sb_7.durasi_aktual_up = "--";
                             $sb_7.flag_init_start = 1;
                             $sb_7.total_detik_pemanasan = 0;
                             $sb_7.suhu_awal = $sb7.temp;
@@ -1509,7 +1559,6 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.tampil_jam_selesai = "--:--:--";
                             $sb_7.flag_init_start = 1;
                             $sb_7.sisa_detik_masak = $sb_7.target_menit * 60;
-                            $sb_7.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_7.total_detik_pemanasan = 0;
                             $sb_7.flag_init_masak = 0;
                             $sb_7.suhu_awal = $sb7.temp;
@@ -1530,7 +1579,10 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_7.total_detik_pemanasan = $sb_7.total_detik_pemanasan + 1;
                             $sb_7.tampil_pemanasan = formatTime($sb_7.total_detik_pemanasan);
-                            $sb_7.tampil_durasi_aktual = formatTime($sb_7.sisa_detik_masak);
+                            
+                            $sb_7.durasi_aktual = formatTime($sb_7.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak) < 0 ? 0 : scale_up_7;
+                            $sb_7.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_7.flag_init_masak === 1) {
@@ -1538,7 +1590,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 7, // Hanya nomor Steambox saja
                                     sisa: $sb_7.sisa_detik_masak,
-                                    tampilSisa: $sb_7.tampil_durasi_aktual,
+                                    tampilSisa: $sb_7.durasi_aktual,
                                     tampilSelesai: $sb_7.tampil_jam_selesai
                                 });
                             } else {
@@ -1558,12 +1610,14 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_7.sisa_detik_masak = $sb_7.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_7.durasi_aktual_up = $sb_7.durasi_aktual_up + 1;
+                            $sb_7.durasi_aktual = formatTime($sb_7.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak) < 0 ? 0 : scale_up_7;
+                            $sb_7.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_7.sisa_detik_masak <= 0) {
                                 $sb_7.sisa_detik_masak = 0;
-                                $sb_7.tampil_durasi_aktual = formatTime(0);
+                                $sb_7.durasi_aktual = formatTime(0);
+                                $sb_7.durasi_aktual_up = formatTime($sb_7.target_menit * 60);
                                 $sb_7.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_7.suhu_akhir = $sb7.temp;
                                 $sb7.run_stop = 1; // STOP otomatis
@@ -1572,12 +1626,11 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_7.flag_init_masak = 0;
                                 $sb_7.status_selesai = true;
                             } else {
-                                $sb_7.tampil_durasi_aktual = formatTime($sb_7.sisa_detik_masak);
                                 $sb_7.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_7.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 7, // Hanya nomor Steambox saja
                                     sisa: $sb_7.sisa_detik_masak,
-                                    tampilSisa: $sb_7.tampil_durasi_aktual,
+                                    tampilSisa: $sb_7.durasi_aktual,
                                     tampilSelesai: $sb_7.tampil_jam_selesai
                                 });
                             }
@@ -1586,10 +1639,14 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_7) {
                 $sb_7.sensor_error = true;
-                $sb_7.status_banner = txtSensorError;
+                if ($sb7.run_stop == 0 && $sb_7.flag_init_start === 1) {
+                    $sb_7.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_7.status_banner = txtSensorError;
+                }
             } else {
                 $sb_7.sensor_error = false;
             }
@@ -1616,13 +1673,13 @@ if ($sb_8.reset) {
     $sb_8.flag_init_masak = 0;
     $sb_8.total_detik_pemanasan = 0;
     $sb_8.sisa_detik_masak = 0;
-    $sb_8.durasi_aktual_up = 0;
     $sb_8.target_menit = 0;
     $sb_8.adjust_menit = 0;
     $sb_8.tampil_jam_mulai = "--:--:--";
     $sb_8.tampil_jam_masak = "--:--:--";
     $sb_8.tampil_jam_selesai = "--:--:--";
-    $sb_8.tampil_durasi_aktual = "--";
+    $sb_8.durasi_aktual = "--";
+    $sb_8.durasi_aktual_up = "--";
     $sb_8.tampil_pemanasan = "--:--:--";
     $sb_8.suhu_awal = 0;
     $sb_8.suhu_akhir = 0;
@@ -1709,7 +1766,8 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.tampil_jam_mulai = "--:--:--";
                             $sb_8.tampil_jam_masak = "--:--:--";
                             $sb_8.tampil_jam_selesai = "--:--:--";
-                            $sb_8.tampil_durasi_aktual = "--";
+                            $sb_8.durasi_aktual = "--";
+                            $sb_8.durasi_aktual_up = "--";
                             $sb_8.flag_init_start = 1;
                             $sb_8.total_detik_pemanasan = 0;
                             $sb_8.suhu_awal = $sb8.temp;
@@ -1732,7 +1790,6 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.tampil_jam_selesai = "--:--:--";
                             $sb_8.flag_init_start = 1;
                             $sb_8.sisa_detik_masak = $sb_8.target_menit * 60;
-                            $sb_8.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_8.total_detik_pemanasan = 0;
                             $sb_8.flag_init_masak = 0;
                             $sb_8.suhu_awal = $sb8.temp;
@@ -1753,7 +1810,10 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_8.total_detik_pemanasan = $sb_8.total_detik_pemanasan + 1;
                             $sb_8.tampil_pemanasan = formatTime($sb_8.total_detik_pemanasan);
-                            $sb_8.tampil_durasi_aktual = formatTime($sb_8.sisa_detik_masak);
+                            
+                            $sb_8.durasi_aktual = formatTime($sb_8.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak) < 0 ? 0 : scale_up_8;
+                            $sb_8.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_8.flag_init_masak === 1) {
@@ -1761,7 +1821,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 8, // Hanya nomor Steambox saja
                                     sisa: $sb_8.sisa_detik_masak,
-                                    tampilSisa: $sb_8.tampil_durasi_aktual,
+                                    tampilSisa: $sb_8.durasi_aktual,
                                     tampilSelesai: $sb_8.tampil_jam_selesai
                                 });
                             } else {
@@ -1781,12 +1841,14 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_8.sisa_detik_masak = $sb_8.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_8.durasi_aktual_up = $sb_8.durasi_aktual_up + 1;
+                            $sb_8.durasi_aktual = formatTime($sb_8.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak) < 0 ? 0 : scale_up_8;
+                            $sb_8.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_8.sisa_detik_masak <= 0) {
                                 $sb_8.sisa_detik_masak = 0;
-                                $sb_8.tampil_durasi_aktual = formatTime(0);
+                                $sb_8.durasi_aktual = formatTime(0);
+                                $sb_8.durasi_aktual_up = formatTime($sb_8.target_menit * 60);
                                 $sb_8.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_8.suhu_akhir = $sb8.temp;
                                 $sb8.run_stop = 1; // STOP otomatis
@@ -1795,12 +1857,11 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_8.flag_init_masak = 0;
                                 $sb_8.status_selesai = true;
                             } else {
-                                $sb_8.tampil_durasi_aktual = formatTime($sb_8.sisa_detik_masak);
                                 $sb_8.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_8.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 8, // Hanya nomor Steambox saja
                                     sisa: $sb_8.sisa_detik_masak,
-                                    tampilSisa: $sb_8.tampil_durasi_aktual,
+                                    tampilSisa: $sb_8.durasi_aktual,
                                     tampilSelesai: $sb_8.tampil_jam_selesai
                                 });
                             }
@@ -1809,10 +1870,14 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_8) {
                 $sb_8.sensor_error = true;
-                $sb_8.status_banner = txtSensorError;
+                if ($sb8.run_stop == 0 && $sb_8.flag_init_start === 1) {
+                    $sb_8.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_8.status_banner = txtSensorError;
+                }
             } else {
                 $sb_8.sensor_error = false;
             }
@@ -1839,13 +1904,13 @@ if ($sb_9.reset) {
     $sb_9.flag_init_masak = 0;
     $sb_9.total_detik_pemanasan = 0;
     $sb_9.sisa_detik_masak = 0;
-    $sb_9.durasi_aktual_up = 0;
     $sb_9.target_menit = 0;
     $sb_9.adjust_menit = 0;
     $sb_9.tampil_jam_mulai = "--:--:--";
     $sb_9.tampil_jam_masak = "--:--:--";
     $sb_9.tampil_jam_selesai = "--:--:--";
-    $sb_9.tampil_durasi_aktual = "--";
+    $sb_9.durasi_aktual = "--";
+    $sb_9.durasi_aktual_up = "--";
     $sb_9.tampil_pemanasan = "--:--:--";
     $sb_9.suhu_awal = 0;
     $sb_9.suhu_akhir = 0;
@@ -1932,7 +1997,8 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.tampil_jam_mulai = "--:--:--";
                             $sb_9.tampil_jam_masak = "--:--:--";
                             $sb_9.tampil_jam_selesai = "--:--:--";
-                            $sb_9.tampil_durasi_aktual = "--";
+                            $sb_9.durasi_aktual = "--";
+                            $sb_9.durasi_aktual_up = "--";
                             $sb_9.flag_init_start = 1;
                             $sb_9.total_detik_pemanasan = 0;
                             $sb_9.suhu_awal = $sb9.temp;
@@ -1955,7 +2021,6 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.tampil_jam_selesai = "--:--:--";
                             $sb_9.flag_init_start = 1;
                             $sb_9.sisa_detik_masak = $sb_9.target_menit * 60;
-                            $sb_9.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_9.total_detik_pemanasan = 0;
                             $sb_9.flag_init_masak = 0;
                             $sb_9.suhu_awal = $sb9.temp;
@@ -1976,7 +2041,10 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_9.total_detik_pemanasan = $sb_9.total_detik_pemanasan + 1;
                             $sb_9.tampil_pemanasan = formatTime($sb_9.total_detik_pemanasan);
-                            $sb_9.tampil_durasi_aktual = formatTime($sb_9.sisa_detik_masak);
+                            
+                            $sb_9.durasi_aktual = formatTime($sb_9.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak) < 0 ? 0 : scale_up_9;
+                            $sb_9.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_9.flag_init_masak === 1) {
@@ -1984,7 +2052,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 9, // Hanya nomor Steambox saja
                                     sisa: $sb_9.sisa_detik_masak,
-                                    tampilSisa: $sb_9.tampil_durasi_aktual,
+                                    tampilSisa: $sb_9.durasi_aktual,
                                     tampilSelesai: $sb_9.tampil_jam_selesai
                                 });
                             } else {
@@ -2004,12 +2072,14 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_9.sisa_detik_masak = $sb_9.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_9.durasi_aktual_up = $sb_9.durasi_aktual_up + 1;
+                            $sb_9.durasi_aktual = formatTime($sb_9.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak) < 0 ? 0 : scale_up_9;
+                            $sb_9.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_9.sisa_detik_masak <= 0) {
                                 $sb_9.sisa_detik_masak = 0;
-                                $sb_9.tampil_durasi_aktual = formatTime(0);
+                                $sb_9.durasi_aktual = formatTime(0);
+                                $sb_9.durasi_aktual_up = formatTime($sb_9.target_menit * 60);
                                 $sb_9.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_9.suhu_akhir = $sb9.temp;
                                 $sb9.run_stop = 1; // STOP otomatis
@@ -2018,12 +2088,11 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_9.flag_init_masak = 0;
                                 $sb_9.status_selesai = true;
                             } else {
-                                $sb_9.tampil_durasi_aktual = formatTime($sb_9.sisa_detik_masak);
                                 $sb_9.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_9.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 9, // Hanya nomor Steambox saja
                                     sisa: $sb_9.sisa_detik_masak,
-                                    tampilSisa: $sb_9.tampil_durasi_aktual,
+                                    tampilSisa: $sb_9.durasi_aktual,
                                     tampilSelesai: $sb_9.tampil_jam_selesai
                                 });
                             }
@@ -2032,10 +2101,14 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_9) {
                 $sb_9.sensor_error = true;
-                $sb_9.status_banner = txtSensorError;
+                if ($sb9.run_stop == 0 && $sb_9.flag_init_start === 1) {
+                    $sb_9.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_9.status_banner = txtSensorError;
+                }
             } else {
                 $sb_9.sensor_error = false;
             }
@@ -2062,13 +2135,13 @@ if ($sb_10.reset) {
     $sb_10.flag_init_masak = 0;
     $sb_10.total_detik_pemanasan = 0;
     $sb_10.sisa_detik_masak = 0;
-    $sb_10.durasi_aktual_up = 0;
     $sb_10.target_menit = 0;
     $sb_10.adjust_menit = 0;
     $sb_10.tampil_jam_mulai = "--:--:--";
     $sb_10.tampil_jam_masak = "--:--:--";
     $sb_10.tampil_jam_selesai = "--:--:--";
-    $sb_10.tampil_durasi_aktual = "--";
+    $sb_10.durasi_aktual = "--";
+    $sb_10.durasi_aktual_up = "--";
     $sb_10.tampil_pemanasan = "--:--:--";
     $sb_10.suhu_awal = 0;
     $sb_10.suhu_akhir = 0;
@@ -2155,7 +2228,8 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.tampil_jam_mulai = "--:--:--";
                             $sb_10.tampil_jam_masak = "--:--:--";
                             $sb_10.tampil_jam_selesai = "--:--:--";
-                            $sb_10.tampil_durasi_aktual = "--";
+                            $sb_10.durasi_aktual = "--";
+                            $sb_10.durasi_aktual_up = "--";
                             $sb_10.flag_init_start = 1;
                             $sb_10.total_detik_pemanasan = 0;
                             $sb_10.suhu_awal = $sb10.temp;
@@ -2178,7 +2252,6 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.tampil_jam_selesai = "--:--:--";
                             $sb_10.flag_init_start = 1;
                             $sb_10.sisa_detik_masak = $sb_10.target_menit * 60;
-                            $sb_10.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_10.total_detik_pemanasan = 0;
                             $sb_10.flag_init_masak = 0;
                             $sb_10.suhu_awal = $sb10.temp;
@@ -2199,7 +2272,10 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_10.total_detik_pemanasan = $sb_10.total_detik_pemanasan + 1;
                             $sb_10.tampil_pemanasan = formatTime($sb_10.total_detik_pemanasan);
-                            $sb_10.tampil_durasi_aktual = formatTime($sb_10.sisa_detik_masak);
+                            
+                            $sb_10.durasi_aktual = formatTime($sb_10.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak) < 0 ? 0 : scale_up_10;
+                            $sb_10.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_10.flag_init_masak === 1) {
@@ -2207,7 +2283,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 10, // Hanya nomor Steambox saja
                                     sisa: $sb_10.sisa_detik_masak,
-                                    tampilSisa: $sb_10.tampil_durasi_aktual,
+                                    tampilSisa: $sb_10.durasi_aktual,
                                     tampilSelesai: $sb_10.tampil_jam_selesai
                                 });
                             } else {
@@ -2227,12 +2303,14 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_10.sisa_detik_masak = $sb_10.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_10.durasi_aktual_up = $sb_10.durasi_aktual_up + 1;
+                            $sb_10.durasi_aktual = formatTime($sb_10.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak) < 0 ? 0 : scale_up_10;
+                            $sb_10.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_10.sisa_detik_masak <= 0) {
                                 $sb_10.sisa_detik_masak = 0;
-                                $sb_10.tampil_durasi_aktual = formatTime(0);
+                                $sb_10.durasi_aktual = formatTime(0);
+                                $sb_10.durasi_aktual_up = formatTime($sb_10.target_menit * 60);
                                 $sb_10.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_10.suhu_akhir = $sb10.temp;
                                 $sb10.run_stop = 1; // STOP otomatis
@@ -2241,12 +2319,11 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_10.flag_init_masak = 0;
                                 $sb_10.status_selesai = true;
                             } else {
-                                $sb_10.tampil_durasi_aktual = formatTime($sb_10.sisa_detik_masak);
                                 $sb_10.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_10.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 10, // Hanya nomor Steambox saja
                                     sisa: $sb_10.sisa_detik_masak,
-                                    tampilSisa: $sb_10.tampil_durasi_aktual,
+                                    tampilSisa: $sb_10.durasi_aktual,
                                     tampilSelesai: $sb_10.tampil_jam_selesai
                                 });
                             }
@@ -2255,10 +2332,14 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_10) {
                 $sb_10.sensor_error = true;
-                $sb_10.status_banner = txtSensorError;
+                if ($sb10.run_stop == 0 && $sb_10.flag_init_start === 1) {
+                    $sb_10.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_10.status_banner = txtSensorError;
+                }
             } else {
                 $sb_10.sensor_error = false;
             }
@@ -2285,13 +2366,13 @@ if ($sb_11.reset) {
     $sb_11.flag_init_masak = 0;
     $sb_11.total_detik_pemanasan = 0;
     $sb_11.sisa_detik_masak = 0;
-    $sb_11.durasi_aktual_up = 0;
     $sb_11.target_menit = 0;
     $sb_11.adjust_menit = 0;
     $sb_11.tampil_jam_mulai = "--:--:--";
     $sb_11.tampil_jam_masak = "--:--:--";
     $sb_11.tampil_jam_selesai = "--:--:--";
-    $sb_11.tampil_durasi_aktual = "--";
+    $sb_11.durasi_aktual = "--";
+    $sb_11.durasi_aktual_up = "--";
     $sb_11.tampil_pemanasan = "--:--:--";
     $sb_11.suhu_awal = 0;
     $sb_11.suhu_akhir = 0;
@@ -2378,7 +2459,8 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.tampil_jam_mulai = "--:--:--";
                             $sb_11.tampil_jam_masak = "--:--:--";
                             $sb_11.tampil_jam_selesai = "--:--:--";
-                            $sb_11.tampil_durasi_aktual = "--";
+                            $sb_11.durasi_aktual = "--";
+                            $sb_11.durasi_aktual_up = "--";
                             $sb_11.flag_init_start = 1;
                             $sb_11.total_detik_pemanasan = 0;
                             $sb_11.suhu_awal = $sb11.temp;
@@ -2401,7 +2483,6 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.tampil_jam_selesai = "--:--:--";
                             $sb_11.flag_init_start = 1;
                             $sb_11.sisa_detik_masak = $sb_11.target_menit * 60;
-                            $sb_11.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_11.total_detik_pemanasan = 0;
                             $sb_11.flag_init_masak = 0;
                             $sb_11.suhu_awal = $sb11.temp;
@@ -2422,7 +2503,10 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_11.total_detik_pemanasan = $sb_11.total_detik_pemanasan + 1;
                             $sb_11.tampil_pemanasan = formatTime($sb_11.total_detik_pemanasan);
-                            $sb_11.tampil_durasi_aktual = formatTime($sb_11.sisa_detik_masak);
+                            
+                            $sb_11.durasi_aktual = formatTime($sb_11.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak) < 0 ? 0 : scale_up_11;
+                            $sb_11.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_11.flag_init_masak === 1) {
@@ -2430,7 +2514,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 11, // Hanya nomor Steambox saja
                                     sisa: $sb_11.sisa_detik_masak,
-                                    tampilSisa: $sb_11.tampil_durasi_aktual,
+                                    tampilSisa: $sb_11.durasi_aktual,
                                     tampilSelesai: $sb_11.tampil_jam_selesai
                                 });
                             } else {
@@ -2450,12 +2534,14 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_11.sisa_detik_masak = $sb_11.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_11.durasi_aktual_up = $sb_11.durasi_aktual_up + 1;
+                            $sb_11.durasi_aktual = formatTime($sb_11.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak) < 0 ? 0 : scale_up_11;
+                            $sb_11.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_11.sisa_detik_masak <= 0) {
                                 $sb_11.sisa_detik_masak = 0;
-                                $sb_11.tampil_durasi_aktual = formatTime(0);
+                                $sb_11.durasi_aktual = formatTime(0);
+                                $sb_11.durasi_aktual_up = formatTime($sb_11.target_menit * 60);
                                 $sb_11.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_11.suhu_akhir = $sb11.temp;
                                 $sb11.run_stop = 1; // STOP otomatis
@@ -2464,12 +2550,11 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_11.flag_init_masak = 0;
                                 $sb_11.status_selesai = true;
                             } else {
-                                $sb_11.tampil_durasi_aktual = formatTime($sb_11.sisa_detik_masak);
                                 $sb_11.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_11.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 11, // Hanya nomor Steambox saja
                                     sisa: $sb_11.sisa_detik_masak,
-                                    tampilSisa: $sb_11.tampil_durasi_aktual,
+                                    tampilSisa: $sb_11.durasi_aktual,
                                     tampilSelesai: $sb_11.tampil_jam_selesai
                                 });
                             }
@@ -2478,10 +2563,14 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_11) {
                 $sb_11.sensor_error = true;
-                $sb_11.status_banner = txtSensorError;
+                if ($sb11.run_stop == 0 && $sb_11.flag_init_start === 1) {
+                    $sb_11.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_11.status_banner = txtSensorError;
+                }
             } else {
                 $sb_11.sensor_error = false;
             }
@@ -2508,13 +2597,13 @@ if ($sb_12.reset) {
     $sb_12.flag_init_masak = 0;
     $sb_12.total_detik_pemanasan = 0;
     $sb_12.sisa_detik_masak = 0;
-    $sb_12.durasi_aktual_up = 0;
     $sb_12.target_menit = 0;
     $sb_12.adjust_menit = 0;
     $sb_12.tampil_jam_mulai = "--:--:--";
     $sb_12.tampil_jam_masak = "--:--:--";
     $sb_12.tampil_jam_selesai = "--:--:--";
-    $sb_12.tampil_durasi_aktual = "--";
+    $sb_12.durasi_aktual = "--";
+    $sb_12.durasi_aktual_up = "--";
     $sb_12.tampil_pemanasan = "--:--:--";
     $sb_12.suhu_awal = 0;
     $sb_12.suhu_akhir = 0;
@@ -2601,7 +2690,8 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.tampil_jam_mulai = "--:--:--";
                             $sb_12.tampil_jam_masak = "--:--:--";
                             $sb_12.tampil_jam_selesai = "--:--:--";
-                            $sb_12.tampil_durasi_aktual = "--";
+                            $sb_12.durasi_aktual = "--";
+                            $sb_12.durasi_aktual_up = "--";
                             $sb_12.flag_init_start = 1;
                             $sb_12.total_detik_pemanasan = 0;
                             $sb_12.suhu_awal = $sb12.temp;
@@ -2624,7 +2714,6 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.tampil_jam_selesai = "--:--:--";
                             $sb_12.flag_init_start = 1;
                             $sb_12.sisa_detik_masak = $sb_12.target_menit * 60;
-                            $sb_12.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_12.total_detik_pemanasan = 0;
                             $sb_12.flag_init_masak = 0;
                             $sb_12.suhu_awal = $sb12.temp;
@@ -2645,7 +2734,10 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_12.total_detik_pemanasan = $sb_12.total_detik_pemanasan + 1;
                             $sb_12.tampil_pemanasan = formatTime($sb_12.total_detik_pemanasan);
-                            $sb_12.tampil_durasi_aktual = formatTime($sb_12.sisa_detik_masak);
+                            
+                            $sb_12.durasi_aktual = formatTime($sb_12.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak) < 0 ? 0 : scale_up_12;
+                            $sb_12.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_12.flag_init_masak === 1) {
@@ -2653,7 +2745,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 12, // Hanya nomor Steambox saja
                                     sisa: $sb_12.sisa_detik_masak,
-                                    tampilSisa: $sb_12.tampil_durasi_aktual,
+                                    tampilSisa: $sb_12.durasi_aktual,
                                     tampilSelesai: $sb_12.tampil_jam_selesai
                                 });
                             } else {
@@ -2673,12 +2765,14 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_12.sisa_detik_masak = $sb_12.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_12.durasi_aktual_up = $sb_12.durasi_aktual_up + 1;
+                            $sb_12.durasi_aktual = formatTime($sb_12.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak) < 0 ? 0 : scale_up_12;
+                            $sb_12.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_12.sisa_detik_masak <= 0) {
                                 $sb_12.sisa_detik_masak = 0;
-                                $sb_12.tampil_durasi_aktual = formatTime(0);
+                                $sb_12.durasi_aktual = formatTime(0);
+                                $sb_12.durasi_aktual_up = formatTime($sb_12.target_menit * 60);
                                 $sb_12.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_12.suhu_akhir = $sb12.temp;
                                 $sb12.run_stop = 1; // STOP otomatis
@@ -2687,12 +2781,11 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_12.flag_init_masak = 0;
                                 $sb_12.status_selesai = true;
                             } else {
-                                $sb_12.tampil_durasi_aktual = formatTime($sb_12.sisa_detik_masak);
                                 $sb_12.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_12.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 12, // Hanya nomor Steambox saja
                                     sisa: $sb_12.sisa_detik_masak,
-                                    tampilSisa: $sb_12.tampil_durasi_aktual,
+                                    tampilSisa: $sb_12.durasi_aktual,
                                     tampilSelesai: $sb_12.tampil_jam_selesai
                                 });
                             }
@@ -2701,10 +2794,14 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_12) {
                 $sb_12.sensor_error = true;
-                $sb_12.status_banner = txtSensorError;
+                if ($sb12.run_stop == 0 && $sb_12.flag_init_start === 1) {
+                    $sb_12.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_12.status_banner = txtSensorError;
+                }
             } else {
                 $sb_12.sensor_error = false;
             }
@@ -2731,13 +2828,13 @@ if ($sb_13.reset) {
     $sb_13.flag_init_masak = 0;
     $sb_13.total_detik_pemanasan = 0;
     $sb_13.sisa_detik_masak = 0;
-    $sb_13.durasi_aktual_up = 0;
     $sb_13.target_menit = 0;
     $sb_13.adjust_menit = 0;
     $sb_13.tampil_jam_mulai = "--:--:--";
     $sb_13.tampil_jam_masak = "--:--:--";
     $sb_13.tampil_jam_selesai = "--:--:--";
-    $sb_13.tampil_durasi_aktual = "--";
+    $sb_13.durasi_aktual = "--";
+    $sb_13.durasi_aktual_up = "--";
     $sb_13.tampil_pemanasan = "--:--:--";
     $sb_13.suhu_awal = 0;
     $sb_13.suhu_akhir = 0;
@@ -2824,7 +2921,8 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.tampil_jam_mulai = "--:--:--";
                             $sb_13.tampil_jam_masak = "--:--:--";
                             $sb_13.tampil_jam_selesai = "--:--:--";
-                            $sb_13.tampil_durasi_aktual = "--";
+                            $sb_13.durasi_aktual = "--";
+                            $sb_13.durasi_aktual_up = "--";
                             $sb_13.flag_init_start = 1;
                             $sb_13.total_detik_pemanasan = 0;
                             $sb_13.suhu_awal = $sb13.temp;
@@ -2847,7 +2945,6 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.tampil_jam_selesai = "--:--:--";
                             $sb_13.flag_init_start = 1;
                             $sb_13.sisa_detik_masak = $sb_13.target_menit * 60;
-                            $sb_13.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_13.total_detik_pemanasan = 0;
                             $sb_13.flag_init_masak = 0;
                             $sb_13.suhu_awal = $sb13.temp;
@@ -2868,7 +2965,10 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_13.total_detik_pemanasan = $sb_13.total_detik_pemanasan + 1;
                             $sb_13.tampil_pemanasan = formatTime($sb_13.total_detik_pemanasan);
-                            $sb_13.tampil_durasi_aktual = formatTime($sb_13.sisa_detik_masak);
+                            
+                            $sb_13.durasi_aktual = formatTime($sb_13.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak) < 0 ? 0 : scale_up_13;
+                            $sb_13.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_13.flag_init_masak === 1) {
@@ -2876,7 +2976,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 13, // Hanya nomor Steambox saja
                                     sisa: $sb_13.sisa_detik_masak,
-                                    tampilSisa: $sb_13.tampil_durasi_aktual,
+                                    tampilSisa: $sb_13.durasi_aktual,
                                     tampilSelesai: $sb_13.tampil_jam_selesai
                                 });
                             } else {
@@ -2896,12 +2996,14 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_13.sisa_detik_masak = $sb_13.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_13.durasi_aktual_up = $sb_13.durasi_aktual_up + 1;
+                            $sb_13.durasi_aktual = formatTime($sb_13.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak) < 0 ? 0 : scale_up_13;
+                            $sb_13.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_13.sisa_detik_masak <= 0) {
                                 $sb_13.sisa_detik_masak = 0;
-                                $sb_13.tampil_durasi_aktual = formatTime(0);
+                                $sb_13.durasi_aktual = formatTime(0);
+                                $sb_13.durasi_aktual_up = formatTime($sb_13.target_menit * 60);
                                 $sb_13.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_13.suhu_akhir = $sb13.temp;
                                 $sb13.run_stop = 1; // STOP otomatis
@@ -2910,12 +3012,11 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_13.flag_init_masak = 0;
                                 $sb_13.status_selesai = true;
                             } else {
-                                $sb_13.tampil_durasi_aktual = formatTime($sb_13.sisa_detik_masak);
                                 $sb_13.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_13.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 13, // Hanya nomor Steambox saja
                                     sisa: $sb_13.sisa_detik_masak,
-                                    tampilSisa: $sb_13.tampil_durasi_aktual,
+                                    tampilSisa: $sb_13.durasi_aktual,
                                     tampilSelesai: $sb_13.tampil_jam_selesai
                                 });
                             }
@@ -2924,10 +3025,14 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_13) {
                 $sb_13.sensor_error = true;
-                $sb_13.status_banner = txtSensorError;
+                if ($sb13.run_stop == 0 && $sb_13.flag_init_start === 1) {
+                    $sb_13.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_13.status_banner = txtSensorError;
+                }
             } else {
                 $sb_13.sensor_error = false;
             }
@@ -2954,13 +3059,13 @@ if ($sb_14.reset) {
     $sb_14.flag_init_masak = 0;
     $sb_14.total_detik_pemanasan = 0;
     $sb_14.sisa_detik_masak = 0;
-    $sb_14.durasi_aktual_up = 0;
     $sb_14.target_menit = 0;
     $sb_14.adjust_menit = 0;
     $sb_14.tampil_jam_mulai = "--:--:--";
     $sb_14.tampil_jam_masak = "--:--:--";
     $sb_14.tampil_jam_selesai = "--:--:--";
-    $sb_14.tampil_durasi_aktual = "--";
+    $sb_14.durasi_aktual = "--";
+    $sb_14.durasi_aktual_up = "--";
     $sb_14.tampil_pemanasan = "--:--:--";
     $sb_14.suhu_awal = 0;
     $sb_14.suhu_akhir = 0;
@@ -3047,7 +3152,8 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.tampil_jam_mulai = "--:--:--";
                             $sb_14.tampil_jam_masak = "--:--:--";
                             $sb_14.tampil_jam_selesai = "--:--:--";
-                            $sb_14.tampil_durasi_aktual = "--";
+                            $sb_14.durasi_aktual = "--";
+                            $sb_14.durasi_aktual_up = "--";
                             $sb_14.flag_init_start = 1;
                             $sb_14.total_detik_pemanasan = 0;
                             $sb_14.suhu_awal = $sb14.temp;
@@ -3070,7 +3176,6 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.tampil_jam_selesai = "--:--:--";
                             $sb_14.flag_init_start = 1;
                             $sb_14.sisa_detik_masak = $sb_14.target_menit * 60;
-                            $sb_14.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_14.total_detik_pemanasan = 0;
                             $sb_14.flag_init_masak = 0;
                             $sb_14.suhu_awal = $sb14.temp;
@@ -3091,7 +3196,10 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_14.total_detik_pemanasan = $sb_14.total_detik_pemanasan + 1;
                             $sb_14.tampil_pemanasan = formatTime($sb_14.total_detik_pemanasan);
-                            $sb_14.tampil_durasi_aktual = formatTime($sb_14.sisa_detik_masak);
+                            
+                            $sb_14.durasi_aktual = formatTime($sb_14.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak) < 0 ? 0 : scale_up_14;
+                            $sb_14.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_14.flag_init_masak === 1) {
@@ -3099,7 +3207,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 14, // Hanya nomor Steambox saja
                                     sisa: $sb_14.sisa_detik_masak,
-                                    tampilSisa: $sb_14.tampil_durasi_aktual,
+                                    tampilSisa: $sb_14.durasi_aktual,
                                     tampilSelesai: $sb_14.tampil_jam_selesai
                                 });
                             } else {
@@ -3119,12 +3227,14 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_14.sisa_detik_masak = $sb_14.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_14.durasi_aktual_up = $sb_14.durasi_aktual_up + 1;
+                            $sb_14.durasi_aktual = formatTime($sb_14.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak) < 0 ? 0 : scale_up_14;
+                            $sb_14.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_14.sisa_detik_masak <= 0) {
                                 $sb_14.sisa_detik_masak = 0;
-                                $sb_14.tampil_durasi_aktual = formatTime(0);
+                                $sb_14.durasi_aktual = formatTime(0);
+                                $sb_14.durasi_aktual_up = formatTime($sb_14.target_menit * 60);
                                 $sb_14.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_14.suhu_akhir = $sb14.temp;
                                 $sb14.run_stop = 1; // STOP otomatis
@@ -3133,12 +3243,11 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_14.flag_init_masak = 0;
                                 $sb_14.status_selesai = true;
                             } else {
-                                $sb_14.tampil_durasi_aktual = formatTime($sb_14.sisa_detik_masak);
                                 $sb_14.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_14.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 14, // Hanya nomor Steambox saja
                                     sisa: $sb_14.sisa_detik_masak,
-                                    tampilSisa: $sb_14.tampil_durasi_aktual,
+                                    tampilSisa: $sb_14.durasi_aktual,
                                     tampilSelesai: $sb_14.tampil_jam_selesai
                                 });
                             }
@@ -3147,10 +3256,14 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_14) {
                 $sb_14.sensor_error = true;
-                $sb_14.status_banner = txtSensorError;
+                if ($sb14.run_stop == 0 && $sb_14.flag_init_start === 1) {
+                    $sb_14.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_14.status_banner = txtSensorError;
+                }
             } else {
                 $sb_14.sensor_error = false;
             }
@@ -3177,13 +3290,13 @@ if ($sb_15.reset) {
     $sb_15.flag_init_masak = 0;
     $sb_15.total_detik_pemanasan = 0;
     $sb_15.sisa_detik_masak = 0;
-    $sb_15.durasi_aktual_up = 0;
     $sb_15.target_menit = 0;
     $sb_15.adjust_menit = 0;
     $sb_15.tampil_jam_mulai = "--:--:--";
     $sb_15.tampil_jam_masak = "--:--:--";
     $sb_15.tampil_jam_selesai = "--:--:--";
-    $sb_15.tampil_durasi_aktual = "--";
+    $sb_15.durasi_aktual = "--";
+    $sb_15.durasi_aktual_up = "--";
     $sb_15.tampil_pemanasan = "--:--:--";
     $sb_15.suhu_awal = 0;
     $sb_15.suhu_akhir = 0;
@@ -3270,7 +3383,8 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.tampil_jam_mulai = "--:--:--";
                             $sb_15.tampil_jam_masak = "--:--:--";
                             $sb_15.tampil_jam_selesai = "--:--:--";
-                            $sb_15.tampil_durasi_aktual = "--";
+                            $sb_15.durasi_aktual = "--";
+                            $sb_15.durasi_aktual_up = "--";
                             $sb_15.flag_init_start = 1;
                             $sb_15.total_detik_pemanasan = 0;
                             $sb_15.suhu_awal = $sb15.temp;
@@ -3293,7 +3407,6 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.tampil_jam_selesai = "--:--:--";
                             $sb_15.flag_init_start = 1;
                             $sb_15.sisa_detik_masak = $sb_15.target_menit * 60;
-                            $sb_15.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_15.total_detik_pemanasan = 0;
                             $sb_15.flag_init_masak = 0;
                             $sb_15.suhu_awal = $sb15.temp;
@@ -3314,7 +3427,10 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_15.total_detik_pemanasan = $sb_15.total_detik_pemanasan + 1;
                             $sb_15.tampil_pemanasan = formatTime($sb_15.total_detik_pemanasan);
-                            $sb_15.tampil_durasi_aktual = formatTime($sb_15.sisa_detik_masak);
+                            
+                            $sb_15.durasi_aktual = formatTime($sb_15.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak) < 0 ? 0 : scale_up_15;
+                            $sb_15.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_15.flag_init_masak === 1) {
@@ -3322,7 +3438,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 15, // Hanya nomor Steambox saja
                                     sisa: $sb_15.sisa_detik_masak,
-                                    tampilSisa: $sb_15.tampil_durasi_aktual,
+                                    tampilSisa: $sb_15.durasi_aktual,
                                     tampilSelesai: $sb_15.tampil_jam_selesai
                                 });
                             } else {
@@ -3342,12 +3458,14 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_15.sisa_detik_masak = $sb_15.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_15.durasi_aktual_up = $sb_15.durasi_aktual_up + 1;
+                            $sb_15.durasi_aktual = formatTime($sb_15.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak) < 0 ? 0 : scale_up_15;
+                            $sb_15.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_15.sisa_detik_masak <= 0) {
                                 $sb_15.sisa_detik_masak = 0;
-                                $sb_15.tampil_durasi_aktual = formatTime(0);
+                                $sb_15.durasi_aktual = formatTime(0);
+                                $sb_15.durasi_aktual_up = formatTime($sb_15.target_menit * 60);
                                 $sb_15.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_15.suhu_akhir = $sb15.temp;
                                 $sb15.run_stop = 1; // STOP otomatis
@@ -3356,12 +3474,11 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_15.flag_init_masak = 0;
                                 $sb_15.status_selesai = true;
                             } else {
-                                $sb_15.tampil_durasi_aktual = formatTime($sb_15.sisa_detik_masak);
                                 $sb_15.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_15.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 15, // Hanya nomor Steambox saja
                                     sisa: $sb_15.sisa_detik_masak,
-                                    tampilSisa: $sb_15.tampil_durasi_aktual,
+                                    tampilSisa: $sb_15.durasi_aktual,
                                     tampilSelesai: $sb_15.tampil_jam_selesai
                                 });
                             }
@@ -3370,10 +3487,14 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_15) {
                 $sb_15.sensor_error = true;
-                $sb_15.status_banner = txtSensorError;
+                if ($sb15.run_stop == 0 && $sb_15.flag_init_start === 1) {
+                    $sb_15.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_15.status_banner = txtSensorError;
+                }
             } else {
                 $sb_15.sensor_error = false;
             }
@@ -3400,13 +3521,13 @@ if ($sb_16.reset) {
     $sb_16.flag_init_masak = 0;
     $sb_16.total_detik_pemanasan = 0;
     $sb_16.sisa_detik_masak = 0;
-    $sb_16.durasi_aktual_up = 0;
     $sb_16.target_menit = 0;
     $sb_16.adjust_menit = 0;
     $sb_16.tampil_jam_mulai = "--:--:--";
     $sb_16.tampil_jam_masak = "--:--:--";
     $sb_16.tampil_jam_selesai = "--:--:--";
-    $sb_16.tampil_durasi_aktual = "--";
+    $sb_16.durasi_aktual = "--";
+    $sb_16.durasi_aktual_up = "--";
     $sb_16.tampil_pemanasan = "--:--:--";
     $sb_16.suhu_awal = 0;
     $sb_16.suhu_akhir = 0;
@@ -3493,7 +3614,8 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.tampil_jam_mulai = "--:--:--";
                             $sb_16.tampil_jam_masak = "--:--:--";
                             $sb_16.tampil_jam_selesai = "--:--:--";
-                            $sb_16.tampil_durasi_aktual = "--";
+                            $sb_16.durasi_aktual = "--";
+                            $sb_16.durasi_aktual_up = "--";
                             $sb_16.flag_init_start = 1;
                             $sb_16.total_detik_pemanasan = 0;
                             $sb_16.suhu_awal = $sb16.temp;
@@ -3516,7 +3638,6 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.tampil_jam_selesai = "--:--:--";
                             $sb_16.flag_init_start = 1;
                             $sb_16.sisa_detik_masak = $sb_16.target_menit * 60;
-                            $sb_16.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_16.total_detik_pemanasan = 0;
                             $sb_16.flag_init_masak = 0;
                             $sb_16.suhu_awal = $sb16.temp;
@@ -3537,7 +3658,10 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_16.total_detik_pemanasan = $sb_16.total_detik_pemanasan + 1;
                             $sb_16.tampil_pemanasan = formatTime($sb_16.total_detik_pemanasan);
-                            $sb_16.tampil_durasi_aktual = formatTime($sb_16.sisa_detik_masak);
+                            
+                            $sb_16.durasi_aktual = formatTime($sb_16.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak) < 0 ? 0 : scale_up_16;
+                            $sb_16.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_16.flag_init_masak === 1) {
@@ -3545,7 +3669,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 16, // Hanya nomor Steambox saja
                                     sisa: $sb_16.sisa_detik_masak,
-                                    tampilSisa: $sb_16.tampil_durasi_aktual,
+                                    tampilSisa: $sb_16.durasi_aktual,
                                     tampilSelesai: $sb_16.tampil_jam_selesai
                                 });
                             } else {
@@ -3565,12 +3689,14 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_16.sisa_detik_masak = $sb_16.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_16.durasi_aktual_up = $sb_16.durasi_aktual_up + 1;
+                            $sb_16.durasi_aktual = formatTime($sb_16.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak) < 0 ? 0 : scale_up_16;
+                            $sb_16.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_16.sisa_detik_masak <= 0) {
                                 $sb_16.sisa_detik_masak = 0;
-                                $sb_16.tampil_durasi_aktual = formatTime(0);
+                                $sb_16.durasi_aktual = formatTime(0);
+                                $sb_16.durasi_aktual_up = formatTime($sb_16.target_menit * 60);
                                 $sb_16.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_16.suhu_akhir = $sb16.temp;
                                 $sb16.run_stop = 1; // STOP otomatis
@@ -3579,12 +3705,11 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_16.flag_init_masak = 0;
                                 $sb_16.status_selesai = true;
                             } else {
-                                $sb_16.tampil_durasi_aktual = formatTime($sb_16.sisa_detik_masak);
                                 $sb_16.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_16.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 16, // Hanya nomor Steambox saja
                                     sisa: $sb_16.sisa_detik_masak,
-                                    tampilSisa: $sb_16.tampil_durasi_aktual,
+                                    tampilSisa: $sb_16.durasi_aktual,
                                     tampilSelesai: $sb_16.tampil_jam_selesai
                                 });
                             }
@@ -3593,10 +3718,14 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_16) {
                 $sb_16.sensor_error = true;
-                $sb_16.status_banner = txtSensorError;
+                if ($sb16.run_stop == 0 && $sb_16.flag_init_start === 1) {
+                    $sb_16.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_16.status_banner = txtSensorError;
+                }
             } else {
                 $sb_16.sensor_error = false;
             }
@@ -3623,13 +3752,13 @@ if ($sb_17.reset) {
     $sb_17.flag_init_masak = 0;
     $sb_17.total_detik_pemanasan = 0;
     $sb_17.sisa_detik_masak = 0;
-    $sb_17.durasi_aktual_up = 0;
     $sb_17.target_menit = 0;
     $sb_17.adjust_menit = 0;
     $sb_17.tampil_jam_mulai = "--:--:--";
     $sb_17.tampil_jam_masak = "--:--:--";
     $sb_17.tampil_jam_selesai = "--:--:--";
-    $sb_17.tampil_durasi_aktual = "--";
+    $sb_17.durasi_aktual = "--";
+    $sb_17.durasi_aktual_up = "--";
     $sb_17.tampil_pemanasan = "--:--:--";
     $sb_17.suhu_awal = 0;
     $sb_17.suhu_akhir = 0;
@@ -3716,7 +3845,8 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.tampil_jam_mulai = "--:--:--";
                             $sb_17.tampil_jam_masak = "--:--:--";
                             $sb_17.tampil_jam_selesai = "--:--:--";
-                            $sb_17.tampil_durasi_aktual = "--";
+                            $sb_17.durasi_aktual = "--";
+                            $sb_17.durasi_aktual_up = "--";
                             $sb_17.flag_init_start = 1;
                             $sb_17.total_detik_pemanasan = 0;
                             $sb_17.suhu_awal = $sb17.temp;
@@ -3739,7 +3869,6 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.tampil_jam_selesai = "--:--:--";
                             $sb_17.flag_init_start = 1;
                             $sb_17.sisa_detik_masak = $sb_17.target_menit * 60;
-                            $sb_17.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_17.total_detik_pemanasan = 0;
                             $sb_17.flag_init_masak = 0;
                             $sb_17.suhu_awal = $sb17.temp;
@@ -3760,7 +3889,10 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_17.total_detik_pemanasan = $sb_17.total_detik_pemanasan + 1;
                             $sb_17.tampil_pemanasan = formatTime($sb_17.total_detik_pemanasan);
-                            $sb_17.tampil_durasi_aktual = formatTime($sb_17.sisa_detik_masak);
+                            
+                            $sb_17.durasi_aktual = formatTime($sb_17.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak) < 0 ? 0 : scale_up_17;
+                            $sb_17.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_17.flag_init_masak === 1) {
@@ -3768,7 +3900,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 17, // Hanya nomor Steambox saja
                                     sisa: $sb_17.sisa_detik_masak,
-                                    tampilSisa: $sb_17.tampil_durasi_aktual,
+                                    tampilSisa: $sb_17.durasi_aktual,
                                     tampilSelesai: $sb_17.tampil_jam_selesai
                                 });
                             } else {
@@ -3788,12 +3920,14 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_17.sisa_detik_masak = $sb_17.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_17.durasi_aktual_up = $sb_17.durasi_aktual_up + 1;
+                            $sb_17.durasi_aktual = formatTime($sb_17.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak) < 0 ? 0 : scale_up_17;
+                            $sb_17.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_17.sisa_detik_masak <= 0) {
                                 $sb_17.sisa_detik_masak = 0;
-                                $sb_17.tampil_durasi_aktual = formatTime(0);
+                                $sb_17.durasi_aktual = formatTime(0);
+                                $sb_17.durasi_aktual_up = formatTime($sb_17.target_menit * 60);
                                 $sb_17.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_17.suhu_akhir = $sb17.temp;
                                 $sb17.run_stop = 1; // STOP otomatis
@@ -3802,12 +3936,11 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_17.flag_init_masak = 0;
                                 $sb_17.status_selesai = true;
                             } else {
-                                $sb_17.tampil_durasi_aktual = formatTime($sb_17.sisa_detik_masak);
                                 $sb_17.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_17.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 17, // Hanya nomor Steambox saja
                                     sisa: $sb_17.sisa_detik_masak,
-                                    tampilSisa: $sb_17.tampil_durasi_aktual,
+                                    tampilSisa: $sb_17.durasi_aktual,
                                     tampilSelesai: $sb_17.tampil_jam_selesai
                                 });
                             }
@@ -3816,10 +3949,14 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_17) {
                 $sb_17.sensor_error = true;
-                $sb_17.status_banner = txtSensorError;
+                if ($sb17.run_stop == 0 && $sb_17.flag_init_start === 1) {
+                    $sb_17.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_17.status_banner = txtSensorError;
+                }
             } else {
                 $sb_17.sensor_error = false;
             }
@@ -3846,13 +3983,13 @@ if ($sb_18.reset) {
     $sb_18.flag_init_masak = 0;
     $sb_18.total_detik_pemanasan = 0;
     $sb_18.sisa_detik_masak = 0;
-    $sb_18.durasi_aktual_up = 0;
     $sb_18.target_menit = 0;
     $sb_18.adjust_menit = 0;
     $sb_18.tampil_jam_mulai = "--:--:--";
     $sb_18.tampil_jam_masak = "--:--:--";
     $sb_18.tampil_jam_selesai = "--:--:--";
-    $sb_18.tampil_durasi_aktual = "--";
+    $sb_18.durasi_aktual = "--";
+    $sb_18.durasi_aktual_up = "--";
     $sb_18.tampil_pemanasan = "--:--:--";
     $sb_18.suhu_awal = 0;
     $sb_18.suhu_akhir = 0;
@@ -3939,7 +4076,8 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.tampil_jam_mulai = "--:--:--";
                             $sb_18.tampil_jam_masak = "--:--:--";
                             $sb_18.tampil_jam_selesai = "--:--:--";
-                            $sb_18.tampil_durasi_aktual = "--";
+                            $sb_18.durasi_aktual = "--";
+                            $sb_18.durasi_aktual_up = "--";
                             $sb_18.flag_init_start = 1;
                             $sb_18.total_detik_pemanasan = 0;
                             $sb_18.suhu_awal = $sb18.temp;
@@ -3962,7 +4100,6 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.tampil_jam_selesai = "--:--:--";
                             $sb_18.flag_init_start = 1;
                             $sb_18.sisa_detik_masak = $sb_18.target_menit * 60;
-                            $sb_18.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_18.total_detik_pemanasan = 0;
                             $sb_18.flag_init_masak = 0;
                             $sb_18.suhu_awal = $sb18.temp;
@@ -3983,7 +4120,10 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_18.total_detik_pemanasan = $sb_18.total_detik_pemanasan + 1;
                             $sb_18.tampil_pemanasan = formatTime($sb_18.total_detik_pemanasan);
-                            $sb_18.tampil_durasi_aktual = formatTime($sb_18.sisa_detik_masak);
+                            
+                            $sb_18.durasi_aktual = formatTime($sb_18.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak) < 0 ? 0 : scale_up_18;
+                            $sb_18.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_18.flag_init_masak === 1) {
@@ -3991,7 +4131,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 18, // Hanya nomor Steambox saja
                                     sisa: $sb_18.sisa_detik_masak,
-                                    tampilSisa: $sb_18.tampil_durasi_aktual,
+                                    tampilSisa: $sb_18.durasi_aktual,
                                     tampilSelesai: $sb_18.tampil_jam_selesai
                                 });
                             } else {
@@ -4011,12 +4151,14 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_18.sisa_detik_masak = $sb_18.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_18.durasi_aktual_up = $sb_18.durasi_aktual_up + 1;
+                            $sb_18.durasi_aktual = formatTime($sb_18.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak) < 0 ? 0 : scale_up_18;
+                            $sb_18.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_18.sisa_detik_masak <= 0) {
                                 $sb_18.sisa_detik_masak = 0;
-                                $sb_18.tampil_durasi_aktual = formatTime(0);
+                                $sb_18.durasi_aktual = formatTime(0);
+                                $sb_18.durasi_aktual_up = formatTime($sb_18.target_menit * 60);
                                 $sb_18.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_18.suhu_akhir = $sb18.temp;
                                 $sb18.run_stop = 1; // STOP otomatis
@@ -4025,12 +4167,11 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_18.flag_init_masak = 0;
                                 $sb_18.status_selesai = true;
                             } else {
-                                $sb_18.tampil_durasi_aktual = formatTime($sb_18.sisa_detik_masak);
                                 $sb_18.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_18.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 18, // Hanya nomor Steambox saja
                                     sisa: $sb_18.sisa_detik_masak,
-                                    tampilSisa: $sb_18.tampil_durasi_aktual,
+                                    tampilSisa: $sb_18.durasi_aktual,
                                     tampilSelesai: $sb_18.tampil_jam_selesai
                                 });
                             }
@@ -4039,10 +4180,14 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_18) {
                 $sb_18.sensor_error = true;
-                $sb_18.status_banner = txtSensorError;
+                if ($sb18.run_stop == 0 && $sb_18.flag_init_start === 1) {
+                    $sb_18.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_18.status_banner = txtSensorError;
+                }
             } else {
                 $sb_18.sensor_error = false;
             }
@@ -4069,13 +4214,13 @@ if ($sb_19.reset) {
     $sb_19.flag_init_masak = 0;
     $sb_19.total_detik_pemanasan = 0;
     $sb_19.sisa_detik_masak = 0;
-    $sb_19.durasi_aktual_up = 0;
     $sb_19.target_menit = 0;
     $sb_19.adjust_menit = 0;
     $sb_19.tampil_jam_mulai = "--:--:--";
     $sb_19.tampil_jam_masak = "--:--:--";
     $sb_19.tampil_jam_selesai = "--:--:--";
-    $sb_19.tampil_durasi_aktual = "--";
+    $sb_19.durasi_aktual = "--";
+    $sb_19.durasi_aktual_up = "--";
     $sb_19.tampil_pemanasan = "--:--:--";
     $sb_19.suhu_awal = 0;
     $sb_19.suhu_akhir = 0;
@@ -4162,7 +4307,8 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.tampil_jam_mulai = "--:--:--";
                             $sb_19.tampil_jam_masak = "--:--:--";
                             $sb_19.tampil_jam_selesai = "--:--:--";
-                            $sb_19.tampil_durasi_aktual = "--";
+                            $sb_19.durasi_aktual = "--";
+                            $sb_19.durasi_aktual_up = "--";
                             $sb_19.flag_init_start = 1;
                             $sb_19.total_detik_pemanasan = 0;
                             $sb_19.suhu_awal = $sb19.temp;
@@ -4185,7 +4331,6 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.tampil_jam_selesai = "--:--:--";
                             $sb_19.flag_init_start = 1;
                             $sb_19.sisa_detik_masak = $sb_19.target_menit * 60;
-                            $sb_19.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_19.total_detik_pemanasan = 0;
                             $sb_19.flag_init_masak = 0;
                             $sb_19.suhu_awal = $sb19.temp;
@@ -4206,7 +4351,10 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_19.total_detik_pemanasan = $sb_19.total_detik_pemanasan + 1;
                             $sb_19.tampil_pemanasan = formatTime($sb_19.total_detik_pemanasan);
-                            $sb_19.tampil_durasi_aktual = formatTime($sb_19.sisa_detik_masak);
+                            
+                            $sb_19.durasi_aktual = formatTime($sb_19.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak) < 0 ? 0 : scale_up_19;
+                            $sb_19.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_19.flag_init_masak === 1) {
@@ -4214,7 +4362,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 19, // Hanya nomor Steambox saja
                                     sisa: $sb_19.sisa_detik_masak,
-                                    tampilSisa: $sb_19.tampil_durasi_aktual,
+                                    tampilSisa: $sb_19.durasi_aktual,
                                     tampilSelesai: $sb_19.tampil_jam_selesai
                                 });
                             } else {
@@ -4234,12 +4382,14 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_19.sisa_detik_masak = $sb_19.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_19.durasi_aktual_up = $sb_19.durasi_aktual_up + 1;
+                            $sb_19.durasi_aktual = formatTime($sb_19.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak) < 0 ? 0 : scale_up_19;
+                            $sb_19.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_19.sisa_detik_masak <= 0) {
                                 $sb_19.sisa_detik_masak = 0;
-                                $sb_19.tampil_durasi_aktual = formatTime(0);
+                                $sb_19.durasi_aktual = formatTime(0);
+                                $sb_19.durasi_aktual_up = formatTime($sb_19.target_menit * 60);
                                 $sb_19.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_19.suhu_akhir = $sb19.temp;
                                 $sb19.run_stop = 1; // STOP otomatis
@@ -4248,12 +4398,11 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_19.flag_init_masak = 0;
                                 $sb_19.status_selesai = true;
                             } else {
-                                $sb_19.tampil_durasi_aktual = formatTime($sb_19.sisa_detik_masak);
                                 $sb_19.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_19.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 19, // Hanya nomor Steambox saja
                                     sisa: $sb_19.sisa_detik_masak,
-                                    tampilSisa: $sb_19.tampil_durasi_aktual,
+                                    tampilSisa: $sb_19.durasi_aktual,
                                     tampilSelesai: $sb_19.tampil_jam_selesai
                                 });
                             }
@@ -4262,10 +4411,14 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_19) {
                 $sb_19.sensor_error = true;
-                $sb_19.status_banner = txtSensorError;
+                if ($sb19.run_stop == 0 && $sb_19.flag_init_start === 1) {
+                    $sb_19.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_19.status_banner = txtSensorError;
+                }
             } else {
                 $sb_19.sensor_error = false;
             }
@@ -4292,13 +4445,13 @@ if ($sb_20.reset) {
     $sb_20.flag_init_masak = 0;
     $sb_20.total_detik_pemanasan = 0;
     $sb_20.sisa_detik_masak = 0;
-    $sb_20.durasi_aktual_up = 0;
     $sb_20.target_menit = 0;
     $sb_20.adjust_menit = 0;
     $sb_20.tampil_jam_mulai = "--:--:--";
     $sb_20.tampil_jam_masak = "--:--:--";
     $sb_20.tampil_jam_selesai = "--:--:--";
-    $sb_20.tampil_durasi_aktual = "--";
+    $sb_20.durasi_aktual = "--";
+    $sb_20.durasi_aktual_up = "--";
     $sb_20.tampil_pemanasan = "--:--:--";
     $sb_20.suhu_awal = 0;
     $sb_20.suhu_akhir = 0;
@@ -4385,7 +4538,8 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.tampil_jam_mulai = "--:--:--";
                             $sb_20.tampil_jam_masak = "--:--:--";
                             $sb_20.tampil_jam_selesai = "--:--:--";
-                            $sb_20.tampil_durasi_aktual = "--";
+                            $sb_20.durasi_aktual = "--";
+                            $sb_20.durasi_aktual_up = "--";
                             $sb_20.flag_init_start = 1;
                             $sb_20.total_detik_pemanasan = 0;
                             $sb_20.suhu_awal = $sb20.temp;
@@ -4408,7 +4562,6 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.tampil_jam_selesai = "--:--:--";
                             $sb_20.flag_init_start = 1;
                             $sb_20.sisa_detik_masak = $sb_20.target_menit * 60;
-                            $sb_20.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_20.total_detik_pemanasan = 0;
                             $sb_20.flag_init_masak = 0;
                             $sb_20.suhu_awal = $sb20.temp;
@@ -4429,7 +4582,10 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_20.total_detik_pemanasan = $sb_20.total_detik_pemanasan + 1;
                             $sb_20.tampil_pemanasan = formatTime($sb_20.total_detik_pemanasan);
-                            $sb_20.tampil_durasi_aktual = formatTime($sb_20.sisa_detik_masak);
+                            
+                            $sb_20.durasi_aktual = formatTime($sb_20.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak) < 0 ? 0 : scale_up_20;
+                            $sb_20.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_20.flag_init_masak === 1) {
@@ -4437,7 +4593,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 20, // Hanya nomor Steambox saja
                                     sisa: $sb_20.sisa_detik_masak,
-                                    tampilSisa: $sb_20.tampil_durasi_aktual,
+                                    tampilSisa: $sb_20.durasi_aktual,
                                     tampilSelesai: $sb_20.tampil_jam_selesai
                                 });
                             } else {
@@ -4457,12 +4613,14 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_20.sisa_detik_masak = $sb_20.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_20.durasi_aktual_up = $sb_20.durasi_aktual_up + 1;
+                            $sb_20.durasi_aktual = formatTime($sb_20.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak) < 0 ? 0 : scale_up_20;
+                            $sb_20.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_20.sisa_detik_masak <= 0) {
                                 $sb_20.sisa_detik_masak = 0;
-                                $sb_20.tampil_durasi_aktual = formatTime(0);
+                                $sb_20.durasi_aktual = formatTime(0);
+                                $sb_20.durasi_aktual_up = formatTime($sb_20.target_menit * 60);
                                 $sb_20.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_20.suhu_akhir = $sb20.temp;
                                 $sb20.run_stop = 1; // STOP otomatis
@@ -4471,12 +4629,11 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_20.flag_init_masak = 0;
                                 $sb_20.status_selesai = true;
                             } else {
-                                $sb_20.tampil_durasi_aktual = formatTime($sb_20.sisa_detik_masak);
                                 $sb_20.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_20.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 20, // Hanya nomor Steambox saja
                                     sisa: $sb_20.sisa_detik_masak,
-                                    tampilSisa: $sb_20.tampil_durasi_aktual,
+                                    tampilSisa: $sb_20.durasi_aktual,
                                     tampilSelesai: $sb_20.tampil_jam_selesai
                                 });
                             }
@@ -4485,10 +4642,14 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_20) {
                 $sb_20.sensor_error = true;
-                $sb_20.status_banner = txtSensorError;
+                if ($sb20.run_stop == 0 && $sb_20.flag_init_start === 1) {
+                    $sb_20.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_20.status_banner = txtSensorError;
+                }
             } else {
                 $sb_20.sensor_error = false;
             }
@@ -4515,13 +4676,13 @@ if ($sb_21.reset) {
     $sb_21.flag_init_masak = 0;
     $sb_21.total_detik_pemanasan = 0;
     $sb_21.sisa_detik_masak = 0;
-    $sb_21.durasi_aktual_up = 0;
     $sb_21.target_menit = 0;
     $sb_21.adjust_menit = 0;
     $sb_21.tampil_jam_mulai = "--:--:--";
     $sb_21.tampil_jam_masak = "--:--:--";
     $sb_21.tampil_jam_selesai = "--:--:--";
-    $sb_21.tampil_durasi_aktual = "--";
+    $sb_21.durasi_aktual = "--";
+    $sb_21.durasi_aktual_up = "--";
     $sb_21.tampil_pemanasan = "--:--:--";
     $sb_21.suhu_awal = 0;
     $sb_21.suhu_akhir = 0;
@@ -4608,7 +4769,8 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.tampil_jam_mulai = "--:--:--";
                             $sb_21.tampil_jam_masak = "--:--:--";
                             $sb_21.tampil_jam_selesai = "--:--:--";
-                            $sb_21.tampil_durasi_aktual = "--";
+                            $sb_21.durasi_aktual = "--";
+                            $sb_21.durasi_aktual_up = "--";
                             $sb_21.flag_init_start = 1;
                             $sb_21.total_detik_pemanasan = 0;
                             $sb_21.suhu_awal = $sb21.temp;
@@ -4631,7 +4793,6 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.tampil_jam_selesai = "--:--:--";
                             $sb_21.flag_init_start = 1;
                             $sb_21.sisa_detik_masak = $sb_21.target_menit * 60;
-                            $sb_21.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_21.total_detik_pemanasan = 0;
                             $sb_21.flag_init_masak = 0;
                             $sb_21.suhu_awal = $sb21.temp;
@@ -4652,7 +4813,10 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_21.total_detik_pemanasan = $sb_21.total_detik_pemanasan + 1;
                             $sb_21.tampil_pemanasan = formatTime($sb_21.total_detik_pemanasan);
-                            $sb_21.tampil_durasi_aktual = formatTime($sb_21.sisa_detik_masak);
+                            
+                            $sb_21.durasi_aktual = formatTime($sb_21.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak) < 0 ? 0 : scale_up_21;
+                            $sb_21.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_21.flag_init_masak === 1) {
@@ -4660,7 +4824,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 21, // Hanya nomor Steambox saja
                                     sisa: $sb_21.sisa_detik_masak,
-                                    tampilSisa: $sb_21.tampil_durasi_aktual,
+                                    tampilSisa: $sb_21.durasi_aktual,
                                     tampilSelesai: $sb_21.tampil_jam_selesai
                                 });
                             } else {
@@ -4680,12 +4844,14 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_21.sisa_detik_masak = $sb_21.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_21.durasi_aktual_up = $sb_21.durasi_aktual_up + 1;
+                            $sb_21.durasi_aktual = formatTime($sb_21.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak) < 0 ? 0 : scale_up_21;
+                            $sb_21.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_21.sisa_detik_masak <= 0) {
                                 $sb_21.sisa_detik_masak = 0;
-                                $sb_21.tampil_durasi_aktual = formatTime(0);
+                                $sb_21.durasi_aktual = formatTime(0);
+                                $sb_21.durasi_aktual_up = formatTime($sb_21.target_menit * 60);
                                 $sb_21.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_21.suhu_akhir = $sb21.temp;
                                 $sb21.run_stop = 1; // STOP otomatis
@@ -4694,12 +4860,11 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_21.flag_init_masak = 0;
                                 $sb_21.status_selesai = true;
                             } else {
-                                $sb_21.tampil_durasi_aktual = formatTime($sb_21.sisa_detik_masak);
                                 $sb_21.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_21.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 21, // Hanya nomor Steambox saja
                                     sisa: $sb_21.sisa_detik_masak,
-                                    tampilSisa: $sb_21.tampil_durasi_aktual,
+                                    tampilSisa: $sb_21.durasi_aktual,
                                     tampilSelesai: $sb_21.tampil_jam_selesai
                                 });
                             }
@@ -4708,10 +4873,14 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_21) {
                 $sb_21.sensor_error = true;
-                $sb_21.status_banner = txtSensorError;
+                if ($sb21.run_stop == 0 && $sb_21.flag_init_start === 1) {
+                    $sb_21.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_21.status_banner = txtSensorError;
+                }
             } else {
                 $sb_21.sensor_error = false;
             }
@@ -4738,13 +4907,13 @@ if ($sb_22.reset) {
     $sb_22.flag_init_masak = 0;
     $sb_22.total_detik_pemanasan = 0;
     $sb_22.sisa_detik_masak = 0;
-    $sb_22.durasi_aktual_up = 0;
     $sb_22.target_menit = 0;
     $sb_22.adjust_menit = 0;
     $sb_22.tampil_jam_mulai = "--:--:--";
     $sb_22.tampil_jam_masak = "--:--:--";
     $sb_22.tampil_jam_selesai = "--:--:--";
-    $sb_22.tampil_durasi_aktual = "--";
+    $sb_22.durasi_aktual = "--";
+    $sb_22.durasi_aktual_up = "--";
     $sb_22.tampil_pemanasan = "--:--:--";
     $sb_22.suhu_awal = 0;
     $sb_22.suhu_akhir = 0;
@@ -4831,7 +5000,8 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.tampil_jam_mulai = "--:--:--";
                             $sb_22.tampil_jam_masak = "--:--:--";
                             $sb_22.tampil_jam_selesai = "--:--:--";
-                            $sb_22.tampil_durasi_aktual = "--";
+                            $sb_22.durasi_aktual = "--";
+                            $sb_22.durasi_aktual_up = "--";
                             $sb_22.flag_init_start = 1;
                             $sb_22.total_detik_pemanasan = 0;
                             $sb_22.suhu_awal = $sb22.temp;
@@ -4854,7 +5024,6 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.tampil_jam_selesai = "--:--:--";
                             $sb_22.flag_init_start = 1;
                             $sb_22.sisa_detik_masak = $sb_22.target_menit * 60;
-                            $sb_22.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_22.total_detik_pemanasan = 0;
                             $sb_22.flag_init_masak = 0;
                             $sb_22.suhu_awal = $sb22.temp;
@@ -4875,7 +5044,10 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_22.total_detik_pemanasan = $sb_22.total_detik_pemanasan + 1;
                             $sb_22.tampil_pemanasan = formatTime($sb_22.total_detik_pemanasan);
-                            $sb_22.tampil_durasi_aktual = formatTime($sb_22.sisa_detik_masak);
+                            
+                            $sb_22.durasi_aktual = formatTime($sb_22.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak) < 0 ? 0 : scale_up_22;
+                            $sb_22.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_22.flag_init_masak === 1) {
@@ -4883,7 +5055,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 22, // Hanya nomor Steambox saja
                                     sisa: $sb_22.sisa_detik_masak,
-                                    tampilSisa: $sb_22.tampil_durasi_aktual,
+                                    tampilSisa: $sb_22.durasi_aktual,
                                     tampilSelesai: $sb_22.tampil_jam_selesai
                                 });
                             } else {
@@ -4903,12 +5075,14 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_22.sisa_detik_masak = $sb_22.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_22.durasi_aktual_up = $sb_22.durasi_aktual_up + 1;
+                            $sb_22.durasi_aktual = formatTime($sb_22.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak) < 0 ? 0 : scale_up_22;
+                            $sb_22.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_22.sisa_detik_masak <= 0) {
                                 $sb_22.sisa_detik_masak = 0;
-                                $sb_22.tampil_durasi_aktual = formatTime(0);
+                                $sb_22.durasi_aktual = formatTime(0);
+                                $sb_22.durasi_aktual_up = formatTime($sb_22.target_menit * 60);
                                 $sb_22.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_22.suhu_akhir = $sb22.temp;
                                 $sb22.run_stop = 1; // STOP otomatis
@@ -4917,12 +5091,11 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_22.flag_init_masak = 0;
                                 $sb_22.status_selesai = true;
                             } else {
-                                $sb_22.tampil_durasi_aktual = formatTime($sb_22.sisa_detik_masak);
                                 $sb_22.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_22.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 22, // Hanya nomor Steambox saja
                                     sisa: $sb_22.sisa_detik_masak,
-                                    tampilSisa: $sb_22.tampil_durasi_aktual,
+                                    tampilSisa: $sb_22.durasi_aktual,
                                     tampilSelesai: $sb_22.tampil_jam_selesai
                                 });
                             }
@@ -4931,10 +5104,14 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_22) {
                 $sb_22.sensor_error = true;
-                $sb_22.status_banner = txtSensorError;
+                if ($sb22.run_stop == 0 && $sb_22.flag_init_start === 1) {
+                    $sb_22.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_22.status_banner = txtSensorError;
+                }
             } else {
                 $sb_22.sensor_error = false;
             }
@@ -4961,13 +5138,13 @@ if ($sb_23.reset) {
     $sb_23.flag_init_masak = 0;
     $sb_23.total_detik_pemanasan = 0;
     $sb_23.sisa_detik_masak = 0;
-    $sb_23.durasi_aktual_up = 0;
     $sb_23.target_menit = 0;
     $sb_23.adjust_menit = 0;
     $sb_23.tampil_jam_mulai = "--:--:--";
     $sb_23.tampil_jam_masak = "--:--:--";
     $sb_23.tampil_jam_selesai = "--:--:--";
-    $sb_23.tampil_durasi_aktual = "--";
+    $sb_23.durasi_aktual = "--";
+    $sb_23.durasi_aktual_up = "--";
     $sb_23.tampil_pemanasan = "--:--:--";
     $sb_23.suhu_awal = 0;
     $sb_23.suhu_akhir = 0;
@@ -5054,7 +5231,8 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.tampil_jam_mulai = "--:--:--";
                             $sb_23.tampil_jam_masak = "--:--:--";
                             $sb_23.tampil_jam_selesai = "--:--:--";
-                            $sb_23.tampil_durasi_aktual = "--";
+                            $sb_23.durasi_aktual = "--";
+                            $sb_23.durasi_aktual_up = "--";
                             $sb_23.flag_init_start = 1;
                             $sb_23.total_detik_pemanasan = 0;
                             $sb_23.suhu_awal = $sb23.temp;
@@ -5077,7 +5255,6 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.tampil_jam_selesai = "--:--:--";
                             $sb_23.flag_init_start = 1;
                             $sb_23.sisa_detik_masak = $sb_23.target_menit * 60;
-                            $sb_23.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_23.total_detik_pemanasan = 0;
                             $sb_23.flag_init_masak = 0;
                             $sb_23.suhu_awal = $sb23.temp;
@@ -5098,7 +5275,10 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_23.total_detik_pemanasan = $sb_23.total_detik_pemanasan + 1;
                             $sb_23.tampil_pemanasan = formatTime($sb_23.total_detik_pemanasan);
-                            $sb_23.tampil_durasi_aktual = formatTime($sb_23.sisa_detik_masak);
+                            
+                            $sb_23.durasi_aktual = formatTime($sb_23.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak) < 0 ? 0 : scale_up_23;
+                            $sb_23.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_23.flag_init_masak === 1) {
@@ -5106,7 +5286,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 23, // Hanya nomor Steambox saja
                                     sisa: $sb_23.sisa_detik_masak,
-                                    tampilSisa: $sb_23.tampil_durasi_aktual,
+                                    tampilSisa: $sb_23.durasi_aktual,
                                     tampilSelesai: $sb_23.tampil_jam_selesai
                                 });
                             } else {
@@ -5126,12 +5306,14 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_23.sisa_detik_masak = $sb_23.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_23.durasi_aktual_up = $sb_23.durasi_aktual_up + 1;
+                            $sb_23.durasi_aktual = formatTime($sb_23.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak) < 0 ? 0 : scale_up_23;
+                            $sb_23.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_23.sisa_detik_masak <= 0) {
                                 $sb_23.sisa_detik_masak = 0;
-                                $sb_23.tampil_durasi_aktual = formatTime(0);
+                                $sb_23.durasi_aktual = formatTime(0);
+                                $sb_23.durasi_aktual_up = formatTime($sb_23.target_menit * 60);
                                 $sb_23.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_23.suhu_akhir = $sb23.temp;
                                 $sb23.run_stop = 1; // STOP otomatis
@@ -5140,12 +5322,11 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_23.flag_init_masak = 0;
                                 $sb_23.status_selesai = true;
                             } else {
-                                $sb_23.tampil_durasi_aktual = formatTime($sb_23.sisa_detik_masak);
                                 $sb_23.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_23.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 23, // Hanya nomor Steambox saja
                                     sisa: $sb_23.sisa_detik_masak,
-                                    tampilSisa: $sb_23.tampil_durasi_aktual,
+                                    tampilSisa: $sb_23.durasi_aktual,
                                     tampilSelesai: $sb_23.tampil_jam_selesai
                                 });
                             }
@@ -5154,10 +5335,14 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_23) {
                 $sb_23.sensor_error = true;
-                $sb_23.status_banner = txtSensorError;
+                if ($sb23.run_stop == 0 && $sb_23.flag_init_start === 1) {
+                    $sb_23.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_23.status_banner = txtSensorError;
+                }
             } else {
                 $sb_23.sensor_error = false;
             }
@@ -5184,13 +5369,13 @@ if ($sb_24.reset) {
     $sb_24.flag_init_masak = 0;
     $sb_24.total_detik_pemanasan = 0;
     $sb_24.sisa_detik_masak = 0;
-    $sb_24.durasi_aktual_up = 0;
     $sb_24.target_menit = 0;
     $sb_24.adjust_menit = 0;
     $sb_24.tampil_jam_mulai = "--:--:--";
     $sb_24.tampil_jam_masak = "--:--:--";
     $sb_24.tampil_jam_selesai = "--:--:--";
-    $sb_24.tampil_durasi_aktual = "--";
+    $sb_24.durasi_aktual = "--";
+    $sb_24.durasi_aktual_up = "--";
     $sb_24.tampil_pemanasan = "--:--:--";
     $sb_24.suhu_awal = 0;
     $sb_24.suhu_akhir = 0;
@@ -5277,7 +5462,8 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.tampil_jam_mulai = "--:--:--";
                             $sb_24.tampil_jam_masak = "--:--:--";
                             $sb_24.tampil_jam_selesai = "--:--:--";
-                            $sb_24.tampil_durasi_aktual = "--";
+                            $sb_24.durasi_aktual = "--";
+                            $sb_24.durasi_aktual_up = "--";
                             $sb_24.flag_init_start = 1;
                             $sb_24.total_detik_pemanasan = 0;
                             $sb_24.suhu_awal = $sb24.temp;
@@ -5300,7 +5486,6 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.tampil_jam_selesai = "--:--:--";
                             $sb_24.flag_init_start = 1;
                             $sb_24.sisa_detik_masak = $sb_24.target_menit * 60;
-                            $sb_24.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_24.total_detik_pemanasan = 0;
                             $sb_24.flag_init_masak = 0;
                             $sb_24.suhu_awal = $sb24.temp;
@@ -5321,7 +5506,10 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_24.total_detik_pemanasan = $sb_24.total_detik_pemanasan + 1;
                             $sb_24.tampil_pemanasan = formatTime($sb_24.total_detik_pemanasan);
-                            $sb_24.tampil_durasi_aktual = formatTime($sb_24.sisa_detik_masak);
+                            
+                            $sb_24.durasi_aktual = formatTime($sb_24.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak) < 0 ? 0 : scale_up_24;
+                            $sb_24.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_24.flag_init_masak === 1) {
@@ -5329,7 +5517,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 24, // Hanya nomor Steambox saja
                                     sisa: $sb_24.sisa_detik_masak,
-                                    tampilSisa: $sb_24.tampil_durasi_aktual,
+                                    tampilSisa: $sb_24.durasi_aktual,
                                     tampilSelesai: $sb_24.tampil_jam_selesai
                                 });
                             } else {
@@ -5349,12 +5537,14 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_24.sisa_detik_masak = $sb_24.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_24.durasi_aktual_up = $sb_24.durasi_aktual_up + 1;
+                            $sb_24.durasi_aktual = formatTime($sb_24.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak) < 0 ? 0 : scale_up_24;
+                            $sb_24.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_24.sisa_detik_masak <= 0) {
                                 $sb_24.sisa_detik_masak = 0;
-                                $sb_24.tampil_durasi_aktual = formatTime(0);
+                                $sb_24.durasi_aktual = formatTime(0);
+                                $sb_24.durasi_aktual_up = formatTime($sb_24.target_menit * 60);
                                 $sb_24.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_24.suhu_akhir = $sb24.temp;
                                 $sb24.run_stop = 1; // STOP otomatis
@@ -5363,12 +5553,11 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_24.flag_init_masak = 0;
                                 $sb_24.status_selesai = true;
                             } else {
-                                $sb_24.tampil_durasi_aktual = formatTime($sb_24.sisa_detik_masak);
                                 $sb_24.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_24.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 24, // Hanya nomor Steambox saja
                                     sisa: $sb_24.sisa_detik_masak,
-                                    tampilSisa: $sb_24.tampil_durasi_aktual,
+                                    tampilSisa: $sb_24.durasi_aktual,
                                     tampilSelesai: $sb_24.tampil_jam_selesai
                                 });
                             }
@@ -5377,10 +5566,14 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_24) {
                 $sb_24.sensor_error = true;
-                $sb_24.status_banner = txtSensorError;
+                if ($sb24.run_stop == 0 && $sb_24.flag_init_start === 1) {
+                    $sb_24.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_24.status_banner = txtSensorError;
+                }
             } else {
                 $sb_24.sensor_error = false;
             }
@@ -5407,13 +5600,13 @@ if ($sb_25.reset) {
     $sb_25.flag_init_masak = 0;
     $sb_25.total_detik_pemanasan = 0;
     $sb_25.sisa_detik_masak = 0;
-    $sb_25.durasi_aktual_up = 0;
     $sb_25.target_menit = 0;
     $sb_25.adjust_menit = 0;
     $sb_25.tampil_jam_mulai = "--:--:--";
     $sb_25.tampil_jam_masak = "--:--:--";
     $sb_25.tampil_jam_selesai = "--:--:--";
-    $sb_25.tampil_durasi_aktual = "--";
+    $sb_25.durasi_aktual = "--";
+    $sb_25.durasi_aktual_up = "--";
     $sb_25.tampil_pemanasan = "--:--:--";
     $sb_25.suhu_awal = 0;
     $sb_25.suhu_akhir = 0;
@@ -5500,7 +5693,8 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.tampil_jam_mulai = "--:--:--";
                             $sb_25.tampil_jam_masak = "--:--:--";
                             $sb_25.tampil_jam_selesai = "--:--:--";
-                            $sb_25.tampil_durasi_aktual = "--";
+                            $sb_25.durasi_aktual = "--";
+                            $sb_25.durasi_aktual_up = "--";
                             $sb_25.flag_init_start = 1;
                             $sb_25.total_detik_pemanasan = 0;
                             $sb_25.suhu_awal = $sb25.temp;
@@ -5523,7 +5717,6 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.tampil_jam_selesai = "--:--:--";
                             $sb_25.flag_init_start = 1;
                             $sb_25.sisa_detik_masak = $sb_25.target_menit * 60;
-                            $sb_25.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_25.total_detik_pemanasan = 0;
                             $sb_25.flag_init_masak = 0;
                             $sb_25.suhu_awal = $sb25.temp;
@@ -5544,7 +5737,10 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_25.total_detik_pemanasan = $sb_25.total_detik_pemanasan + 1;
                             $sb_25.tampil_pemanasan = formatTime($sb_25.total_detik_pemanasan);
-                            $sb_25.tampil_durasi_aktual = formatTime($sb_25.sisa_detik_masak);
+                            
+                            $sb_25.durasi_aktual = formatTime($sb_25.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak) < 0 ? 0 : scale_up_25;
+                            $sb_25.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_25.flag_init_masak === 1) {
@@ -5552,7 +5748,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 25, // Hanya nomor Steambox saja
                                     sisa: $sb_25.sisa_detik_masak,
-                                    tampilSisa: $sb_25.tampil_durasi_aktual,
+                                    tampilSisa: $sb_25.durasi_aktual,
                                     tampilSelesai: $sb_25.tampil_jam_selesai
                                 });
                             } else {
@@ -5572,12 +5768,14 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_25.sisa_detik_masak = $sb_25.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_25.durasi_aktual_up = $sb_25.durasi_aktual_up + 1;
+                            $sb_25.durasi_aktual = formatTime($sb_25.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak) < 0 ? 0 : scale_up_25;
+                            $sb_25.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_25.sisa_detik_masak <= 0) {
                                 $sb_25.sisa_detik_masak = 0;
-                                $sb_25.tampil_durasi_aktual = formatTime(0);
+                                $sb_25.durasi_aktual = formatTime(0);
+                                $sb_25.durasi_aktual_up = formatTime($sb_25.target_menit * 60);
                                 $sb_25.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_25.suhu_akhir = $sb25.temp;
                                 $sb25.run_stop = 1; // STOP otomatis
@@ -5586,12 +5784,11 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_25.flag_init_masak = 0;
                                 $sb_25.status_selesai = true;
                             } else {
-                                $sb_25.tampil_durasi_aktual = formatTime($sb_25.sisa_detik_masak);
                                 $sb_25.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_25.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 25, // Hanya nomor Steambox saja
                                     sisa: $sb_25.sisa_detik_masak,
-                                    tampilSisa: $sb_25.tampil_durasi_aktual,
+                                    tampilSisa: $sb_25.durasi_aktual,
                                     tampilSelesai: $sb_25.tampil_jam_selesai
                                 });
                             }
@@ -5600,10 +5797,14 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_25) {
                 $sb_25.sensor_error = true;
-                $sb_25.status_banner = txtSensorError;
+                if ($sb25.run_stop == 0 && $sb_25.flag_init_start === 1) {
+                    $sb_25.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_25.status_banner = txtSensorError;
+                }
             } else {
                 $sb_25.sensor_error = false;
             }
@@ -5630,13 +5831,13 @@ if ($sb_26.reset) {
     $sb_26.flag_init_masak = 0;
     $sb_26.total_detik_pemanasan = 0;
     $sb_26.sisa_detik_masak = 0;
-    $sb_26.durasi_aktual_up = 0;
     $sb_26.target_menit = 0;
     $sb_26.adjust_menit = 0;
     $sb_26.tampil_jam_mulai = "--:--:--";
     $sb_26.tampil_jam_masak = "--:--:--";
     $sb_26.tampil_jam_selesai = "--:--:--";
-    $sb_26.tampil_durasi_aktual = "--";
+    $sb_26.durasi_aktual = "--";
+    $sb_26.durasi_aktual_up = "--";
     $sb_26.tampil_pemanasan = "--:--:--";
     $sb_26.suhu_awal = 0;
     $sb_26.suhu_akhir = 0;
@@ -5723,7 +5924,8 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.tampil_jam_mulai = "--:--:--";
                             $sb_26.tampil_jam_masak = "--:--:--";
                             $sb_26.tampil_jam_selesai = "--:--:--";
-                            $sb_26.tampil_durasi_aktual = "--";
+                            $sb_26.durasi_aktual = "--";
+                            $sb_26.durasi_aktual_up = "--";
                             $sb_26.flag_init_start = 1;
                             $sb_26.total_detik_pemanasan = 0;
                             $sb_26.suhu_awal = $sb26.temp;
@@ -5746,7 +5948,6 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.tampil_jam_selesai = "--:--:--";
                             $sb_26.flag_init_start = 1;
                             $sb_26.sisa_detik_masak = $sb_26.target_menit * 60;
-                            $sb_26.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_26.total_detik_pemanasan = 0;
                             $sb_26.flag_init_masak = 0;
                             $sb_26.suhu_awal = $sb26.temp;
@@ -5767,7 +5968,10 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_26.total_detik_pemanasan = $sb_26.total_detik_pemanasan + 1;
                             $sb_26.tampil_pemanasan = formatTime($sb_26.total_detik_pemanasan);
-                            $sb_26.tampil_durasi_aktual = formatTime($sb_26.sisa_detik_masak);
+                            
+                            $sb_26.durasi_aktual = formatTime($sb_26.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak) < 0 ? 0 : scale_up_26;
+                            $sb_26.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_26.flag_init_masak === 1) {
@@ -5775,7 +5979,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 26, // Hanya nomor Steambox saja
                                     sisa: $sb_26.sisa_detik_masak,
-                                    tampilSisa: $sb_26.tampil_durasi_aktual,
+                                    tampilSisa: $sb_26.durasi_aktual,
                                     tampilSelesai: $sb_26.tampil_jam_selesai
                                 });
                             } else {
@@ -5795,12 +5999,14 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_26.sisa_detik_masak = $sb_26.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_26.durasi_aktual_up = $sb_26.durasi_aktual_up + 1;
+                            $sb_26.durasi_aktual = formatTime($sb_26.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak) < 0 ? 0 : scale_up_26;
+                            $sb_26.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_26.sisa_detik_masak <= 0) {
                                 $sb_26.sisa_detik_masak = 0;
-                                $sb_26.tampil_durasi_aktual = formatTime(0);
+                                $sb_26.durasi_aktual = formatTime(0);
+                                $sb_26.durasi_aktual_up = formatTime($sb_26.target_menit * 60);
                                 $sb_26.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_26.suhu_akhir = $sb26.temp;
                                 $sb26.run_stop = 1; // STOP otomatis
@@ -5809,12 +6015,11 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_26.flag_init_masak = 0;
                                 $sb_26.status_selesai = true;
                             } else {
-                                $sb_26.tampil_durasi_aktual = formatTime($sb_26.sisa_detik_masak);
                                 $sb_26.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_26.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 26, // Hanya nomor Steambox saja
                                     sisa: $sb_26.sisa_detik_masak,
-                                    tampilSisa: $sb_26.tampil_durasi_aktual,
+                                    tampilSisa: $sb_26.durasi_aktual,
                                     tampilSelesai: $sb_26.tampil_jam_selesai
                                 });
                             }
@@ -5823,10 +6028,14 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_26) {
                 $sb_26.sensor_error = true;
-                $sb_26.status_banner = txtSensorError;
+                if ($sb26.run_stop == 0 && $sb_26.flag_init_start === 1) {
+                    $sb_26.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_26.status_banner = txtSensorError;
+                }
             } else {
                 $sb_26.sensor_error = false;
             }
@@ -5853,13 +6062,13 @@ if ($sb_27.reset) {
     $sb_27.flag_init_masak = 0;
     $sb_27.total_detik_pemanasan = 0;
     $sb_27.sisa_detik_masak = 0;
-    $sb_27.durasi_aktual_up = 0;
     $sb_27.target_menit = 0;
     $sb_27.adjust_menit = 0;
     $sb_27.tampil_jam_mulai = "--:--:--";
     $sb_27.tampil_jam_masak = "--:--:--";
     $sb_27.tampil_jam_selesai = "--:--:--";
-    $sb_27.tampil_durasi_aktual = "--";
+    $sb_27.durasi_aktual = "--";
+    $sb_27.durasi_aktual_up = "--";
     $sb_27.tampil_pemanasan = "--:--:--";
     $sb_27.suhu_awal = 0;
     $sb_27.suhu_akhir = 0;
@@ -5946,7 +6155,8 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.tampil_jam_mulai = "--:--:--";
                             $sb_27.tampil_jam_masak = "--:--:--";
                             $sb_27.tampil_jam_selesai = "--:--:--";
-                            $sb_27.tampil_durasi_aktual = "--";
+                            $sb_27.durasi_aktual = "--";
+                            $sb_27.durasi_aktual_up = "--";
                             $sb_27.flag_init_start = 1;
                             $sb_27.total_detik_pemanasan = 0;
                             $sb_27.suhu_awal = $sb27.temp;
@@ -5969,7 +6179,6 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.tampil_jam_selesai = "--:--:--";
                             $sb_27.flag_init_start = 1;
                             $sb_27.sisa_detik_masak = $sb_27.target_menit * 60;
-                            $sb_27.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_27.total_detik_pemanasan = 0;
                             $sb_27.flag_init_masak = 0;
                             $sb_27.suhu_awal = $sb27.temp;
@@ -5990,7 +6199,10 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_27.total_detik_pemanasan = $sb_27.total_detik_pemanasan + 1;
                             $sb_27.tampil_pemanasan = formatTime($sb_27.total_detik_pemanasan);
-                            $sb_27.tampil_durasi_aktual = formatTime($sb_27.sisa_detik_masak);
+                            
+                            $sb_27.durasi_aktual = formatTime($sb_27.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak) < 0 ? 0 : scale_up_27;
+                            $sb_27.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_27.flag_init_masak === 1) {
@@ -5998,7 +6210,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 27, // Hanya nomor Steambox saja
                                     sisa: $sb_27.sisa_detik_masak,
-                                    tampilSisa: $sb_27.tampil_durasi_aktual,
+                                    tampilSisa: $sb_27.durasi_aktual,
                                     tampilSelesai: $sb_27.tampil_jam_selesai
                                 });
                             } else {
@@ -6018,12 +6230,14 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_27.sisa_detik_masak = $sb_27.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_27.durasi_aktual_up = $sb_27.durasi_aktual_up + 1;
+                            $sb_27.durasi_aktual = formatTime($sb_27.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak) < 0 ? 0 : scale_up_27;
+                            $sb_27.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_27.sisa_detik_masak <= 0) {
                                 $sb_27.sisa_detik_masak = 0;
-                                $sb_27.tampil_durasi_aktual = formatTime(0);
+                                $sb_27.durasi_aktual = formatTime(0);
+                                $sb_27.durasi_aktual_up = formatTime($sb_27.target_menit * 60);
                                 $sb_27.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_27.suhu_akhir = $sb27.temp;
                                 $sb27.run_stop = 1; // STOP otomatis
@@ -6032,12 +6246,11 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_27.flag_init_masak = 0;
                                 $sb_27.status_selesai = true;
                             } else {
-                                $sb_27.tampil_durasi_aktual = formatTime($sb_27.sisa_detik_masak);
                                 $sb_27.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_27.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 27, // Hanya nomor Steambox saja
                                     sisa: $sb_27.sisa_detik_masak,
-                                    tampilSisa: $sb_27.tampil_durasi_aktual,
+                                    tampilSisa: $sb_27.durasi_aktual,
                                     tampilSelesai: $sb_27.tampil_jam_selesai
                                 });
                             }
@@ -6046,10 +6259,14 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_27) {
                 $sb_27.sensor_error = true;
-                $sb_27.status_banner = txtSensorError;
+                if ($sb27.run_stop == 0 && $sb_27.flag_init_start === 1) {
+                    $sb_27.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_27.status_banner = txtSensorError;
+                }
             } else {
                 $sb_27.sensor_error = false;
             }
@@ -6076,13 +6293,13 @@ if ($sb_28.reset) {
     $sb_28.flag_init_masak = 0;
     $sb_28.total_detik_pemanasan = 0;
     $sb_28.sisa_detik_masak = 0;
-    $sb_28.durasi_aktual_up = 0;
     $sb_28.target_menit = 0;
     $sb_28.adjust_menit = 0;
     $sb_28.tampil_jam_mulai = "--:--:--";
     $sb_28.tampil_jam_masak = "--:--:--";
     $sb_28.tampil_jam_selesai = "--:--:--";
-    $sb_28.tampil_durasi_aktual = "--";
+    $sb_28.durasi_aktual = "--";
+    $sb_28.durasi_aktual_up = "--";
     $sb_28.tampil_pemanasan = "--:--:--";
     $sb_28.suhu_awal = 0;
     $sb_28.suhu_akhir = 0;
@@ -6169,7 +6386,8 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.tampil_jam_mulai = "--:--:--";
                             $sb_28.tampil_jam_masak = "--:--:--";
                             $sb_28.tampil_jam_selesai = "--:--:--";
-                            $sb_28.tampil_durasi_aktual = "--";
+                            $sb_28.durasi_aktual = "--";
+                            $sb_28.durasi_aktual_up = "--";
                             $sb_28.flag_init_start = 1;
                             $sb_28.total_detik_pemanasan = 0;
                             $sb_28.suhu_awal = $sb28.temp;
@@ -6192,7 +6410,6 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.tampil_jam_selesai = "--:--:--";
                             $sb_28.flag_init_start = 1;
                             $sb_28.sisa_detik_masak = $sb_28.target_menit * 60;
-                            $sb_28.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_28.total_detik_pemanasan = 0;
                             $sb_28.flag_init_masak = 0;
                             $sb_28.suhu_awal = $sb28.temp;
@@ -6213,7 +6430,10 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_28.total_detik_pemanasan = $sb_28.total_detik_pemanasan + 1;
                             $sb_28.tampil_pemanasan = formatTime($sb_28.total_detik_pemanasan);
-                            $sb_28.tampil_durasi_aktual = formatTime($sb_28.sisa_detik_masak);
+                            
+                            $sb_28.durasi_aktual = formatTime($sb_28.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak) < 0 ? 0 : scale_up_28;
+                            $sb_28.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_28.flag_init_masak === 1) {
@@ -6221,7 +6441,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 28, // Hanya nomor Steambox saja
                                     sisa: $sb_28.sisa_detik_masak,
-                                    tampilSisa: $sb_28.tampil_durasi_aktual,
+                                    tampilSisa: $sb_28.durasi_aktual,
                                     tampilSelesai: $sb_28.tampil_jam_selesai
                                 });
                             } else {
@@ -6241,12 +6461,14 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_28.sisa_detik_masak = $sb_28.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_28.durasi_aktual_up = $sb_28.durasi_aktual_up + 1;
+                            $sb_28.durasi_aktual = formatTime($sb_28.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak) < 0 ? 0 : scale_up_28;
+                            $sb_28.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_28.sisa_detik_masak <= 0) {
                                 $sb_28.sisa_detik_masak = 0;
-                                $sb_28.tampil_durasi_aktual = formatTime(0);
+                                $sb_28.durasi_aktual = formatTime(0);
+                                $sb_28.durasi_aktual_up = formatTime($sb_28.target_menit * 60);
                                 $sb_28.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_28.suhu_akhir = $sb28.temp;
                                 $sb28.run_stop = 1; // STOP otomatis
@@ -6255,12 +6477,11 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_28.flag_init_masak = 0;
                                 $sb_28.status_selesai = true;
                             } else {
-                                $sb_28.tampil_durasi_aktual = formatTime($sb_28.sisa_detik_masak);
                                 $sb_28.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_28.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 28, // Hanya nomor Steambox saja
                                     sisa: $sb_28.sisa_detik_masak,
-                                    tampilSisa: $sb_28.tampil_durasi_aktual,
+                                    tampilSisa: $sb_28.durasi_aktual,
                                     tampilSelesai: $sb_28.tampil_jam_selesai
                                 });
                             }
@@ -6269,10 +6490,14 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_28) {
                 $sb_28.sensor_error = true;
-                $sb_28.status_banner = txtSensorError;
+                if ($sb28.run_stop == 0 && $sb_28.flag_init_start === 1) {
+                    $sb_28.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_28.status_banner = txtSensorError;
+                }
             } else {
                 $sb_28.sensor_error = false;
             }
@@ -6299,13 +6524,13 @@ if ($sb_29.reset) {
     $sb_29.flag_init_masak = 0;
     $sb_29.total_detik_pemanasan = 0;
     $sb_29.sisa_detik_masak = 0;
-    $sb_29.durasi_aktual_up = 0;
     $sb_29.target_menit = 0;
     $sb_29.adjust_menit = 0;
     $sb_29.tampil_jam_mulai = "--:--:--";
     $sb_29.tampil_jam_masak = "--:--:--";
     $sb_29.tampil_jam_selesai = "--:--:--";
-    $sb_29.tampil_durasi_aktual = "--";
+    $sb_29.durasi_aktual = "--";
+    $sb_29.durasi_aktual_up = "--";
     $sb_29.tampil_pemanasan = "--:--:--";
     $sb_29.suhu_awal = 0;
     $sb_29.suhu_akhir = 0;
@@ -6392,7 +6617,8 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.tampil_jam_mulai = "--:--:--";
                             $sb_29.tampil_jam_masak = "--:--:--";
                             $sb_29.tampil_jam_selesai = "--:--:--";
-                            $sb_29.tampil_durasi_aktual = "--";
+                            $sb_29.durasi_aktual = "--";
+                            $sb_29.durasi_aktual_up = "--";
                             $sb_29.flag_init_start = 1;
                             $sb_29.total_detik_pemanasan = 0;
                             $sb_29.suhu_awal = $sb29.temp;
@@ -6415,7 +6641,6 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.tampil_jam_selesai = "--:--:--";
                             $sb_29.flag_init_start = 1;
                             $sb_29.sisa_detik_masak = $sb_29.target_menit * 60;
-                            $sb_29.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_29.total_detik_pemanasan = 0;
                             $sb_29.flag_init_masak = 0;
                             $sb_29.suhu_awal = $sb29.temp;
@@ -6436,7 +6661,10 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_29.total_detik_pemanasan = $sb_29.total_detik_pemanasan + 1;
                             $sb_29.tampil_pemanasan = formatTime($sb_29.total_detik_pemanasan);
-                            $sb_29.tampil_durasi_aktual = formatTime($sb_29.sisa_detik_masak);
+                            
+                            $sb_29.durasi_aktual = formatTime($sb_29.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak) < 0 ? 0 : scale_up_29;
+                            $sb_29.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_29.flag_init_masak === 1) {
@@ -6444,7 +6672,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 29, // Hanya nomor Steambox saja
                                     sisa: $sb_29.sisa_detik_masak,
-                                    tampilSisa: $sb_29.tampil_durasi_aktual,
+                                    tampilSisa: $sb_29.durasi_aktual,
                                     tampilSelesai: $sb_29.tampil_jam_selesai
                                 });
                             } else {
@@ -6464,12 +6692,14 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_29.sisa_detik_masak = $sb_29.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_29.durasi_aktual_up = $sb_29.durasi_aktual_up + 1;
+                            $sb_29.durasi_aktual = formatTime($sb_29.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak) < 0 ? 0 : scale_up_29;
+                            $sb_29.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_29.sisa_detik_masak <= 0) {
                                 $sb_29.sisa_detik_masak = 0;
-                                $sb_29.tampil_durasi_aktual = formatTime(0);
+                                $sb_29.durasi_aktual = formatTime(0);
+                                $sb_29.durasi_aktual_up = formatTime($sb_29.target_menit * 60);
                                 $sb_29.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_29.suhu_akhir = $sb29.temp;
                                 $sb29.run_stop = 1; // STOP otomatis
@@ -6478,12 +6708,11 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_29.flag_init_masak = 0;
                                 $sb_29.status_selesai = true;
                             } else {
-                                $sb_29.tampil_durasi_aktual = formatTime($sb_29.sisa_detik_masak);
                                 $sb_29.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_29.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 29, // Hanya nomor Steambox saja
                                     sisa: $sb_29.sisa_detik_masak,
-                                    tampilSisa: $sb_29.tampil_durasi_aktual,
+                                    tampilSisa: $sb_29.durasi_aktual,
                                     tampilSelesai: $sb_29.tampil_jam_selesai
                                 });
                             }
@@ -6492,10 +6721,14 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_29) {
                 $sb_29.sensor_error = true;
-                $sb_29.status_banner = txtSensorError;
+                if ($sb29.run_stop == 0 && $sb_29.flag_init_start === 1) {
+                    $sb_29.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_29.status_banner = txtSensorError;
+                }
             } else {
                 $sb_29.sensor_error = false;
             }
@@ -6522,13 +6755,13 @@ if ($sb_30.reset) {
     $sb_30.flag_init_masak = 0;
     $sb_30.total_detik_pemanasan = 0;
     $sb_30.sisa_detik_masak = 0;
-    $sb_30.durasi_aktual_up = 0;
     $sb_30.target_menit = 0;
     $sb_30.adjust_menit = 0;
     $sb_30.tampil_jam_mulai = "--:--:--";
     $sb_30.tampil_jam_masak = "--:--:--";
     $sb_30.tampil_jam_selesai = "--:--:--";
-    $sb_30.tampil_durasi_aktual = "--";
+    $sb_30.durasi_aktual = "--";
+    $sb_30.durasi_aktual_up = "--";
     $sb_30.tampil_pemanasan = "--:--:--";
     $sb_30.suhu_awal = 0;
     $sb_30.suhu_akhir = 0;
@@ -6615,7 +6848,8 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.tampil_jam_mulai = "--:--:--";
                             $sb_30.tampil_jam_masak = "--:--:--";
                             $sb_30.tampil_jam_selesai = "--:--:--";
-                            $sb_30.tampil_durasi_aktual = "--";
+                            $sb_30.durasi_aktual = "--";
+                            $sb_30.durasi_aktual_up = "--";
                             $sb_30.flag_init_start = 1;
                             $sb_30.total_detik_pemanasan = 0;
                             $sb_30.suhu_awal = $sb30.temp;
@@ -6638,7 +6872,6 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.tampil_jam_selesai = "--:--:--";
                             $sb_30.flag_init_start = 1;
                             $sb_30.sisa_detik_masak = $sb_30.target_menit * 60;
-                            $sb_30.durasi_aktual_up = 0; // Mulai hitung maju dari 0
                             $sb_30.total_detik_pemanasan = 0;
                             $sb_30.flag_init_masak = 0;
                             $sb_30.suhu_awal = $sb30.temp;
@@ -6659,7 +6892,10 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_30.total_detik_pemanasan = $sb_30.total_detik_pemanasan + 1;
                             $sb_30.tampil_pemanasan = formatTime($sb_30.total_detik_pemanasan);
-                            $sb_30.tampil_durasi_aktual = formatTime($sb_30.sisa_detik_masak);
+                            
+                            $sb_30.durasi_aktual = formatTime($sb_30.sisa_detik_masak);
+                            var detik_up_heat = (scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak) < 0 ? 0 : scale_up_30;
+                            $sb_30.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
                             if ($sb_30.flag_init_masak === 1) {
@@ -6667,7 +6903,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 runningRooms.push({
                                     name: 30, // Hanya nomor Steambox saja
                                     sisa: $sb_30.sisa_detik_masak,
-                                    tampilSisa: $sb_30.tampil_durasi_aktual,
+                                    tampilSisa: $sb_30.durasi_aktual,
                                     tampilSelesai: $sb_30.tampil_jam_selesai
                                 });
                             } else {
@@ -6687,12 +6923,14 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_30.sisa_detik_masak = $sb_30.sisa_detik_masak - 1;
                             }
                             
-                            // Increment hitung maju/elapsed time (hanya saat mendidih/boiling/error)
-                            $sb_30.durasi_aktual_up = $sb_30.durasi_aktual_up + 1;
+                            $sb_30.durasi_aktual = formatTime($sb_30.sisa_detik_masak);
+                            var detik_up_boil = (scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak) < 0 ? 0 : scale_up_30;
+                            $sb_30.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_30.sisa_detik_masak <= 0) {
                                 $sb_30.sisa_detik_masak = 0;
-                                $sb_30.tampil_durasi_aktual = formatTime(0);
+                                $sb_30.durasi_aktual = formatTime(0);
+                                $sb_30.durasi_aktual_up = formatTime($sb_30.target_menit * 60);
                                 $sb_30.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, 0);
                                 $sb_30.suhu_akhir = $sb30.temp;
                                 $sb30.run_stop = 1; // STOP otomatis
@@ -6701,12 +6939,11 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                                 $sb_30.flag_init_masak = 0;
                                 $sb_30.status_selesai = true;
                             } else {
-                                $sb_30.tampil_durasi_aktual = formatTime($sb_30.sisa_detik_masak);
                                 $sb_30.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_30.sisa_detik_masak);
                                 runningRooms.push({
                                     name: 30, // Hanya nomor Steambox saja
                                     sisa: $sb_30.sisa_detik_masak,
-                                    tampilSisa: $sb_30.tampil_durasi_aktual,
+                                    tampilSisa: $sb_30.durasi_aktual,
                                     tampilSelesai: $sb_30.tampil_jam_selesai
                                 });
                             }
@@ -6715,10 +6952,14 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Tetap menampilkan alarm namun proses cooking tetap jalan di atas)
+            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_30) {
                 $sb_30.sensor_error = true;
-                $sb_30.status_banner = txtSensorError;
+                if ($sb30.run_stop == 0 && $sb_30.flag_init_start === 1) {
+                    $sb_30.status_banner = txtSensorErrorCooking;
+                } else {
+                    $sb_30.status_banner = txtSensorError;
+                }
             } else {
                 $sb_30.sensor_error = false;
             }
