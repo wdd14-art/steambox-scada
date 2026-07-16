@@ -36,7 +36,7 @@
           <HwSys>0</HwSys>
           <Config />
           <Script>// ============================================================================
-// FUNCTION SCRIPT: TRANSFER DATA RESEP DINAMIS (1 S.D. 30) - COMPILER-SAFE - V2
+// FUNCTION SCRIPT: TRANSFER DATA RESEP DINAMIS (1 S.D. 30) - COMPILER-SAFE - V3
 // DIPICU OLEH: TOMBOL &quot;TRANSFER RESEP&quot; DI LAYAR 120:RESEP
 // ============================================================================
 
@@ -48,7 +48,7 @@ if (pilih_steambox == 1) {
     $sb_1.status_kosong = false;
     $sb_1.status_selesai = false;
     $sb_1.status_resep = true;
-    $sb_1.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_1.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.1&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.1&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.1&quot;, $recipe.versi);
@@ -62,7 +62,7 @@ if (pilih_steambox == 1) {
     $sb_2.status_kosong = false;
     $sb_2.status_selesai = false;
     $sb_2.status_resep = true;
-    $sb_2.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_2.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.2&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.2&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.2&quot;, $recipe.versi);
@@ -76,7 +76,7 @@ if (pilih_steambox == 1) {
     $sb_3.status_kosong = false;
     $sb_3.status_selesai = false;
     $sb_3.status_resep = true;
-    $sb_3.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_3.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.3&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.3&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.3&quot;, $recipe.versi);
@@ -90,7 +90,7 @@ if (pilih_steambox == 1) {
     $sb_4.status_kosong = false;
     $sb_4.status_selesai = false;
     $sb_4.status_resep = true;
-    $sb_4.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_4.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.4&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.4&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.4&quot;, $recipe.versi);
@@ -104,7 +104,7 @@ if (pilih_steambox == 1) {
     $sb_5.status_kosong = false;
     $sb_5.status_selesai = false;
     $sb_5.status_resep = true;
-    $sb_5.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_5.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.5&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.5&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.5&quot;, $recipe.versi);
@@ -118,7 +118,7 @@ if (pilih_steambox == 1) {
     $sb_6.status_kosong = false;
     $sb_6.status_selesai = false;
     $sb_6.status_resep = true;
-    $sb_6.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_6.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.6&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.6&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.6&quot;, $recipe.versi);
@@ -132,7 +132,7 @@ if (pilih_steambox == 1) {
     $sb_7.status_kosong = false;
     $sb_7.status_selesai = false;
     $sb_7.status_resep = true;
-    $sb_7.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_7.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.7&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.7&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.7&quot;, $recipe.versi);
@@ -146,7 +146,7 @@ if (pilih_steambox == 1) {
     $sb_8.status_kosong = false;
     $sb_8.status_selesai = false;
     $sb_8.status_resep = true;
-    $sb_8.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_8.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.8&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.8&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.8&quot;, $recipe.versi);
@@ -160,7 +160,7 @@ if (pilih_steambox == 1) {
     $sb_9.status_kosong = false;
     $sb_9.status_selesai = false;
     $sb_9.status_resep = true;
-    $sb_9.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_9.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.9&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.9&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.9&quot;, $recipe.versi);
@@ -174,7 +174,7 @@ if (pilih_steambox == 1) {
     $sb_10.status_kosong = false;
     $sb_10.status_selesai = false;
     $sb_10.status_resep = true;
-    $sb_10.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_10.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.10&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.10&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.10&quot;, $recipe.versi);
@@ -188,7 +188,7 @@ if (pilih_steambox == 1) {
     $sb_11.status_kosong = false;
     $sb_11.status_selesai = false;
     $sb_11.status_resep = true;
-    $sb_11.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_11.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.11&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.11&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.11&quot;, $recipe.versi);
@@ -202,7 +202,7 @@ if (pilih_steambox == 1) {
     $sb_12.status_kosong = false;
     $sb_12.status_selesai = false;
     $sb_12.status_resep = true;
-    $sb_12.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_12.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.12&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.12&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.12&quot;, $recipe.versi);
@@ -216,7 +216,7 @@ if (pilih_steambox == 1) {
     $sb_13.status_kosong = false;
     $sb_13.status_selesai = false;
     $sb_13.status_resep = true;
-    $sb_13.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_13.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.13&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.13&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.13&quot;, $recipe.versi);
@@ -230,7 +230,7 @@ if (pilih_steambox == 1) {
     $sb_14.status_kosong = false;
     $sb_14.status_selesai = false;
     $sb_14.status_resep = true;
-    $sb_14.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_14.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.14&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.14&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.14&quot;, $recipe.versi);
@@ -244,7 +244,7 @@ if (pilih_steambox == 1) {
     $sb_15.status_kosong = false;
     $sb_15.status_selesai = false;
     $sb_15.status_resep = true;
-    $sb_15.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_15.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.15&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.15&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.15&quot;, $recipe.versi);
@@ -258,7 +258,7 @@ if (pilih_steambox == 1) {
     $sb_16.status_kosong = false;
     $sb_16.status_selesai = false;
     $sb_16.status_resep = true;
-    $sb_16.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_16.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.16&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.16&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.16&quot;, $recipe.versi);
@@ -272,7 +272,7 @@ if (pilih_steambox == 1) {
     $sb_17.status_kosong = false;
     $sb_17.status_selesai = false;
     $sb_17.status_resep = true;
-    $sb_17.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_17.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.17&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.17&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.17&quot;, $recipe.versi);
@@ -286,7 +286,7 @@ if (pilih_steambox == 1) {
     $sb_18.status_kosong = false;
     $sb_18.status_selesai = false;
     $sb_18.status_resep = true;
-    $sb_18.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_18.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.18&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.18&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.18&quot;, $recipe.versi);
@@ -300,7 +300,7 @@ if (pilih_steambox == 1) {
     $sb_19.status_kosong = false;
     $sb_19.status_selesai = false;
     $sb_19.status_resep = true;
-    $sb_19.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_19.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.19&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.19&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.19&quot;, $recipe.versi);
@@ -314,7 +314,7 @@ if (pilih_steambox == 1) {
     $sb_20.status_kosong = false;
     $sb_20.status_selesai = false;
     $sb_20.status_resep = true;
-    $sb_20.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_20.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.20&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.20&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.20&quot;, $recipe.versi);
@@ -328,7 +328,7 @@ if (pilih_steambox == 1) {
     $sb_21.status_kosong = false;
     $sb_21.status_selesai = false;
     $sb_21.status_resep = true;
-    $sb_21.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_21.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.21&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.21&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.21&quot;, $recipe.versi);
@@ -342,7 +342,7 @@ if (pilih_steambox == 1) {
     $sb_22.status_kosong = false;
     $sb_22.status_selesai = false;
     $sb_22.status_resep = true;
-    $sb_22.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_22.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.22&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.22&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.22&quot;, $recipe.versi);
@@ -356,7 +356,7 @@ if (pilih_steambox == 1) {
     $sb_23.status_kosong = false;
     $sb_23.status_selesai = false;
     $sb_23.status_resep = true;
-    $sb_23.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_23.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.23&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.23&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.23&quot;, $recipe.versi);
@@ -370,7 +370,7 @@ if (pilih_steambox == 1) {
     $sb_24.status_kosong = false;
     $sb_24.status_selesai = false;
     $sb_24.status_resep = true;
-    $sb_24.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_24.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.24&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.24&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.24&quot;, $recipe.versi);
@@ -384,7 +384,7 @@ if (pilih_steambox == 1) {
     $sb_25.status_kosong = false;
     $sb_25.status_selesai = false;
     $sb_25.status_resep = true;
-    $sb_25.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_25.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.25&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.25&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.25&quot;, $recipe.versi);
@@ -398,7 +398,7 @@ if (pilih_steambox == 1) {
     $sb_26.status_kosong = false;
     $sb_26.status_selesai = false;
     $sb_26.status_resep = true;
-    $sb_26.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_26.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.26&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.26&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.26&quot;, $recipe.versi);
@@ -412,7 +412,7 @@ if (pilih_steambox == 1) {
     $sb_27.status_kosong = false;
     $sb_27.status_selesai = false;
     $sb_27.status_resep = true;
-    $sb_27.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_27.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.27&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.27&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.27&quot;, $recipe.versi);
@@ -426,7 +426,7 @@ if (pilih_steambox == 1) {
     $sb_28.status_kosong = false;
     $sb_28.status_selesai = false;
     $sb_28.status_resep = true;
-    $sb_28.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_28.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.28&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.28&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.28&quot;, $recipe.versi);
@@ -440,7 +440,7 @@ if (pilih_steambox == 1) {
     $sb_29.status_kosong = false;
     $sb_29.status_selesai = false;
     $sb_29.status_resep = true;
-    $sb_29.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_29.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.29&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.29&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.29&quot;, $recipe.versi);
@@ -454,7 +454,7 @@ if (pilih_steambox == 1) {
     $sb_30.status_kosong = false;
     $sb_30.status_selesai = false;
     $sb_30.status_resep = true;
-    $sb_30.status_banner = $Sys_Control.txt_siap_cooking || &quot;resep sudah siap, silakan tekan start&quot;;
+    $sb_30.status_banner = $Sys_Control.txt_status_resep || $Sys_Control.txt_siap_cooking || &quot;RESEP TERPASANG - SILAKAN TEKAN START&quot;;
     Variable.SetValue(&quot;recipe_kode.30&quot;, $recipe.kode);
     Variable.SetValue(&quot;recipe_nama.30&quot;, $recipe.nama);
     Variable.SetValue(&quot;recipe_versi.30&quot;, $recipe.versi);
