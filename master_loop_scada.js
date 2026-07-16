@@ -111,7 +111,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_1.maintenance_mode) {
             var isSensorError_1 = ($sb1.temp >= tempErrorLimit);
             
-            if ($sb1.run_stop == 1) { // STOPPED
+            if ($sb1.run_stop === 1) { // STOPPED
                 $sb_1.status_pemanasan = false;
                 $sb_1.status_pemasakan = false;
                 $sb_1.flag_init_start = 0;
@@ -213,7 +213,8 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.tampil_pemanasan = formatTime($sb_1.total_detik_pemanasan);
                             
                             $sb_1.tampil_durasi_aktual = formatTime($sb_1.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak) < 0 ? 0 : scale_up_1;
+                            var scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak;
+                            var detik_up_heat = scale_up_1 < 0 ? 0 : scale_up_1;
                             $sb_1.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -243,7 +244,8 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_1.tampil_durasi_aktual = formatTime($sb_1.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak) < 0 ? 0 : scale_up_1;
+                            var scale_up_1 = ($sb_1.target_menit * 60) - $sb_1.sisa_detik_masak;
+                            var detik_up_boil = scale_up_1 < 0 ? 0 : scale_up_1;
                             $sb_1.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_1.sisa_detik_masak <= 0) {
@@ -274,7 +276,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_1) {
                 $sb_1.sensor_error = true;
-                if ($sb1.run_stop == 0 && $sb_1.flag_init_start === 1) {
+                if ($sb1.run_stop === 0 && $sb_1.flag_init_start === 1) {
                     $sb_1.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_1.status_banner = txtSensorError;
@@ -342,7 +344,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_2.maintenance_mode) {
             var isSensorError_2 = ($sb2.temp >= tempErrorLimit);
             
-            if ($sb2.run_stop == 1) { // STOPPED
+            if ($sb2.run_stop === 1) { // STOPPED
                 $sb_2.status_pemanasan = false;
                 $sb_2.status_pemasakan = false;
                 $sb_2.flag_init_start = 0;
@@ -444,7 +446,8 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.tampil_pemanasan = formatTime($sb_2.total_detik_pemanasan);
                             
                             $sb_2.tampil_durasi_aktual = formatTime($sb_2.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak) < 0 ? 0 : scale_up_2;
+                            var scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak;
+                            var detik_up_heat = scale_up_2 < 0 ? 0 : scale_up_2;
                             $sb_2.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -474,7 +477,8 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_2.tampil_durasi_aktual = formatTime($sb_2.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak) < 0 ? 0 : scale_up_2;
+                            var scale_up_2 = ($sb_2.target_menit * 60) - $sb_2.sisa_detik_masak;
+                            var detik_up_boil = scale_up_2 < 0 ? 0 : scale_up_2;
                             $sb_2.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_2.sisa_detik_masak <= 0) {
@@ -505,7 +509,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_2) {
                 $sb_2.sensor_error = true;
-                if ($sb2.run_stop == 0 && $sb_2.flag_init_start === 1) {
+                if ($sb2.run_stop === 0 && $sb_2.flag_init_start === 1) {
                     $sb_2.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_2.status_banner = txtSensorError;
@@ -573,7 +577,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_3.maintenance_mode) {
             var isSensorError_3 = ($sb3.temp >= tempErrorLimit);
             
-            if ($sb3.run_stop == 1) { // STOPPED
+            if ($sb3.run_stop === 1) { // STOPPED
                 $sb_3.status_pemanasan = false;
                 $sb_3.status_pemasakan = false;
                 $sb_3.flag_init_start = 0;
@@ -675,7 +679,8 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.tampil_pemanasan = formatTime($sb_3.total_detik_pemanasan);
                             
                             $sb_3.tampil_durasi_aktual = formatTime($sb_3.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak) < 0 ? 0 : scale_up_3;
+                            var scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak;
+                            var detik_up_heat = scale_up_3 < 0 ? 0 : scale_up_3;
                             $sb_3.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -705,7 +710,8 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_3.tampil_durasi_aktual = formatTime($sb_3.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak) < 0 ? 0 : scale_up_3;
+                            var scale_up_3 = ($sb_3.target_menit * 60) - $sb_3.sisa_detik_masak;
+                            var detik_up_boil = scale_up_3 < 0 ? 0 : scale_up_3;
                             $sb_3.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_3.sisa_detik_masak <= 0) {
@@ -736,7 +742,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_3) {
                 $sb_3.sensor_error = true;
-                if ($sb3.run_stop == 0 && $sb_3.flag_init_start === 1) {
+                if ($sb3.run_stop === 0 && $sb_3.flag_init_start === 1) {
                     $sb_3.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_3.status_banner = txtSensorError;
@@ -804,7 +810,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_4.maintenance_mode) {
             var isSensorError_4 = ($sb4.temp >= tempErrorLimit);
             
-            if ($sb4.run_stop == 1) { // STOPPED
+            if ($sb4.run_stop === 1) { // STOPPED
                 $sb_4.status_pemanasan = false;
                 $sb_4.status_pemasakan = false;
                 $sb_4.flag_init_start = 0;
@@ -906,7 +912,8 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.tampil_pemanasan = formatTime($sb_4.total_detik_pemanasan);
                             
                             $sb_4.tampil_durasi_aktual = formatTime($sb_4.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak) < 0 ? 0 : scale_up_4;
+                            var scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak;
+                            var detik_up_heat = scale_up_4 < 0 ? 0 : scale_up_4;
                             $sb_4.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -936,7 +943,8 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_4.tampil_durasi_aktual = formatTime($sb_4.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak) < 0 ? 0 : scale_up_4;
+                            var scale_up_4 = ($sb_4.target_menit * 60) - $sb_4.sisa_detik_masak;
+                            var detik_up_boil = scale_up_4 < 0 ? 0 : scale_up_4;
                             $sb_4.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_4.sisa_detik_masak <= 0) {
@@ -967,7 +975,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_4) {
                 $sb_4.sensor_error = true;
-                if ($sb4.run_stop == 0 && $sb_4.flag_init_start === 1) {
+                if ($sb4.run_stop === 0 && $sb_4.flag_init_start === 1) {
                     $sb_4.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_4.status_banner = txtSensorError;
@@ -1035,7 +1043,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_5.maintenance_mode) {
             var isSensorError_5 = ($sb5.temp >= tempErrorLimit);
             
-            if ($sb5.run_stop == 1) { // STOPPED
+            if ($sb5.run_stop === 1) { // STOPPED
                 $sb_5.status_pemanasan = false;
                 $sb_5.status_pemasakan = false;
                 $sb_5.flag_init_start = 0;
@@ -1137,7 +1145,8 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.tampil_pemanasan = formatTime($sb_5.total_detik_pemanasan);
                             
                             $sb_5.tampil_durasi_aktual = formatTime($sb_5.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak) < 0 ? 0 : scale_up_5;
+                            var scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak;
+                            var detik_up_heat = scale_up_5 < 0 ? 0 : scale_up_5;
                             $sb_5.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -1167,7 +1176,8 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_5.tampil_durasi_aktual = formatTime($sb_5.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak) < 0 ? 0 : scale_up_5;
+                            var scale_up_5 = ($sb_5.target_menit * 60) - $sb_5.sisa_detik_masak;
+                            var detik_up_boil = scale_up_5 < 0 ? 0 : scale_up_5;
                             $sb_5.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_5.sisa_detik_masak <= 0) {
@@ -1198,7 +1208,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_5) {
                 $sb_5.sensor_error = true;
-                if ($sb5.run_stop == 0 && $sb_5.flag_init_start === 1) {
+                if ($sb5.run_stop === 0 && $sb_5.flag_init_start === 1) {
                     $sb_5.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_5.status_banner = txtSensorError;
@@ -1266,7 +1276,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_6.maintenance_mode) {
             var isSensorError_6 = ($sb6.temp >= tempErrorLimit);
             
-            if ($sb6.run_stop == 1) { // STOPPED
+            if ($sb6.run_stop === 1) { // STOPPED
                 $sb_6.status_pemanasan = false;
                 $sb_6.status_pemasakan = false;
                 $sb_6.flag_init_start = 0;
@@ -1368,7 +1378,8 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.tampil_pemanasan = formatTime($sb_6.total_detik_pemanasan);
                             
                             $sb_6.tampil_durasi_aktual = formatTime($sb_6.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak) < 0 ? 0 : scale_up_6;
+                            var scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak;
+                            var detik_up_heat = scale_up_6 < 0 ? 0 : scale_up_6;
                             $sb_6.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -1398,7 +1409,8 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_6.tampil_durasi_aktual = formatTime($sb_6.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak) < 0 ? 0 : scale_up_6;
+                            var scale_up_6 = ($sb_6.target_menit * 60) - $sb_6.sisa_detik_masak;
+                            var detik_up_boil = scale_up_6 < 0 ? 0 : scale_up_6;
                             $sb_6.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_6.sisa_detik_masak <= 0) {
@@ -1429,7 +1441,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_6) {
                 $sb_6.sensor_error = true;
-                if ($sb6.run_stop == 0 && $sb_6.flag_init_start === 1) {
+                if ($sb6.run_stop === 0 && $sb_6.flag_init_start === 1) {
                     $sb_6.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_6.status_banner = txtSensorError;
@@ -1497,7 +1509,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_7.maintenance_mode) {
             var isSensorError_7 = ($sb7.temp >= tempErrorLimit);
             
-            if ($sb7.run_stop == 1) { // STOPPED
+            if ($sb7.run_stop === 1) { // STOPPED
                 $sb_7.status_pemanasan = false;
                 $sb_7.status_pemasakan = false;
                 $sb_7.flag_init_start = 0;
@@ -1599,7 +1611,8 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.tampil_pemanasan = formatTime($sb_7.total_detik_pemanasan);
                             
                             $sb_7.tampil_durasi_aktual = formatTime($sb_7.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak) < 0 ? 0 : scale_up_7;
+                            var scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak;
+                            var detik_up_heat = scale_up_7 < 0 ? 0 : scale_up_7;
                             $sb_7.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -1629,7 +1642,8 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_7.tampil_durasi_aktual = formatTime($sb_7.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak) < 0 ? 0 : scale_up_7;
+                            var scale_up_7 = ($sb_7.target_menit * 60) - $sb_7.sisa_detik_masak;
+                            var detik_up_boil = scale_up_7 < 0 ? 0 : scale_up_7;
                             $sb_7.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_7.sisa_detik_masak <= 0) {
@@ -1660,7 +1674,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_7) {
                 $sb_7.sensor_error = true;
-                if ($sb7.run_stop == 0 && $sb_7.flag_init_start === 1) {
+                if ($sb7.run_stop === 0 && $sb_7.flag_init_start === 1) {
                     $sb_7.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_7.status_banner = txtSensorError;
@@ -1728,7 +1742,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_8.maintenance_mode) {
             var isSensorError_8 = ($sb8.temp >= tempErrorLimit);
             
-            if ($sb8.run_stop == 1) { // STOPPED
+            if ($sb8.run_stop === 1) { // STOPPED
                 $sb_8.status_pemanasan = false;
                 $sb_8.status_pemasakan = false;
                 $sb_8.flag_init_start = 0;
@@ -1830,7 +1844,8 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.tampil_pemanasan = formatTime($sb_8.total_detik_pemanasan);
                             
                             $sb_8.tampil_durasi_aktual = formatTime($sb_8.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak) < 0 ? 0 : scale_up_8;
+                            var scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak;
+                            var detik_up_heat = scale_up_8 < 0 ? 0 : scale_up_8;
                             $sb_8.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -1860,7 +1875,8 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_8.tampil_durasi_aktual = formatTime($sb_8.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak) < 0 ? 0 : scale_up_8;
+                            var scale_up_8 = ($sb_8.target_menit * 60) - $sb_8.sisa_detik_masak;
+                            var detik_up_boil = scale_up_8 < 0 ? 0 : scale_up_8;
                             $sb_8.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_8.sisa_detik_masak <= 0) {
@@ -1891,7 +1907,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_8) {
                 $sb_8.sensor_error = true;
-                if ($sb8.run_stop == 0 && $sb_8.flag_init_start === 1) {
+                if ($sb8.run_stop === 0 && $sb_8.flag_init_start === 1) {
                     $sb_8.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_8.status_banner = txtSensorError;
@@ -1959,7 +1975,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_9.maintenance_mode) {
             var isSensorError_9 = ($sb9.temp >= tempErrorLimit);
             
-            if ($sb9.run_stop == 1) { // STOPPED
+            if ($sb9.run_stop === 1) { // STOPPED
                 $sb_9.status_pemanasan = false;
                 $sb_9.status_pemasakan = false;
                 $sb_9.flag_init_start = 0;
@@ -2061,7 +2077,8 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.tampil_pemanasan = formatTime($sb_9.total_detik_pemanasan);
                             
                             $sb_9.tampil_durasi_aktual = formatTime($sb_9.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak) < 0 ? 0 : scale_up_9;
+                            var scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak;
+                            var detik_up_heat = scale_up_9 < 0 ? 0 : scale_up_9;
                             $sb_9.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -2091,7 +2108,8 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_9.tampil_durasi_aktual = formatTime($sb_9.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak) < 0 ? 0 : scale_up_9;
+                            var scale_up_9 = ($sb_9.target_menit * 60) - $sb_9.sisa_detik_masak;
+                            var detik_up_boil = scale_up_9 < 0 ? 0 : scale_up_9;
                             $sb_9.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_9.sisa_detik_masak <= 0) {
@@ -2122,7 +2140,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_9) {
                 $sb_9.sensor_error = true;
-                if ($sb9.run_stop == 0 && $sb_9.flag_init_start === 1) {
+                if ($sb9.run_stop === 0 && $sb_9.flag_init_start === 1) {
                     $sb_9.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_9.status_banner = txtSensorError;
@@ -2190,7 +2208,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_10.maintenance_mode) {
             var isSensorError_10 = ($sb10.temp >= tempErrorLimit);
             
-            if ($sb10.run_stop == 1) { // STOPPED
+            if ($sb10.run_stop === 1) { // STOPPED
                 $sb_10.status_pemanasan = false;
                 $sb_10.status_pemasakan = false;
                 $sb_10.flag_init_start = 0;
@@ -2292,7 +2310,8 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.tampil_pemanasan = formatTime($sb_10.total_detik_pemanasan);
                             
                             $sb_10.tampil_durasi_aktual = formatTime($sb_10.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak) < 0 ? 0 : scale_up_10;
+                            var scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak;
+                            var detik_up_heat = scale_up_10 < 0 ? 0 : scale_up_10;
                             $sb_10.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -2322,7 +2341,8 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_10.tampil_durasi_aktual = formatTime($sb_10.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak) < 0 ? 0 : scale_up_10;
+                            var scale_up_10 = ($sb_10.target_menit * 60) - $sb_10.sisa_detik_masak;
+                            var detik_up_boil = scale_up_10 < 0 ? 0 : scale_up_10;
                             $sb_10.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_10.sisa_detik_masak <= 0) {
@@ -2353,7 +2373,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_10) {
                 $sb_10.sensor_error = true;
-                if ($sb10.run_stop == 0 && $sb_10.flag_init_start === 1) {
+                if ($sb10.run_stop === 0 && $sb_10.flag_init_start === 1) {
                     $sb_10.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_10.status_banner = txtSensorError;
@@ -2421,7 +2441,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_11.maintenance_mode) {
             var isSensorError_11 = ($sb11.temp >= tempErrorLimit);
             
-            if ($sb11.run_stop == 1) { // STOPPED
+            if ($sb11.run_stop === 1) { // STOPPED
                 $sb_11.status_pemanasan = false;
                 $sb_11.status_pemasakan = false;
                 $sb_11.flag_init_start = 0;
@@ -2523,7 +2543,8 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.tampil_pemanasan = formatTime($sb_11.total_detik_pemanasan);
                             
                             $sb_11.tampil_durasi_aktual = formatTime($sb_11.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak) < 0 ? 0 : scale_up_11;
+                            var scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak;
+                            var detik_up_heat = scale_up_11 < 0 ? 0 : scale_up_11;
                             $sb_11.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -2553,7 +2574,8 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_11.tampil_durasi_aktual = formatTime($sb_11.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak) < 0 ? 0 : scale_up_11;
+                            var scale_up_11 = ($sb_11.target_menit * 60) - $sb_11.sisa_detik_masak;
+                            var detik_up_boil = scale_up_11 < 0 ? 0 : scale_up_11;
                             $sb_11.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_11.sisa_detik_masak <= 0) {
@@ -2584,7 +2606,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_11) {
                 $sb_11.sensor_error = true;
-                if ($sb11.run_stop == 0 && $sb_11.flag_init_start === 1) {
+                if ($sb11.run_stop === 0 && $sb_11.flag_init_start === 1) {
                     $sb_11.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_11.status_banner = txtSensorError;
@@ -2652,7 +2674,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_12.maintenance_mode) {
             var isSensorError_12 = ($sb12.temp >= tempErrorLimit);
             
-            if ($sb12.run_stop == 1) { // STOPPED
+            if ($sb12.run_stop === 1) { // STOPPED
                 $sb_12.status_pemanasan = false;
                 $sb_12.status_pemasakan = false;
                 $sb_12.flag_init_start = 0;
@@ -2754,7 +2776,8 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.tampil_pemanasan = formatTime($sb_12.total_detik_pemanasan);
                             
                             $sb_12.tampil_durasi_aktual = formatTime($sb_12.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak) < 0 ? 0 : scale_up_12;
+                            var scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak;
+                            var detik_up_heat = scale_up_12 < 0 ? 0 : scale_up_12;
                             $sb_12.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -2784,7 +2807,8 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_12.tampil_durasi_aktual = formatTime($sb_12.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak) < 0 ? 0 : scale_up_12;
+                            var scale_up_12 = ($sb_12.target_menit * 60) - $sb_12.sisa_detik_masak;
+                            var detik_up_boil = scale_up_12 < 0 ? 0 : scale_up_12;
                             $sb_12.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_12.sisa_detik_masak <= 0) {
@@ -2815,7 +2839,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_12) {
                 $sb_12.sensor_error = true;
-                if ($sb12.run_stop == 0 && $sb_12.flag_init_start === 1) {
+                if ($sb12.run_stop === 0 && $sb_12.flag_init_start === 1) {
                     $sb_12.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_12.status_banner = txtSensorError;
@@ -2883,7 +2907,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_13.maintenance_mode) {
             var isSensorError_13 = ($sb13.temp >= tempErrorLimit);
             
-            if ($sb13.run_stop == 1) { // STOPPED
+            if ($sb13.run_stop === 1) { // STOPPED
                 $sb_13.status_pemanasan = false;
                 $sb_13.status_pemasakan = false;
                 $sb_13.flag_init_start = 0;
@@ -2985,7 +3009,8 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.tampil_pemanasan = formatTime($sb_13.total_detik_pemanasan);
                             
                             $sb_13.tampil_durasi_aktual = formatTime($sb_13.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak) < 0 ? 0 : scale_up_13;
+                            var scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak;
+                            var detik_up_heat = scale_up_13 < 0 ? 0 : scale_up_13;
                             $sb_13.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -3015,7 +3040,8 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_13.tampil_durasi_aktual = formatTime($sb_13.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak) < 0 ? 0 : scale_up_13;
+                            var scale_up_13 = ($sb_13.target_menit * 60) - $sb_13.sisa_detik_masak;
+                            var detik_up_boil = scale_up_13 < 0 ? 0 : scale_up_13;
                             $sb_13.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_13.sisa_detik_masak <= 0) {
@@ -3046,7 +3072,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_13) {
                 $sb_13.sensor_error = true;
-                if ($sb13.run_stop == 0 && $sb_13.flag_init_start === 1) {
+                if ($sb13.run_stop === 0 && $sb_13.flag_init_start === 1) {
                     $sb_13.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_13.status_banner = txtSensorError;
@@ -3114,7 +3140,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_14.maintenance_mode) {
             var isSensorError_14 = ($sb14.temp >= tempErrorLimit);
             
-            if ($sb14.run_stop == 1) { // STOPPED
+            if ($sb14.run_stop === 1) { // STOPPED
                 $sb_14.status_pemanasan = false;
                 $sb_14.status_pemasakan = false;
                 $sb_14.flag_init_start = 0;
@@ -3216,7 +3242,8 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.tampil_pemanasan = formatTime($sb_14.total_detik_pemanasan);
                             
                             $sb_14.tampil_durasi_aktual = formatTime($sb_14.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak) < 0 ? 0 : scale_up_14;
+                            var scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak;
+                            var detik_up_heat = scale_up_14 < 0 ? 0 : scale_up_14;
                             $sb_14.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -3246,7 +3273,8 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_14.tampil_durasi_aktual = formatTime($sb_14.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak) < 0 ? 0 : scale_up_14;
+                            var scale_up_14 = ($sb_14.target_menit * 60) - $sb_14.sisa_detik_masak;
+                            var detik_up_boil = scale_up_14 < 0 ? 0 : scale_up_14;
                             $sb_14.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_14.sisa_detik_masak <= 0) {
@@ -3277,7 +3305,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_14) {
                 $sb_14.sensor_error = true;
-                if ($sb14.run_stop == 0 && $sb_14.flag_init_start === 1) {
+                if ($sb14.run_stop === 0 && $sb_14.flag_init_start === 1) {
                     $sb_14.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_14.status_banner = txtSensorError;
@@ -3345,7 +3373,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_15.maintenance_mode) {
             var isSensorError_15 = ($sb15.temp >= tempErrorLimit);
             
-            if ($sb15.run_stop == 1) { // STOPPED
+            if ($sb15.run_stop === 1) { // STOPPED
                 $sb_15.status_pemanasan = false;
                 $sb_15.status_pemasakan = false;
                 $sb_15.flag_init_start = 0;
@@ -3447,7 +3475,8 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.tampil_pemanasan = formatTime($sb_15.total_detik_pemanasan);
                             
                             $sb_15.tampil_durasi_aktual = formatTime($sb_15.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak) < 0 ? 0 : scale_up_15;
+                            var scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak;
+                            var detik_up_heat = scale_up_15 < 0 ? 0 : scale_up_15;
                             $sb_15.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -3477,7 +3506,8 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_15.tampil_durasi_aktual = formatTime($sb_15.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak) < 0 ? 0 : scale_up_15;
+                            var scale_up_15 = ($sb_15.target_menit * 60) - $sb_15.sisa_detik_masak;
+                            var detik_up_boil = scale_up_15 < 0 ? 0 : scale_up_15;
                             $sb_15.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_15.sisa_detik_masak <= 0) {
@@ -3508,7 +3538,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_15) {
                 $sb_15.sensor_error = true;
-                if ($sb15.run_stop == 0 && $sb_15.flag_init_start === 1) {
+                if ($sb15.run_stop === 0 && $sb_15.flag_init_start === 1) {
                     $sb_15.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_15.status_banner = txtSensorError;
@@ -3576,7 +3606,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_16.maintenance_mode) {
             var isSensorError_16 = ($sb16.temp >= tempErrorLimit);
             
-            if ($sb16.run_stop == 1) { // STOPPED
+            if ($sb16.run_stop === 1) { // STOPPED
                 $sb_16.status_pemanasan = false;
                 $sb_16.status_pemasakan = false;
                 $sb_16.flag_init_start = 0;
@@ -3678,7 +3708,8 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.tampil_pemanasan = formatTime($sb_16.total_detik_pemanasan);
                             
                             $sb_16.tampil_durasi_aktual = formatTime($sb_16.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak) < 0 ? 0 : scale_up_16;
+                            var scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak;
+                            var detik_up_heat = scale_up_16 < 0 ? 0 : scale_up_16;
                             $sb_16.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -3708,7 +3739,8 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_16.tampil_durasi_aktual = formatTime($sb_16.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak) < 0 ? 0 : scale_up_16;
+                            var scale_up_16 = ($sb_16.target_menit * 60) - $sb_16.sisa_detik_masak;
+                            var detik_up_boil = scale_up_16 < 0 ? 0 : scale_up_16;
                             $sb_16.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_16.sisa_detik_masak <= 0) {
@@ -3739,7 +3771,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_16) {
                 $sb_16.sensor_error = true;
-                if ($sb16.run_stop == 0 && $sb_16.flag_init_start === 1) {
+                if ($sb16.run_stop === 0 && $sb_16.flag_init_start === 1) {
                     $sb_16.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_16.status_banner = txtSensorError;
@@ -3807,7 +3839,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_17.maintenance_mode) {
             var isSensorError_17 = ($sb17.temp >= tempErrorLimit);
             
-            if ($sb17.run_stop == 1) { // STOPPED
+            if ($sb17.run_stop === 1) { // STOPPED
                 $sb_17.status_pemanasan = false;
                 $sb_17.status_pemasakan = false;
                 $sb_17.flag_init_start = 0;
@@ -3909,7 +3941,8 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.tampil_pemanasan = formatTime($sb_17.total_detik_pemanasan);
                             
                             $sb_17.tampil_durasi_aktual = formatTime($sb_17.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak) < 0 ? 0 : scale_up_17;
+                            var scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak;
+                            var detik_up_heat = scale_up_17 < 0 ? 0 : scale_up_17;
                             $sb_17.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -3939,7 +3972,8 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_17.tampil_durasi_aktual = formatTime($sb_17.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak) < 0 ? 0 : scale_up_17;
+                            var scale_up_17 = ($sb_17.target_menit * 60) - $sb_17.sisa_detik_masak;
+                            var detik_up_boil = scale_up_17 < 0 ? 0 : scale_up_17;
                             $sb_17.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_17.sisa_detik_masak <= 0) {
@@ -3970,7 +4004,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_17) {
                 $sb_17.sensor_error = true;
-                if ($sb17.run_stop == 0 && $sb_17.flag_init_start === 1) {
+                if ($sb17.run_stop === 0 && $sb_17.flag_init_start === 1) {
                     $sb_17.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_17.status_banner = txtSensorError;
@@ -4038,7 +4072,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_18.maintenance_mode) {
             var isSensorError_18 = ($sb18.temp >= tempErrorLimit);
             
-            if ($sb18.run_stop == 1) { // STOPPED
+            if ($sb18.run_stop === 1) { // STOPPED
                 $sb_18.status_pemanasan = false;
                 $sb_18.status_pemasakan = false;
                 $sb_18.flag_init_start = 0;
@@ -4140,7 +4174,8 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.tampil_pemanasan = formatTime($sb_18.total_detik_pemanasan);
                             
                             $sb_18.tampil_durasi_aktual = formatTime($sb_18.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak) < 0 ? 0 : scale_up_18;
+                            var scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak;
+                            var detik_up_heat = scale_up_18 < 0 ? 0 : scale_up_18;
                             $sb_18.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -4170,7 +4205,8 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_18.tampil_durasi_aktual = formatTime($sb_18.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak) < 0 ? 0 : scale_up_18;
+                            var scale_up_18 = ($sb_18.target_menit * 60) - $sb_18.sisa_detik_masak;
+                            var detik_up_boil = scale_up_18 < 0 ? 0 : scale_up_18;
                             $sb_18.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_18.sisa_detik_masak <= 0) {
@@ -4201,7 +4237,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_18) {
                 $sb_18.sensor_error = true;
-                if ($sb18.run_stop == 0 && $sb_18.flag_init_start === 1) {
+                if ($sb18.run_stop === 0 && $sb_18.flag_init_start === 1) {
                     $sb_18.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_18.status_banner = txtSensorError;
@@ -4269,7 +4305,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_19.maintenance_mode) {
             var isSensorError_19 = ($sb19.temp >= tempErrorLimit);
             
-            if ($sb19.run_stop == 1) { // STOPPED
+            if ($sb19.run_stop === 1) { // STOPPED
                 $sb_19.status_pemanasan = false;
                 $sb_19.status_pemasakan = false;
                 $sb_19.flag_init_start = 0;
@@ -4371,7 +4407,8 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.tampil_pemanasan = formatTime($sb_19.total_detik_pemanasan);
                             
                             $sb_19.tampil_durasi_aktual = formatTime($sb_19.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak) < 0 ? 0 : scale_up_19;
+                            var scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak;
+                            var detik_up_heat = scale_up_19 < 0 ? 0 : scale_up_19;
                             $sb_19.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -4401,7 +4438,8 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_19.tampil_durasi_aktual = formatTime($sb_19.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak) < 0 ? 0 : scale_up_19;
+                            var scale_up_19 = ($sb_19.target_menit * 60) - $sb_19.sisa_detik_masak;
+                            var detik_up_boil = scale_up_19 < 0 ? 0 : scale_up_19;
                             $sb_19.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_19.sisa_detik_masak <= 0) {
@@ -4432,7 +4470,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_19) {
                 $sb_19.sensor_error = true;
-                if ($sb19.run_stop == 0 && $sb_19.flag_init_start === 1) {
+                if ($sb19.run_stop === 0 && $sb_19.flag_init_start === 1) {
                     $sb_19.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_19.status_banner = txtSensorError;
@@ -4500,7 +4538,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_20.maintenance_mode) {
             var isSensorError_20 = ($sb20.temp >= tempErrorLimit);
             
-            if ($sb20.run_stop == 1) { // STOPPED
+            if ($sb20.run_stop === 1) { // STOPPED
                 $sb_20.status_pemanasan = false;
                 $sb_20.status_pemasakan = false;
                 $sb_20.flag_init_start = 0;
@@ -4602,7 +4640,8 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.tampil_pemanasan = formatTime($sb_20.total_detik_pemanasan);
                             
                             $sb_20.tampil_durasi_aktual = formatTime($sb_20.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak) < 0 ? 0 : scale_up_20;
+                            var scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak;
+                            var detik_up_heat = scale_up_20 < 0 ? 0 : scale_up_20;
                             $sb_20.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -4632,7 +4671,8 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_20.tampil_durasi_aktual = formatTime($sb_20.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak) < 0 ? 0 : scale_up_20;
+                            var scale_up_20 = ($sb_20.target_menit * 60) - $sb_20.sisa_detik_masak;
+                            var detik_up_boil = scale_up_20 < 0 ? 0 : scale_up_20;
                             $sb_20.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_20.sisa_detik_masak <= 0) {
@@ -4663,7 +4703,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_20) {
                 $sb_20.sensor_error = true;
-                if ($sb20.run_stop == 0 && $sb_20.flag_init_start === 1) {
+                if ($sb20.run_stop === 0 && $sb_20.flag_init_start === 1) {
                     $sb_20.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_20.status_banner = txtSensorError;
@@ -4731,7 +4771,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_21.maintenance_mode) {
             var isSensorError_21 = ($sb21.temp >= tempErrorLimit);
             
-            if ($sb21.run_stop == 1) { // STOPPED
+            if ($sb21.run_stop === 1) { // STOPPED
                 $sb_21.status_pemanasan = false;
                 $sb_21.status_pemasakan = false;
                 $sb_21.flag_init_start = 0;
@@ -4833,7 +4873,8 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.tampil_pemanasan = formatTime($sb_21.total_detik_pemanasan);
                             
                             $sb_21.tampil_durasi_aktual = formatTime($sb_21.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak) < 0 ? 0 : scale_up_21;
+                            var scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak;
+                            var detik_up_heat = scale_up_21 < 0 ? 0 : scale_up_21;
                             $sb_21.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -4863,7 +4904,8 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_21.tampil_durasi_aktual = formatTime($sb_21.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak) < 0 ? 0 : scale_up_21;
+                            var scale_up_21 = ($sb_21.target_menit * 60) - $sb_21.sisa_detik_masak;
+                            var detik_up_boil = scale_up_21 < 0 ? 0 : scale_up_21;
                             $sb_21.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_21.sisa_detik_masak <= 0) {
@@ -4894,7 +4936,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_21) {
                 $sb_21.sensor_error = true;
-                if ($sb21.run_stop == 0 && $sb_21.flag_init_start === 1) {
+                if ($sb21.run_stop === 0 && $sb_21.flag_init_start === 1) {
                     $sb_21.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_21.status_banner = txtSensorError;
@@ -4962,7 +5004,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_22.maintenance_mode) {
             var isSensorError_22 = ($sb22.temp >= tempErrorLimit);
             
-            if ($sb22.run_stop == 1) { // STOPPED
+            if ($sb22.run_stop === 1) { // STOPPED
                 $sb_22.status_pemanasan = false;
                 $sb_22.status_pemasakan = false;
                 $sb_22.flag_init_start = 0;
@@ -5064,7 +5106,8 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.tampil_pemanasan = formatTime($sb_22.total_detik_pemanasan);
                             
                             $sb_22.tampil_durasi_aktual = formatTime($sb_22.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak) < 0 ? 0 : scale_up_22;
+                            var scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak;
+                            var detik_up_heat = scale_up_22 < 0 ? 0 : scale_up_22;
                             $sb_22.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -5094,7 +5137,8 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_22.tampil_durasi_aktual = formatTime($sb_22.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak) < 0 ? 0 : scale_up_22;
+                            var scale_up_22 = ($sb_22.target_menit * 60) - $sb_22.sisa_detik_masak;
+                            var detik_up_boil = scale_up_22 < 0 ? 0 : scale_up_22;
                             $sb_22.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_22.sisa_detik_masak <= 0) {
@@ -5125,7 +5169,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_22) {
                 $sb_22.sensor_error = true;
-                if ($sb22.run_stop == 0 && $sb_22.flag_init_start === 1) {
+                if ($sb22.run_stop === 0 && $sb_22.flag_init_start === 1) {
                     $sb_22.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_22.status_banner = txtSensorError;
@@ -5193,7 +5237,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_23.maintenance_mode) {
             var isSensorError_23 = ($sb23.temp >= tempErrorLimit);
             
-            if ($sb23.run_stop == 1) { // STOPPED
+            if ($sb23.run_stop === 1) { // STOPPED
                 $sb_23.status_pemanasan = false;
                 $sb_23.status_pemasakan = false;
                 $sb_23.flag_init_start = 0;
@@ -5295,7 +5339,8 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.tampil_pemanasan = formatTime($sb_23.total_detik_pemanasan);
                             
                             $sb_23.tampil_durasi_aktual = formatTime($sb_23.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak) < 0 ? 0 : scale_up_23;
+                            var scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak;
+                            var detik_up_heat = scale_up_23 < 0 ? 0 : scale_up_23;
                             $sb_23.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -5325,7 +5370,8 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_23.tampil_durasi_aktual = formatTime($sb_23.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak) < 0 ? 0 : scale_up_23;
+                            var scale_up_23 = ($sb_23.target_menit * 60) - $sb_23.sisa_detik_masak;
+                            var detik_up_boil = scale_up_23 < 0 ? 0 : scale_up_23;
                             $sb_23.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_23.sisa_detik_masak <= 0) {
@@ -5356,7 +5402,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_23) {
                 $sb_23.sensor_error = true;
-                if ($sb23.run_stop == 0 && $sb_23.flag_init_start === 1) {
+                if ($sb23.run_stop === 0 && $sb_23.flag_init_start === 1) {
                     $sb_23.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_23.status_banner = txtSensorError;
@@ -5424,7 +5470,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_24.maintenance_mode) {
             var isSensorError_24 = ($sb24.temp >= tempErrorLimit);
             
-            if ($sb24.run_stop == 1) { // STOPPED
+            if ($sb24.run_stop === 1) { // STOPPED
                 $sb_24.status_pemanasan = false;
                 $sb_24.status_pemasakan = false;
                 $sb_24.flag_init_start = 0;
@@ -5526,7 +5572,8 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.tampil_pemanasan = formatTime($sb_24.total_detik_pemanasan);
                             
                             $sb_24.tampil_durasi_aktual = formatTime($sb_24.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak) < 0 ? 0 : scale_up_24;
+                            var scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak;
+                            var detik_up_heat = scale_up_24 < 0 ? 0 : scale_up_24;
                             $sb_24.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -5556,7 +5603,8 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_24.tampil_durasi_aktual = formatTime($sb_24.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak) < 0 ? 0 : scale_up_24;
+                            var scale_up_24 = ($sb_24.target_menit * 60) - $sb_24.sisa_detik_masak;
+                            var detik_up_boil = scale_up_24 < 0 ? 0 : scale_up_24;
                             $sb_24.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_24.sisa_detik_masak <= 0) {
@@ -5587,7 +5635,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_24) {
                 $sb_24.sensor_error = true;
-                if ($sb24.run_stop == 0 && $sb_24.flag_init_start === 1) {
+                if ($sb24.run_stop === 0 && $sb_24.flag_init_start === 1) {
                     $sb_24.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_24.status_banner = txtSensorError;
@@ -5655,7 +5703,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_25.maintenance_mode) {
             var isSensorError_25 = ($sb25.temp >= tempErrorLimit);
             
-            if ($sb25.run_stop == 1) { // STOPPED
+            if ($sb25.run_stop === 1) { // STOPPED
                 $sb_25.status_pemanasan = false;
                 $sb_25.status_pemasakan = false;
                 $sb_25.flag_init_start = 0;
@@ -5757,7 +5805,8 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.tampil_pemanasan = formatTime($sb_25.total_detik_pemanasan);
                             
                             $sb_25.tampil_durasi_aktual = formatTime($sb_25.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak) < 0 ? 0 : scale_up_25;
+                            var scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak;
+                            var detik_up_heat = scale_up_25 < 0 ? 0 : scale_up_25;
                             $sb_25.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -5787,7 +5836,8 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_25.tampil_durasi_aktual = formatTime($sb_25.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak) < 0 ? 0 : scale_up_25;
+                            var scale_up_25 = ($sb_25.target_menit * 60) - $sb_25.sisa_detik_masak;
+                            var detik_up_boil = scale_up_25 < 0 ? 0 : scale_up_25;
                             $sb_25.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_25.sisa_detik_masak <= 0) {
@@ -5818,7 +5868,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_25) {
                 $sb_25.sensor_error = true;
-                if ($sb25.run_stop == 0 && $sb_25.flag_init_start === 1) {
+                if ($sb25.run_stop === 0 && $sb_25.flag_init_start === 1) {
                     $sb_25.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_25.status_banner = txtSensorError;
@@ -5886,7 +5936,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_26.maintenance_mode) {
             var isSensorError_26 = ($sb26.temp >= tempErrorLimit);
             
-            if ($sb26.run_stop == 1) { // STOPPED
+            if ($sb26.run_stop === 1) { // STOPPED
                 $sb_26.status_pemanasan = false;
                 $sb_26.status_pemasakan = false;
                 $sb_26.flag_init_start = 0;
@@ -5988,7 +6038,8 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.tampil_pemanasan = formatTime($sb_26.total_detik_pemanasan);
                             
                             $sb_26.tampil_durasi_aktual = formatTime($sb_26.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak) < 0 ? 0 : scale_up_26;
+                            var scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak;
+                            var detik_up_heat = scale_up_26 < 0 ? 0 : scale_up_26;
                             $sb_26.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -6018,7 +6069,8 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_26.tampil_durasi_aktual = formatTime($sb_26.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak) < 0 ? 0 : scale_up_26;
+                            var scale_up_26 = ($sb_26.target_menit * 60) - $sb_26.sisa_detik_masak;
+                            var detik_up_boil = scale_up_26 < 0 ? 0 : scale_up_26;
                             $sb_26.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_26.sisa_detik_masak <= 0) {
@@ -6049,7 +6101,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_26) {
                 $sb_26.sensor_error = true;
-                if ($sb26.run_stop == 0 && $sb_26.flag_init_start === 1) {
+                if ($sb26.run_stop === 0 && $sb_26.flag_init_start === 1) {
                     $sb_26.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_26.status_banner = txtSensorError;
@@ -6117,7 +6169,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_27.maintenance_mode) {
             var isSensorError_27 = ($sb27.temp >= tempErrorLimit);
             
-            if ($sb27.run_stop == 1) { // STOPPED
+            if ($sb27.run_stop === 1) { // STOPPED
                 $sb_27.status_pemanasan = false;
                 $sb_27.status_pemasakan = false;
                 $sb_27.flag_init_start = 0;
@@ -6219,7 +6271,8 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.tampil_pemanasan = formatTime($sb_27.total_detik_pemanasan);
                             
                             $sb_27.tampil_durasi_aktual = formatTime($sb_27.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak) < 0 ? 0 : scale_up_27;
+                            var scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak;
+                            var detik_up_heat = scale_up_27 < 0 ? 0 : scale_up_27;
                             $sb_27.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -6249,7 +6302,8 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_27.tampil_durasi_aktual = formatTime($sb_27.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak) < 0 ? 0 : scale_up_27;
+                            var scale_up_27 = ($sb_27.target_menit * 60) - $sb_27.sisa_detik_masak;
+                            var detik_up_boil = scale_up_27 < 0 ? 0 : scale_up_27;
                             $sb_27.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_27.sisa_detik_masak <= 0) {
@@ -6280,7 +6334,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_27) {
                 $sb_27.sensor_error = true;
-                if ($sb27.run_stop == 0 && $sb_27.flag_init_start === 1) {
+                if ($sb27.run_stop === 0 && $sb_27.flag_init_start === 1) {
                     $sb_27.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_27.status_banner = txtSensorError;
@@ -6348,7 +6402,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_28.maintenance_mode) {
             var isSensorError_28 = ($sb28.temp >= tempErrorLimit);
             
-            if ($sb28.run_stop == 1) { // STOPPED
+            if ($sb28.run_stop === 1) { // STOPPED
                 $sb_28.status_pemanasan = false;
                 $sb_28.status_pemasakan = false;
                 $sb_28.flag_init_start = 0;
@@ -6450,7 +6504,8 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.tampil_pemanasan = formatTime($sb_28.total_detik_pemanasan);
                             
                             $sb_28.tampil_durasi_aktual = formatTime($sb_28.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak) < 0 ? 0 : scale_up_28;
+                            var scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak;
+                            var detik_up_heat = scale_up_28 < 0 ? 0 : scale_up_28;
                             $sb_28.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -6480,7 +6535,8 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_28.tampil_durasi_aktual = formatTime($sb_28.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak) < 0 ? 0 : scale_up_28;
+                            var scale_up_28 = ($sb_28.target_menit * 60) - $sb_28.sisa_detik_masak;
+                            var detik_up_boil = scale_up_28 < 0 ? 0 : scale_up_28;
                             $sb_28.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_28.sisa_detik_masak <= 0) {
@@ -6511,7 +6567,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_28) {
                 $sb_28.sensor_error = true;
-                if ($sb28.run_stop == 0 && $sb_28.flag_init_start === 1) {
+                if ($sb28.run_stop === 0 && $sb_28.flag_init_start === 1) {
                     $sb_28.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_28.status_banner = txtSensorError;
@@ -6579,7 +6635,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_29.maintenance_mode) {
             var isSensorError_29 = ($sb29.temp >= tempErrorLimit);
             
-            if ($sb29.run_stop == 1) { // STOPPED
+            if ($sb29.run_stop === 1) { // STOPPED
                 $sb_29.status_pemanasan = false;
                 $sb_29.status_pemasakan = false;
                 $sb_29.flag_init_start = 0;
@@ -6681,7 +6737,8 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.tampil_pemanasan = formatTime($sb_29.total_detik_pemanasan);
                             
                             $sb_29.tampil_durasi_aktual = formatTime($sb_29.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak) < 0 ? 0 : scale_up_29;
+                            var scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak;
+                            var detik_up_heat = scale_up_29 < 0 ? 0 : scale_up_29;
                             $sb_29.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -6711,7 +6768,8 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_29.tampil_durasi_aktual = formatTime($sb_29.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak) < 0 ? 0 : scale_up_29;
+                            var scale_up_29 = ($sb_29.target_menit * 60) - $sb_29.sisa_detik_masak;
+                            var detik_up_boil = scale_up_29 < 0 ? 0 : scale_up_29;
                             $sb_29.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_29.sisa_detik_masak <= 0) {
@@ -6742,7 +6800,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_29) {
                 $sb_29.sensor_error = true;
-                if ($sb29.run_stop == 0 && $sb_29.flag_init_start === 1) {
+                if ($sb29.run_stop === 0 && $sb_29.flag_init_start === 1) {
                     $sb_29.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_29.status_banner = txtSensorError;
@@ -6810,7 +6868,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_30.maintenance_mode) {
             var isSensorError_30 = ($sb30.temp >= tempErrorLimit);
             
-            if ($sb30.run_stop == 1) { // STOPPED
+            if ($sb30.run_stop === 1) { // STOPPED
                 $sb_30.status_pemanasan = false;
                 $sb_30.status_pemasakan = false;
                 $sb_30.flag_init_start = 0;
@@ -6912,7 +6970,8 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.tampil_pemanasan = formatTime($sb_30.total_detik_pemanasan);
                             
                             $sb_30.tampil_durasi_aktual = formatTime($sb_30.sisa_detik_masak);
-                            var detik_up_heat = (scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak) < 0 ? 0 : scale_up_30;
+                            var scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak;
+                            var detik_up_heat = scale_up_30 < 0 ? 0 : scale_up_30;
                             $sb_30.durasi_aktual_up = formatTime(detik_up_heat);
                             
                             // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
@@ -6942,7 +7001,8 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             }
                             
                             $sb_30.tampil_durasi_aktual = formatTime($sb_30.sisa_detik_masak);
-                            var detik_up_boil = (scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak) < 0 ? 0 : scale_up_30;
+                            var scale_up_30 = ($sb_30.target_menit * 60) - $sb_30.sisa_detik_masak;
+                            var detik_up_boil = scale_up_30 < 0 ? 0 : scale_up_30;
                             $sb_30.durasi_aktual_up = formatTime(detik_up_boil);
                             
                             if ($sb_30.sisa_detik_masak <= 0) {
@@ -6973,7 +7033,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_30) {
                 $sb_30.sensor_error = true;
-                if ($sb30.run_stop == 0 && $sb_30.flag_init_start === 1) {
+                if ($sb30.run_stop === 0 && $sb_30.flag_init_start === 1) {
                     $sb_30.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_30.status_banner = txtSensorError;
