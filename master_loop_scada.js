@@ -101,19 +101,18 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_1.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_1.mode_preheat && !$sb_1.status_resep && $sb_1.target_menit === 0 && $sb_1.sisa_detik_masak === 0 && !$sb_1.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_1.mode_preheat && !$sb_1.status_resep && $sb_1.target_menit === 0 && $sb_1.sisa_detik_masak === 0 && !$sb_1.status_selesai && $sb_1.total_detik_pemanasan === 0) {
                     $sb_1.status_kosong = true;
                 }
                 
                 if ($sb_1.status_kosong) {
                     $sb_1.status_banner = txtKosong;
                 } else if ($sb_1.status_selesai) {
-                    if ($sb_1.target_menit === 0) {
-                        $sb_1.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_1.status_banner = txtSelesai;
-                    }
+                    $sb_1.status_banner = txtSelesai;
+                } else if (!$sb_1.status_kosong && !$sb_1.status_selesai && !$sb_1.mode_preheat && !$sb_1.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_1.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_1.mode_preheat) {
                         if ($sb_1.total_detik_pemanasan === 0) {
@@ -162,7 +161,6 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.status_pemanasan = false;
                             $sb_1.suhu_akhir = $sb1.temp;
                             $sb_1.flag_init_start = 0;
-                            $sb_1.status_selesai = true;
                             $sb_1.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -186,14 +184,26 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.adjust_menit = 0;
                         }
                         
-                        if ($sb1.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb1.temp < 1000) { // Heating (< 100 C)
                             $sb_1.status_pemanasan = true;
                             $sb_1.status_pemasakan = false;
                             $sb_1.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_1.total_detik_pemanasan = $sb_1.total_detik_pemanasan + 1;
                             $sb_1.tampil_pemanasan = formatTime($sb_1.total_detik_pemanasan);
                             $sb_1.tampil_durasi_aktual = formatTime($sb_1.sisa_detik_masak);
-                            $sb_1.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_1.flag_init_masak === 1) {
+                                $sb_1.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_1.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 1, // Hanya nomor Steambox saja
+                                    sisa: $sb_1.sisa_detik_masak,
+                                    tampilSisa: $sb_1.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_1.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_1.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_1.status_pemanasan = false;
                             $sb_1.status_pemasakan = true;
@@ -309,19 +319,18 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_2.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_2.mode_preheat && !$sb_2.status_resep && $sb_2.target_menit === 0 && $sb_2.sisa_detik_masak === 0 && !$sb_2.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_2.mode_preheat && !$sb_2.status_resep && $sb_2.target_menit === 0 && $sb_2.sisa_detik_masak === 0 && !$sb_2.status_selesai && $sb_2.total_detik_pemanasan === 0) {
                     $sb_2.status_kosong = true;
                 }
                 
                 if ($sb_2.status_kosong) {
                     $sb_2.status_banner = txtKosong;
                 } else if ($sb_2.status_selesai) {
-                    if ($sb_2.target_menit === 0) {
-                        $sb_2.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_2.status_banner = txtSelesai;
-                    }
+                    $sb_2.status_banner = txtSelesai;
+                } else if (!$sb_2.status_kosong && !$sb_2.status_selesai && !$sb_2.mode_preheat && !$sb_2.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_2.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_2.mode_preheat) {
                         if ($sb_2.total_detik_pemanasan === 0) {
@@ -370,7 +379,6 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.status_pemanasan = false;
                             $sb_2.suhu_akhir = $sb2.temp;
                             $sb_2.flag_init_start = 0;
-                            $sb_2.status_selesai = true;
                             $sb_2.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -394,14 +402,26 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.adjust_menit = 0;
                         }
                         
-                        if ($sb2.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb2.temp < 1000) { // Heating (< 100 C)
                             $sb_2.status_pemanasan = true;
                             $sb_2.status_pemasakan = false;
                             $sb_2.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_2.total_detik_pemanasan = $sb_2.total_detik_pemanasan + 1;
                             $sb_2.tampil_pemanasan = formatTime($sb_2.total_detik_pemanasan);
                             $sb_2.tampil_durasi_aktual = formatTime($sb_2.sisa_detik_masak);
-                            $sb_2.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_2.flag_init_masak === 1) {
+                                $sb_2.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_2.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 2, // Hanya nomor Steambox saja
+                                    sisa: $sb_2.sisa_detik_masak,
+                                    tampilSisa: $sb_2.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_2.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_2.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_2.status_pemanasan = false;
                             $sb_2.status_pemasakan = true;
@@ -517,19 +537,18 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_3.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_3.mode_preheat && !$sb_3.status_resep && $sb_3.target_menit === 0 && $sb_3.sisa_detik_masak === 0 && !$sb_3.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_3.mode_preheat && !$sb_3.status_resep && $sb_3.target_menit === 0 && $sb_3.sisa_detik_masak === 0 && !$sb_3.status_selesai && $sb_3.total_detik_pemanasan === 0) {
                     $sb_3.status_kosong = true;
                 }
                 
                 if ($sb_3.status_kosong) {
                     $sb_3.status_banner = txtKosong;
                 } else if ($sb_3.status_selesai) {
-                    if ($sb_3.target_menit === 0) {
-                        $sb_3.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_3.status_banner = txtSelesai;
-                    }
+                    $sb_3.status_banner = txtSelesai;
+                } else if (!$sb_3.status_kosong && !$sb_3.status_selesai && !$sb_3.mode_preheat && !$sb_3.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_3.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_3.mode_preheat) {
                         if ($sb_3.total_detik_pemanasan === 0) {
@@ -578,7 +597,6 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.status_pemanasan = false;
                             $sb_3.suhu_akhir = $sb3.temp;
                             $sb_3.flag_init_start = 0;
-                            $sb_3.status_selesai = true;
                             $sb_3.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -602,14 +620,26 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.adjust_menit = 0;
                         }
                         
-                        if ($sb3.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb3.temp < 1000) { // Heating (< 100 C)
                             $sb_3.status_pemanasan = true;
                             $sb_3.status_pemasakan = false;
                             $sb_3.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_3.total_detik_pemanasan = $sb_3.total_detik_pemanasan + 1;
                             $sb_3.tampil_pemanasan = formatTime($sb_3.total_detik_pemanasan);
                             $sb_3.tampil_durasi_aktual = formatTime($sb_3.sisa_detik_masak);
-                            $sb_3.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_3.flag_init_masak === 1) {
+                                $sb_3.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_3.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 3, // Hanya nomor Steambox saja
+                                    sisa: $sb_3.sisa_detik_masak,
+                                    tampilSisa: $sb_3.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_3.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_3.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_3.status_pemanasan = false;
                             $sb_3.status_pemasakan = true;
@@ -725,19 +755,18 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_4.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_4.mode_preheat && !$sb_4.status_resep && $sb_4.target_menit === 0 && $sb_4.sisa_detik_masak === 0 && !$sb_4.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_4.mode_preheat && !$sb_4.status_resep && $sb_4.target_menit === 0 && $sb_4.sisa_detik_masak === 0 && !$sb_4.status_selesai && $sb_4.total_detik_pemanasan === 0) {
                     $sb_4.status_kosong = true;
                 }
                 
                 if ($sb_4.status_kosong) {
                     $sb_4.status_banner = txtKosong;
                 } else if ($sb_4.status_selesai) {
-                    if ($sb_4.target_menit === 0) {
-                        $sb_4.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_4.status_banner = txtSelesai;
-                    }
+                    $sb_4.status_banner = txtSelesai;
+                } else if (!$sb_4.status_kosong && !$sb_4.status_selesai && !$sb_4.mode_preheat && !$sb_4.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_4.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_4.mode_preheat) {
                         if ($sb_4.total_detik_pemanasan === 0) {
@@ -786,7 +815,6 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.status_pemanasan = false;
                             $sb_4.suhu_akhir = $sb4.temp;
                             $sb_4.flag_init_start = 0;
-                            $sb_4.status_selesai = true;
                             $sb_4.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -810,14 +838,26 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.adjust_menit = 0;
                         }
                         
-                        if ($sb4.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb4.temp < 1000) { // Heating (< 100 C)
                             $sb_4.status_pemanasan = true;
                             $sb_4.status_pemasakan = false;
                             $sb_4.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_4.total_detik_pemanasan = $sb_4.total_detik_pemanasan + 1;
                             $sb_4.tampil_pemanasan = formatTime($sb_4.total_detik_pemanasan);
                             $sb_4.tampil_durasi_aktual = formatTime($sb_4.sisa_detik_masak);
-                            $sb_4.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_4.flag_init_masak === 1) {
+                                $sb_4.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_4.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 4, // Hanya nomor Steambox saja
+                                    sisa: $sb_4.sisa_detik_masak,
+                                    tampilSisa: $sb_4.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_4.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_4.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_4.status_pemanasan = false;
                             $sb_4.status_pemasakan = true;
@@ -933,19 +973,18 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_5.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_5.mode_preheat && !$sb_5.status_resep && $sb_5.target_menit === 0 && $sb_5.sisa_detik_masak === 0 && !$sb_5.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_5.mode_preheat && !$sb_5.status_resep && $sb_5.target_menit === 0 && $sb_5.sisa_detik_masak === 0 && !$sb_5.status_selesai && $sb_5.total_detik_pemanasan === 0) {
                     $sb_5.status_kosong = true;
                 }
                 
                 if ($sb_5.status_kosong) {
                     $sb_5.status_banner = txtKosong;
                 } else if ($sb_5.status_selesai) {
-                    if ($sb_5.target_menit === 0) {
-                        $sb_5.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_5.status_banner = txtSelesai;
-                    }
+                    $sb_5.status_banner = txtSelesai;
+                } else if (!$sb_5.status_kosong && !$sb_5.status_selesai && !$sb_5.mode_preheat && !$sb_5.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_5.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_5.mode_preheat) {
                         if ($sb_5.total_detik_pemanasan === 0) {
@@ -994,7 +1033,6 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.status_pemanasan = false;
                             $sb_5.suhu_akhir = $sb5.temp;
                             $sb_5.flag_init_start = 0;
-                            $sb_5.status_selesai = true;
                             $sb_5.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -1018,14 +1056,26 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.adjust_menit = 0;
                         }
                         
-                        if ($sb5.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb5.temp < 1000) { // Heating (< 100 C)
                             $sb_5.status_pemanasan = true;
                             $sb_5.status_pemasakan = false;
                             $sb_5.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_5.total_detik_pemanasan = $sb_5.total_detik_pemanasan + 1;
                             $sb_5.tampil_pemanasan = formatTime($sb_5.total_detik_pemanasan);
                             $sb_5.tampil_durasi_aktual = formatTime($sb_5.sisa_detik_masak);
-                            $sb_5.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_5.flag_init_masak === 1) {
+                                $sb_5.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_5.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 5, // Hanya nomor Steambox saja
+                                    sisa: $sb_5.sisa_detik_masak,
+                                    tampilSisa: $sb_5.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_5.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_5.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_5.status_pemanasan = false;
                             $sb_5.status_pemasakan = true;
@@ -1141,19 +1191,18 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_6.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_6.mode_preheat && !$sb_6.status_resep && $sb_6.target_menit === 0 && $sb_6.sisa_detik_masak === 0 && !$sb_6.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_6.mode_preheat && !$sb_6.status_resep && $sb_6.target_menit === 0 && $sb_6.sisa_detik_masak === 0 && !$sb_6.status_selesai && $sb_6.total_detik_pemanasan === 0) {
                     $sb_6.status_kosong = true;
                 }
                 
                 if ($sb_6.status_kosong) {
                     $sb_6.status_banner = txtKosong;
                 } else if ($sb_6.status_selesai) {
-                    if ($sb_6.target_menit === 0) {
-                        $sb_6.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_6.status_banner = txtSelesai;
-                    }
+                    $sb_6.status_banner = txtSelesai;
+                } else if (!$sb_6.status_kosong && !$sb_6.status_selesai && !$sb_6.mode_preheat && !$sb_6.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_6.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_6.mode_preheat) {
                         if ($sb_6.total_detik_pemanasan === 0) {
@@ -1202,7 +1251,6 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.status_pemanasan = false;
                             $sb_6.suhu_akhir = $sb6.temp;
                             $sb_6.flag_init_start = 0;
-                            $sb_6.status_selesai = true;
                             $sb_6.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -1226,14 +1274,26 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.adjust_menit = 0;
                         }
                         
-                        if ($sb6.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb6.temp < 1000) { // Heating (< 100 C)
                             $sb_6.status_pemanasan = true;
                             $sb_6.status_pemasakan = false;
                             $sb_6.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_6.total_detik_pemanasan = $sb_6.total_detik_pemanasan + 1;
                             $sb_6.tampil_pemanasan = formatTime($sb_6.total_detik_pemanasan);
                             $sb_6.tampil_durasi_aktual = formatTime($sb_6.sisa_detik_masak);
-                            $sb_6.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_6.flag_init_masak === 1) {
+                                $sb_6.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_6.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 6, // Hanya nomor Steambox saja
+                                    sisa: $sb_6.sisa_detik_masak,
+                                    tampilSisa: $sb_6.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_6.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_6.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_6.status_pemanasan = false;
                             $sb_6.status_pemasakan = true;
@@ -1349,19 +1409,18 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_7.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_7.mode_preheat && !$sb_7.status_resep && $sb_7.target_menit === 0 && $sb_7.sisa_detik_masak === 0 && !$sb_7.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_7.mode_preheat && !$sb_7.status_resep && $sb_7.target_menit === 0 && $sb_7.sisa_detik_masak === 0 && !$sb_7.status_selesai && $sb_7.total_detik_pemanasan === 0) {
                     $sb_7.status_kosong = true;
                 }
                 
                 if ($sb_7.status_kosong) {
                     $sb_7.status_banner = txtKosong;
                 } else if ($sb_7.status_selesai) {
-                    if ($sb_7.target_menit === 0) {
-                        $sb_7.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_7.status_banner = txtSelesai;
-                    }
+                    $sb_7.status_banner = txtSelesai;
+                } else if (!$sb_7.status_kosong && !$sb_7.status_selesai && !$sb_7.mode_preheat && !$sb_7.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_7.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_7.mode_preheat) {
                         if ($sb_7.total_detik_pemanasan === 0) {
@@ -1410,7 +1469,6 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.status_pemanasan = false;
                             $sb_7.suhu_akhir = $sb7.temp;
                             $sb_7.flag_init_start = 0;
-                            $sb_7.status_selesai = true;
                             $sb_7.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -1434,14 +1492,26 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.adjust_menit = 0;
                         }
                         
-                        if ($sb7.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb7.temp < 1000) { // Heating (< 100 C)
                             $sb_7.status_pemanasan = true;
                             $sb_7.status_pemasakan = false;
                             $sb_7.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_7.total_detik_pemanasan = $sb_7.total_detik_pemanasan + 1;
                             $sb_7.tampil_pemanasan = formatTime($sb_7.total_detik_pemanasan);
                             $sb_7.tampil_durasi_aktual = formatTime($sb_7.sisa_detik_masak);
-                            $sb_7.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_7.flag_init_masak === 1) {
+                                $sb_7.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_7.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 7, // Hanya nomor Steambox saja
+                                    sisa: $sb_7.sisa_detik_masak,
+                                    tampilSisa: $sb_7.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_7.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_7.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_7.status_pemanasan = false;
                             $sb_7.status_pemasakan = true;
@@ -1557,19 +1627,18 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_8.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_8.mode_preheat && !$sb_8.status_resep && $sb_8.target_menit === 0 && $sb_8.sisa_detik_masak === 0 && !$sb_8.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_8.mode_preheat && !$sb_8.status_resep && $sb_8.target_menit === 0 && $sb_8.sisa_detik_masak === 0 && !$sb_8.status_selesai && $sb_8.total_detik_pemanasan === 0) {
                     $sb_8.status_kosong = true;
                 }
                 
                 if ($sb_8.status_kosong) {
                     $sb_8.status_banner = txtKosong;
                 } else if ($sb_8.status_selesai) {
-                    if ($sb_8.target_menit === 0) {
-                        $sb_8.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_8.status_banner = txtSelesai;
-                    }
+                    $sb_8.status_banner = txtSelesai;
+                } else if (!$sb_8.status_kosong && !$sb_8.status_selesai && !$sb_8.mode_preheat && !$sb_8.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_8.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_8.mode_preheat) {
                         if ($sb_8.total_detik_pemanasan === 0) {
@@ -1618,7 +1687,6 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.status_pemanasan = false;
                             $sb_8.suhu_akhir = $sb8.temp;
                             $sb_8.flag_init_start = 0;
-                            $sb_8.status_selesai = true;
                             $sb_8.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -1642,14 +1710,26 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.adjust_menit = 0;
                         }
                         
-                        if ($sb8.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb8.temp < 1000) { // Heating (< 100 C)
                             $sb_8.status_pemanasan = true;
                             $sb_8.status_pemasakan = false;
                             $sb_8.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_8.total_detik_pemanasan = $sb_8.total_detik_pemanasan + 1;
                             $sb_8.tampil_pemanasan = formatTime($sb_8.total_detik_pemanasan);
                             $sb_8.tampil_durasi_aktual = formatTime($sb_8.sisa_detik_masak);
-                            $sb_8.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_8.flag_init_masak === 1) {
+                                $sb_8.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_8.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 8, // Hanya nomor Steambox saja
+                                    sisa: $sb_8.sisa_detik_masak,
+                                    tampilSisa: $sb_8.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_8.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_8.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_8.status_pemanasan = false;
                             $sb_8.status_pemasakan = true;
@@ -1765,19 +1845,18 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_9.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_9.mode_preheat && !$sb_9.status_resep && $sb_9.target_menit === 0 && $sb_9.sisa_detik_masak === 0 && !$sb_9.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_9.mode_preheat && !$sb_9.status_resep && $sb_9.target_menit === 0 && $sb_9.sisa_detik_masak === 0 && !$sb_9.status_selesai && $sb_9.total_detik_pemanasan === 0) {
                     $sb_9.status_kosong = true;
                 }
                 
                 if ($sb_9.status_kosong) {
                     $sb_9.status_banner = txtKosong;
                 } else if ($sb_9.status_selesai) {
-                    if ($sb_9.target_menit === 0) {
-                        $sb_9.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_9.status_banner = txtSelesai;
-                    }
+                    $sb_9.status_banner = txtSelesai;
+                } else if (!$sb_9.status_kosong && !$sb_9.status_selesai && !$sb_9.mode_preheat && !$sb_9.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_9.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_9.mode_preheat) {
                         if ($sb_9.total_detik_pemanasan === 0) {
@@ -1826,7 +1905,6 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.status_pemanasan = false;
                             $sb_9.suhu_akhir = $sb9.temp;
                             $sb_9.flag_init_start = 0;
-                            $sb_9.status_selesai = true;
                             $sb_9.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -1850,14 +1928,26 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.adjust_menit = 0;
                         }
                         
-                        if ($sb9.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb9.temp < 1000) { // Heating (< 100 C)
                             $sb_9.status_pemanasan = true;
                             $sb_9.status_pemasakan = false;
                             $sb_9.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_9.total_detik_pemanasan = $sb_9.total_detik_pemanasan + 1;
                             $sb_9.tampil_pemanasan = formatTime($sb_9.total_detik_pemanasan);
                             $sb_9.tampil_durasi_aktual = formatTime($sb_9.sisa_detik_masak);
-                            $sb_9.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_9.flag_init_masak === 1) {
+                                $sb_9.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_9.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 9, // Hanya nomor Steambox saja
+                                    sisa: $sb_9.sisa_detik_masak,
+                                    tampilSisa: $sb_9.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_9.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_9.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_9.status_pemanasan = false;
                             $sb_9.status_pemasakan = true;
@@ -1973,19 +2063,18 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_10.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_10.mode_preheat && !$sb_10.status_resep && $sb_10.target_menit === 0 && $sb_10.sisa_detik_masak === 0 && !$sb_10.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_10.mode_preheat && !$sb_10.status_resep && $sb_10.target_menit === 0 && $sb_10.sisa_detik_masak === 0 && !$sb_10.status_selesai && $sb_10.total_detik_pemanasan === 0) {
                     $sb_10.status_kosong = true;
                 }
                 
                 if ($sb_10.status_kosong) {
                     $sb_10.status_banner = txtKosong;
                 } else if ($sb_10.status_selesai) {
-                    if ($sb_10.target_menit === 0) {
-                        $sb_10.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_10.status_banner = txtSelesai;
-                    }
+                    $sb_10.status_banner = txtSelesai;
+                } else if (!$sb_10.status_kosong && !$sb_10.status_selesai && !$sb_10.mode_preheat && !$sb_10.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_10.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_10.mode_preheat) {
                         if ($sb_10.total_detik_pemanasan === 0) {
@@ -2034,7 +2123,6 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.status_pemanasan = false;
                             $sb_10.suhu_akhir = $sb10.temp;
                             $sb_10.flag_init_start = 0;
-                            $sb_10.status_selesai = true;
                             $sb_10.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -2058,14 +2146,26 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.adjust_menit = 0;
                         }
                         
-                        if ($sb10.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb10.temp < 1000) { // Heating (< 100 C)
                             $sb_10.status_pemanasan = true;
                             $sb_10.status_pemasakan = false;
                             $sb_10.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_10.total_detik_pemanasan = $sb_10.total_detik_pemanasan + 1;
                             $sb_10.tampil_pemanasan = formatTime($sb_10.total_detik_pemanasan);
                             $sb_10.tampil_durasi_aktual = formatTime($sb_10.sisa_detik_masak);
-                            $sb_10.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_10.flag_init_masak === 1) {
+                                $sb_10.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_10.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 10, // Hanya nomor Steambox saja
+                                    sisa: $sb_10.sisa_detik_masak,
+                                    tampilSisa: $sb_10.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_10.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_10.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_10.status_pemanasan = false;
                             $sb_10.status_pemasakan = true;
@@ -2181,19 +2281,18 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_11.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_11.mode_preheat && !$sb_11.status_resep && $sb_11.target_menit === 0 && $sb_11.sisa_detik_masak === 0 && !$sb_11.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_11.mode_preheat && !$sb_11.status_resep && $sb_11.target_menit === 0 && $sb_11.sisa_detik_masak === 0 && !$sb_11.status_selesai && $sb_11.total_detik_pemanasan === 0) {
                     $sb_11.status_kosong = true;
                 }
                 
                 if ($sb_11.status_kosong) {
                     $sb_11.status_banner = txtKosong;
                 } else if ($sb_11.status_selesai) {
-                    if ($sb_11.target_menit === 0) {
-                        $sb_11.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_11.status_banner = txtSelesai;
-                    }
+                    $sb_11.status_banner = txtSelesai;
+                } else if (!$sb_11.status_kosong && !$sb_11.status_selesai && !$sb_11.mode_preheat && !$sb_11.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_11.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_11.mode_preheat) {
                         if ($sb_11.total_detik_pemanasan === 0) {
@@ -2242,7 +2341,6 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.status_pemanasan = false;
                             $sb_11.suhu_akhir = $sb11.temp;
                             $sb_11.flag_init_start = 0;
-                            $sb_11.status_selesai = true;
                             $sb_11.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -2266,14 +2364,26 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.adjust_menit = 0;
                         }
                         
-                        if ($sb11.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb11.temp < 1000) { // Heating (< 100 C)
                             $sb_11.status_pemanasan = true;
                             $sb_11.status_pemasakan = false;
                             $sb_11.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_11.total_detik_pemanasan = $sb_11.total_detik_pemanasan + 1;
                             $sb_11.tampil_pemanasan = formatTime($sb_11.total_detik_pemanasan);
                             $sb_11.tampil_durasi_aktual = formatTime($sb_11.sisa_detik_masak);
-                            $sb_11.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_11.flag_init_masak === 1) {
+                                $sb_11.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_11.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 11, // Hanya nomor Steambox saja
+                                    sisa: $sb_11.sisa_detik_masak,
+                                    tampilSisa: $sb_11.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_11.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_11.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_11.status_pemanasan = false;
                             $sb_11.status_pemasakan = true;
@@ -2389,19 +2499,18 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_12.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_12.mode_preheat && !$sb_12.status_resep && $sb_12.target_menit === 0 && $sb_12.sisa_detik_masak === 0 && !$sb_12.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_12.mode_preheat && !$sb_12.status_resep && $sb_12.target_menit === 0 && $sb_12.sisa_detik_masak === 0 && !$sb_12.status_selesai && $sb_12.total_detik_pemanasan === 0) {
                     $sb_12.status_kosong = true;
                 }
                 
                 if ($sb_12.status_kosong) {
                     $sb_12.status_banner = txtKosong;
                 } else if ($sb_12.status_selesai) {
-                    if ($sb_12.target_menit === 0) {
-                        $sb_12.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_12.status_banner = txtSelesai;
-                    }
+                    $sb_12.status_banner = txtSelesai;
+                } else if (!$sb_12.status_kosong && !$sb_12.status_selesai && !$sb_12.mode_preheat && !$sb_12.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_12.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_12.mode_preheat) {
                         if ($sb_12.total_detik_pemanasan === 0) {
@@ -2450,7 +2559,6 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.status_pemanasan = false;
                             $sb_12.suhu_akhir = $sb12.temp;
                             $sb_12.flag_init_start = 0;
-                            $sb_12.status_selesai = true;
                             $sb_12.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -2474,14 +2582,26 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.adjust_menit = 0;
                         }
                         
-                        if ($sb12.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb12.temp < 1000) { // Heating (< 100 C)
                             $sb_12.status_pemanasan = true;
                             $sb_12.status_pemasakan = false;
                             $sb_12.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_12.total_detik_pemanasan = $sb_12.total_detik_pemanasan + 1;
                             $sb_12.tampil_pemanasan = formatTime($sb_12.total_detik_pemanasan);
                             $sb_12.tampil_durasi_aktual = formatTime($sb_12.sisa_detik_masak);
-                            $sb_12.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_12.flag_init_masak === 1) {
+                                $sb_12.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_12.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 12, // Hanya nomor Steambox saja
+                                    sisa: $sb_12.sisa_detik_masak,
+                                    tampilSisa: $sb_12.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_12.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_12.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_12.status_pemanasan = false;
                             $sb_12.status_pemasakan = true;
@@ -2597,19 +2717,18 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_13.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_13.mode_preheat && !$sb_13.status_resep && $sb_13.target_menit === 0 && $sb_13.sisa_detik_masak === 0 && !$sb_13.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_13.mode_preheat && !$sb_13.status_resep && $sb_13.target_menit === 0 && $sb_13.sisa_detik_masak === 0 && !$sb_13.status_selesai && $sb_13.total_detik_pemanasan === 0) {
                     $sb_13.status_kosong = true;
                 }
                 
                 if ($sb_13.status_kosong) {
                     $sb_13.status_banner = txtKosong;
                 } else if ($sb_13.status_selesai) {
-                    if ($sb_13.target_menit === 0) {
-                        $sb_13.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_13.status_banner = txtSelesai;
-                    }
+                    $sb_13.status_banner = txtSelesai;
+                } else if (!$sb_13.status_kosong && !$sb_13.status_selesai && !$sb_13.mode_preheat && !$sb_13.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_13.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_13.mode_preheat) {
                         if ($sb_13.total_detik_pemanasan === 0) {
@@ -2658,7 +2777,6 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.status_pemanasan = false;
                             $sb_13.suhu_akhir = $sb13.temp;
                             $sb_13.flag_init_start = 0;
-                            $sb_13.status_selesai = true;
                             $sb_13.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -2682,14 +2800,26 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.adjust_menit = 0;
                         }
                         
-                        if ($sb13.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb13.temp < 1000) { // Heating (< 100 C)
                             $sb_13.status_pemanasan = true;
                             $sb_13.status_pemasakan = false;
                             $sb_13.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_13.total_detik_pemanasan = $sb_13.total_detik_pemanasan + 1;
                             $sb_13.tampil_pemanasan = formatTime($sb_13.total_detik_pemanasan);
                             $sb_13.tampil_durasi_aktual = formatTime($sb_13.sisa_detik_masak);
-                            $sb_13.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_13.flag_init_masak === 1) {
+                                $sb_13.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_13.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 13, // Hanya nomor Steambox saja
+                                    sisa: $sb_13.sisa_detik_masak,
+                                    tampilSisa: $sb_13.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_13.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_13.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_13.status_pemanasan = false;
                             $sb_13.status_pemasakan = true;
@@ -2805,19 +2935,18 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_14.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_14.mode_preheat && !$sb_14.status_resep && $sb_14.target_menit === 0 && $sb_14.sisa_detik_masak === 0 && !$sb_14.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_14.mode_preheat && !$sb_14.status_resep && $sb_14.target_menit === 0 && $sb_14.sisa_detik_masak === 0 && !$sb_14.status_selesai && $sb_14.total_detik_pemanasan === 0) {
                     $sb_14.status_kosong = true;
                 }
                 
                 if ($sb_14.status_kosong) {
                     $sb_14.status_banner = txtKosong;
                 } else if ($sb_14.status_selesai) {
-                    if ($sb_14.target_menit === 0) {
-                        $sb_14.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_14.status_banner = txtSelesai;
-                    }
+                    $sb_14.status_banner = txtSelesai;
+                } else if (!$sb_14.status_kosong && !$sb_14.status_selesai && !$sb_14.mode_preheat && !$sb_14.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_14.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_14.mode_preheat) {
                         if ($sb_14.total_detik_pemanasan === 0) {
@@ -2866,7 +2995,6 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.status_pemanasan = false;
                             $sb_14.suhu_akhir = $sb14.temp;
                             $sb_14.flag_init_start = 0;
-                            $sb_14.status_selesai = true;
                             $sb_14.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -2890,14 +3018,26 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.adjust_menit = 0;
                         }
                         
-                        if ($sb14.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb14.temp < 1000) { // Heating (< 100 C)
                             $sb_14.status_pemanasan = true;
                             $sb_14.status_pemasakan = false;
                             $sb_14.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_14.total_detik_pemanasan = $sb_14.total_detik_pemanasan + 1;
                             $sb_14.tampil_pemanasan = formatTime($sb_14.total_detik_pemanasan);
                             $sb_14.tampil_durasi_aktual = formatTime($sb_14.sisa_detik_masak);
-                            $sb_14.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_14.flag_init_masak === 1) {
+                                $sb_14.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_14.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 14, // Hanya nomor Steambox saja
+                                    sisa: $sb_14.sisa_detik_masak,
+                                    tampilSisa: $sb_14.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_14.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_14.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_14.status_pemanasan = false;
                             $sb_14.status_pemasakan = true;
@@ -3013,19 +3153,18 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_15.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_15.mode_preheat && !$sb_15.status_resep && $sb_15.target_menit === 0 && $sb_15.sisa_detik_masak === 0 && !$sb_15.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_15.mode_preheat && !$sb_15.status_resep && $sb_15.target_menit === 0 && $sb_15.sisa_detik_masak === 0 && !$sb_15.status_selesai && $sb_15.total_detik_pemanasan === 0) {
                     $sb_15.status_kosong = true;
                 }
                 
                 if ($sb_15.status_kosong) {
                     $sb_15.status_banner = txtKosong;
                 } else if ($sb_15.status_selesai) {
-                    if ($sb_15.target_menit === 0) {
-                        $sb_15.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_15.status_banner = txtSelesai;
-                    }
+                    $sb_15.status_banner = txtSelesai;
+                } else if (!$sb_15.status_kosong && !$sb_15.status_selesai && !$sb_15.mode_preheat && !$sb_15.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_15.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_15.mode_preheat) {
                         if ($sb_15.total_detik_pemanasan === 0) {
@@ -3074,7 +3213,6 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.status_pemanasan = false;
                             $sb_15.suhu_akhir = $sb15.temp;
                             $sb_15.flag_init_start = 0;
-                            $sb_15.status_selesai = true;
                             $sb_15.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -3098,14 +3236,26 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.adjust_menit = 0;
                         }
                         
-                        if ($sb15.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb15.temp < 1000) { // Heating (< 100 C)
                             $sb_15.status_pemanasan = true;
                             $sb_15.status_pemasakan = false;
                             $sb_15.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_15.total_detik_pemanasan = $sb_15.total_detik_pemanasan + 1;
                             $sb_15.tampil_pemanasan = formatTime($sb_15.total_detik_pemanasan);
                             $sb_15.tampil_durasi_aktual = formatTime($sb_15.sisa_detik_masak);
-                            $sb_15.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_15.flag_init_masak === 1) {
+                                $sb_15.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_15.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 15, // Hanya nomor Steambox saja
+                                    sisa: $sb_15.sisa_detik_masak,
+                                    tampilSisa: $sb_15.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_15.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_15.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_15.status_pemanasan = false;
                             $sb_15.status_pemasakan = true;
@@ -3221,19 +3371,18 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_16.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_16.mode_preheat && !$sb_16.status_resep && $sb_16.target_menit === 0 && $sb_16.sisa_detik_masak === 0 && !$sb_16.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_16.mode_preheat && !$sb_16.status_resep && $sb_16.target_menit === 0 && $sb_16.sisa_detik_masak === 0 && !$sb_16.status_selesai && $sb_16.total_detik_pemanasan === 0) {
                     $sb_16.status_kosong = true;
                 }
                 
                 if ($sb_16.status_kosong) {
                     $sb_16.status_banner = txtKosong;
                 } else if ($sb_16.status_selesai) {
-                    if ($sb_16.target_menit === 0) {
-                        $sb_16.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_16.status_banner = txtSelesai;
-                    }
+                    $sb_16.status_banner = txtSelesai;
+                } else if (!$sb_16.status_kosong && !$sb_16.status_selesai && !$sb_16.mode_preheat && !$sb_16.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_16.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_16.mode_preheat) {
                         if ($sb_16.total_detik_pemanasan === 0) {
@@ -3282,7 +3431,6 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.status_pemanasan = false;
                             $sb_16.suhu_akhir = $sb16.temp;
                             $sb_16.flag_init_start = 0;
-                            $sb_16.status_selesai = true;
                             $sb_16.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -3306,14 +3454,26 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.adjust_menit = 0;
                         }
                         
-                        if ($sb16.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb16.temp < 1000) { // Heating (< 100 C)
                             $sb_16.status_pemanasan = true;
                             $sb_16.status_pemasakan = false;
                             $sb_16.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_16.total_detik_pemanasan = $sb_16.total_detik_pemanasan + 1;
                             $sb_16.tampil_pemanasan = formatTime($sb_16.total_detik_pemanasan);
                             $sb_16.tampil_durasi_aktual = formatTime($sb_16.sisa_detik_masak);
-                            $sb_16.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_16.flag_init_masak === 1) {
+                                $sb_16.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_16.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 16, // Hanya nomor Steambox saja
+                                    sisa: $sb_16.sisa_detik_masak,
+                                    tampilSisa: $sb_16.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_16.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_16.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_16.status_pemanasan = false;
                             $sb_16.status_pemasakan = true;
@@ -3429,19 +3589,18 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_17.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_17.mode_preheat && !$sb_17.status_resep && $sb_17.target_menit === 0 && $sb_17.sisa_detik_masak === 0 && !$sb_17.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_17.mode_preheat && !$sb_17.status_resep && $sb_17.target_menit === 0 && $sb_17.sisa_detik_masak === 0 && !$sb_17.status_selesai && $sb_17.total_detik_pemanasan === 0) {
                     $sb_17.status_kosong = true;
                 }
                 
                 if ($sb_17.status_kosong) {
                     $sb_17.status_banner = txtKosong;
                 } else if ($sb_17.status_selesai) {
-                    if ($sb_17.target_menit === 0) {
-                        $sb_17.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_17.status_banner = txtSelesai;
-                    }
+                    $sb_17.status_banner = txtSelesai;
+                } else if (!$sb_17.status_kosong && !$sb_17.status_selesai && !$sb_17.mode_preheat && !$sb_17.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_17.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_17.mode_preheat) {
                         if ($sb_17.total_detik_pemanasan === 0) {
@@ -3490,7 +3649,6 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.status_pemanasan = false;
                             $sb_17.suhu_akhir = $sb17.temp;
                             $sb_17.flag_init_start = 0;
-                            $sb_17.status_selesai = true;
                             $sb_17.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -3514,14 +3672,26 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.adjust_menit = 0;
                         }
                         
-                        if ($sb17.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb17.temp < 1000) { // Heating (< 100 C)
                             $sb_17.status_pemanasan = true;
                             $sb_17.status_pemasakan = false;
                             $sb_17.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_17.total_detik_pemanasan = $sb_17.total_detik_pemanasan + 1;
                             $sb_17.tampil_pemanasan = formatTime($sb_17.total_detik_pemanasan);
                             $sb_17.tampil_durasi_aktual = formatTime($sb_17.sisa_detik_masak);
-                            $sb_17.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_17.flag_init_masak === 1) {
+                                $sb_17.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_17.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 17, // Hanya nomor Steambox saja
+                                    sisa: $sb_17.sisa_detik_masak,
+                                    tampilSisa: $sb_17.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_17.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_17.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_17.status_pemanasan = false;
                             $sb_17.status_pemasakan = true;
@@ -3637,19 +3807,18 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_18.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_18.mode_preheat && !$sb_18.status_resep && $sb_18.target_menit === 0 && $sb_18.sisa_detik_masak === 0 && !$sb_18.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_18.mode_preheat && !$sb_18.status_resep && $sb_18.target_menit === 0 && $sb_18.sisa_detik_masak === 0 && !$sb_18.status_selesai && $sb_18.total_detik_pemanasan === 0) {
                     $sb_18.status_kosong = true;
                 }
                 
                 if ($sb_18.status_kosong) {
                     $sb_18.status_banner = txtKosong;
                 } else if ($sb_18.status_selesai) {
-                    if ($sb_18.target_menit === 0) {
-                        $sb_18.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_18.status_banner = txtSelesai;
-                    }
+                    $sb_18.status_banner = txtSelesai;
+                } else if (!$sb_18.status_kosong && !$sb_18.status_selesai && !$sb_18.mode_preheat && !$sb_18.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_18.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_18.mode_preheat) {
                         if ($sb_18.total_detik_pemanasan === 0) {
@@ -3698,7 +3867,6 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.status_pemanasan = false;
                             $sb_18.suhu_akhir = $sb18.temp;
                             $sb_18.flag_init_start = 0;
-                            $sb_18.status_selesai = true;
                             $sb_18.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -3722,14 +3890,26 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.adjust_menit = 0;
                         }
                         
-                        if ($sb18.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb18.temp < 1000) { // Heating (< 100 C)
                             $sb_18.status_pemanasan = true;
                             $sb_18.status_pemasakan = false;
                             $sb_18.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_18.total_detik_pemanasan = $sb_18.total_detik_pemanasan + 1;
                             $sb_18.tampil_pemanasan = formatTime($sb_18.total_detik_pemanasan);
                             $sb_18.tampil_durasi_aktual = formatTime($sb_18.sisa_detik_masak);
-                            $sb_18.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_18.flag_init_masak === 1) {
+                                $sb_18.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_18.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 18, // Hanya nomor Steambox saja
+                                    sisa: $sb_18.sisa_detik_masak,
+                                    tampilSisa: $sb_18.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_18.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_18.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_18.status_pemanasan = false;
                             $sb_18.status_pemasakan = true;
@@ -3845,19 +4025,18 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_19.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_19.mode_preheat && !$sb_19.status_resep && $sb_19.target_menit === 0 && $sb_19.sisa_detik_masak === 0 && !$sb_19.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_19.mode_preheat && !$sb_19.status_resep && $sb_19.target_menit === 0 && $sb_19.sisa_detik_masak === 0 && !$sb_19.status_selesai && $sb_19.total_detik_pemanasan === 0) {
                     $sb_19.status_kosong = true;
                 }
                 
                 if ($sb_19.status_kosong) {
                     $sb_19.status_banner = txtKosong;
                 } else if ($sb_19.status_selesai) {
-                    if ($sb_19.target_menit === 0) {
-                        $sb_19.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_19.status_banner = txtSelesai;
-                    }
+                    $sb_19.status_banner = txtSelesai;
+                } else if (!$sb_19.status_kosong && !$sb_19.status_selesai && !$sb_19.mode_preheat && !$sb_19.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_19.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_19.mode_preheat) {
                         if ($sb_19.total_detik_pemanasan === 0) {
@@ -3906,7 +4085,6 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.status_pemanasan = false;
                             $sb_19.suhu_akhir = $sb19.temp;
                             $sb_19.flag_init_start = 0;
-                            $sb_19.status_selesai = true;
                             $sb_19.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -3930,14 +4108,26 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.adjust_menit = 0;
                         }
                         
-                        if ($sb19.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb19.temp < 1000) { // Heating (< 100 C)
                             $sb_19.status_pemanasan = true;
                             $sb_19.status_pemasakan = false;
                             $sb_19.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_19.total_detik_pemanasan = $sb_19.total_detik_pemanasan + 1;
                             $sb_19.tampil_pemanasan = formatTime($sb_19.total_detik_pemanasan);
                             $sb_19.tampil_durasi_aktual = formatTime($sb_19.sisa_detik_masak);
-                            $sb_19.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_19.flag_init_masak === 1) {
+                                $sb_19.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_19.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 19, // Hanya nomor Steambox saja
+                                    sisa: $sb_19.sisa_detik_masak,
+                                    tampilSisa: $sb_19.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_19.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_19.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_19.status_pemanasan = false;
                             $sb_19.status_pemasakan = true;
@@ -4053,19 +4243,18 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_20.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_20.mode_preheat && !$sb_20.status_resep && $sb_20.target_menit === 0 && $sb_20.sisa_detik_masak === 0 && !$sb_20.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_20.mode_preheat && !$sb_20.status_resep && $sb_20.target_menit === 0 && $sb_20.sisa_detik_masak === 0 && !$sb_20.status_selesai && $sb_20.total_detik_pemanasan === 0) {
                     $sb_20.status_kosong = true;
                 }
                 
                 if ($sb_20.status_kosong) {
                     $sb_20.status_banner = txtKosong;
                 } else if ($sb_20.status_selesai) {
-                    if ($sb_20.target_menit === 0) {
-                        $sb_20.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_20.status_banner = txtSelesai;
-                    }
+                    $sb_20.status_banner = txtSelesai;
+                } else if (!$sb_20.status_kosong && !$sb_20.status_selesai && !$sb_20.mode_preheat && !$sb_20.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_20.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_20.mode_preheat) {
                         if ($sb_20.total_detik_pemanasan === 0) {
@@ -4114,7 +4303,6 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.status_pemanasan = false;
                             $sb_20.suhu_akhir = $sb20.temp;
                             $sb_20.flag_init_start = 0;
-                            $sb_20.status_selesai = true;
                             $sb_20.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -4138,14 +4326,26 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.adjust_menit = 0;
                         }
                         
-                        if ($sb20.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb20.temp < 1000) { // Heating (< 100 C)
                             $sb_20.status_pemanasan = true;
                             $sb_20.status_pemasakan = false;
                             $sb_20.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_20.total_detik_pemanasan = $sb_20.total_detik_pemanasan + 1;
                             $sb_20.tampil_pemanasan = formatTime($sb_20.total_detik_pemanasan);
                             $sb_20.tampil_durasi_aktual = formatTime($sb_20.sisa_detik_masak);
-                            $sb_20.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_20.flag_init_masak === 1) {
+                                $sb_20.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_20.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 20, // Hanya nomor Steambox saja
+                                    sisa: $sb_20.sisa_detik_masak,
+                                    tampilSisa: $sb_20.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_20.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_20.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_20.status_pemanasan = false;
                             $sb_20.status_pemasakan = true;
@@ -4261,19 +4461,18 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_21.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_21.mode_preheat && !$sb_21.status_resep && $sb_21.target_menit === 0 && $sb_21.sisa_detik_masak === 0 && !$sb_21.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_21.mode_preheat && !$sb_21.status_resep && $sb_21.target_menit === 0 && $sb_21.sisa_detik_masak === 0 && !$sb_21.status_selesai && $sb_21.total_detik_pemanasan === 0) {
                     $sb_21.status_kosong = true;
                 }
                 
                 if ($sb_21.status_kosong) {
                     $sb_21.status_banner = txtKosong;
                 } else if ($sb_21.status_selesai) {
-                    if ($sb_21.target_menit === 0) {
-                        $sb_21.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_21.status_banner = txtSelesai;
-                    }
+                    $sb_21.status_banner = txtSelesai;
+                } else if (!$sb_21.status_kosong && !$sb_21.status_selesai && !$sb_21.mode_preheat && !$sb_21.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_21.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_21.mode_preheat) {
                         if ($sb_21.total_detik_pemanasan === 0) {
@@ -4322,7 +4521,6 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.status_pemanasan = false;
                             $sb_21.suhu_akhir = $sb21.temp;
                             $sb_21.flag_init_start = 0;
-                            $sb_21.status_selesai = true;
                             $sb_21.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -4346,14 +4544,26 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.adjust_menit = 0;
                         }
                         
-                        if ($sb21.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb21.temp < 1000) { // Heating (< 100 C)
                             $sb_21.status_pemanasan = true;
                             $sb_21.status_pemasakan = false;
                             $sb_21.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_21.total_detik_pemanasan = $sb_21.total_detik_pemanasan + 1;
                             $sb_21.tampil_pemanasan = formatTime($sb_21.total_detik_pemanasan);
                             $sb_21.tampil_durasi_aktual = formatTime($sb_21.sisa_detik_masak);
-                            $sb_21.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_21.flag_init_masak === 1) {
+                                $sb_21.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_21.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 21, // Hanya nomor Steambox saja
+                                    sisa: $sb_21.sisa_detik_masak,
+                                    tampilSisa: $sb_21.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_21.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_21.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_21.status_pemanasan = false;
                             $sb_21.status_pemasakan = true;
@@ -4469,19 +4679,18 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_22.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_22.mode_preheat && !$sb_22.status_resep && $sb_22.target_menit === 0 && $sb_22.sisa_detik_masak === 0 && !$sb_22.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_22.mode_preheat && !$sb_22.status_resep && $sb_22.target_menit === 0 && $sb_22.sisa_detik_masak === 0 && !$sb_22.status_selesai && $sb_22.total_detik_pemanasan === 0) {
                     $sb_22.status_kosong = true;
                 }
                 
                 if ($sb_22.status_kosong) {
                     $sb_22.status_banner = txtKosong;
                 } else if ($sb_22.status_selesai) {
-                    if ($sb_22.target_menit === 0) {
-                        $sb_22.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_22.status_banner = txtSelesai;
-                    }
+                    $sb_22.status_banner = txtSelesai;
+                } else if (!$sb_22.status_kosong && !$sb_22.status_selesai && !$sb_22.mode_preheat && !$sb_22.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_22.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_22.mode_preheat) {
                         if ($sb_22.total_detik_pemanasan === 0) {
@@ -4530,7 +4739,6 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.status_pemanasan = false;
                             $sb_22.suhu_akhir = $sb22.temp;
                             $sb_22.flag_init_start = 0;
-                            $sb_22.status_selesai = true;
                             $sb_22.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -4554,14 +4762,26 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.adjust_menit = 0;
                         }
                         
-                        if ($sb22.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb22.temp < 1000) { // Heating (< 100 C)
                             $sb_22.status_pemanasan = true;
                             $sb_22.status_pemasakan = false;
                             $sb_22.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_22.total_detik_pemanasan = $sb_22.total_detik_pemanasan + 1;
                             $sb_22.tampil_pemanasan = formatTime($sb_22.total_detik_pemanasan);
                             $sb_22.tampil_durasi_aktual = formatTime($sb_22.sisa_detik_masak);
-                            $sb_22.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_22.flag_init_masak === 1) {
+                                $sb_22.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_22.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 22, // Hanya nomor Steambox saja
+                                    sisa: $sb_22.sisa_detik_masak,
+                                    tampilSisa: $sb_22.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_22.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_22.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_22.status_pemanasan = false;
                             $sb_22.status_pemasakan = true;
@@ -4677,19 +4897,18 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_23.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_23.mode_preheat && !$sb_23.status_resep && $sb_23.target_menit === 0 && $sb_23.sisa_detik_masak === 0 && !$sb_23.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_23.mode_preheat && !$sb_23.status_resep && $sb_23.target_menit === 0 && $sb_23.sisa_detik_masak === 0 && !$sb_23.status_selesai && $sb_23.total_detik_pemanasan === 0) {
                     $sb_23.status_kosong = true;
                 }
                 
                 if ($sb_23.status_kosong) {
                     $sb_23.status_banner = txtKosong;
                 } else if ($sb_23.status_selesai) {
-                    if ($sb_23.target_menit === 0) {
-                        $sb_23.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_23.status_banner = txtSelesai;
-                    }
+                    $sb_23.status_banner = txtSelesai;
+                } else if (!$sb_23.status_kosong && !$sb_23.status_selesai && !$sb_23.mode_preheat && !$sb_23.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_23.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_23.mode_preheat) {
                         if ($sb_23.total_detik_pemanasan === 0) {
@@ -4738,7 +4957,6 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.status_pemanasan = false;
                             $sb_23.suhu_akhir = $sb23.temp;
                             $sb_23.flag_init_start = 0;
-                            $sb_23.status_selesai = true;
                             $sb_23.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -4762,14 +4980,26 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.adjust_menit = 0;
                         }
                         
-                        if ($sb23.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb23.temp < 1000) { // Heating (< 100 C)
                             $sb_23.status_pemanasan = true;
                             $sb_23.status_pemasakan = false;
                             $sb_23.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_23.total_detik_pemanasan = $sb_23.total_detik_pemanasan + 1;
                             $sb_23.tampil_pemanasan = formatTime($sb_23.total_detik_pemanasan);
                             $sb_23.tampil_durasi_aktual = formatTime($sb_23.sisa_detik_masak);
-                            $sb_23.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_23.flag_init_masak === 1) {
+                                $sb_23.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_23.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 23, // Hanya nomor Steambox saja
+                                    sisa: $sb_23.sisa_detik_masak,
+                                    tampilSisa: $sb_23.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_23.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_23.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_23.status_pemanasan = false;
                             $sb_23.status_pemasakan = true;
@@ -4885,19 +5115,18 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_24.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_24.mode_preheat && !$sb_24.status_resep && $sb_24.target_menit === 0 && $sb_24.sisa_detik_masak === 0 && !$sb_24.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_24.mode_preheat && !$sb_24.status_resep && $sb_24.target_menit === 0 && $sb_24.sisa_detik_masak === 0 && !$sb_24.status_selesai && $sb_24.total_detik_pemanasan === 0) {
                     $sb_24.status_kosong = true;
                 }
                 
                 if ($sb_24.status_kosong) {
                     $sb_24.status_banner = txtKosong;
                 } else if ($sb_24.status_selesai) {
-                    if ($sb_24.target_menit === 0) {
-                        $sb_24.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_24.status_banner = txtSelesai;
-                    }
+                    $sb_24.status_banner = txtSelesai;
+                } else if (!$sb_24.status_kosong && !$sb_24.status_selesai && !$sb_24.mode_preheat && !$sb_24.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_24.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_24.mode_preheat) {
                         if ($sb_24.total_detik_pemanasan === 0) {
@@ -4946,7 +5175,6 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.status_pemanasan = false;
                             $sb_24.suhu_akhir = $sb24.temp;
                             $sb_24.flag_init_start = 0;
-                            $sb_24.status_selesai = true;
                             $sb_24.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -4970,14 +5198,26 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.adjust_menit = 0;
                         }
                         
-                        if ($sb24.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb24.temp < 1000) { // Heating (< 100 C)
                             $sb_24.status_pemanasan = true;
                             $sb_24.status_pemasakan = false;
                             $sb_24.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_24.total_detik_pemanasan = $sb_24.total_detik_pemanasan + 1;
                             $sb_24.tampil_pemanasan = formatTime($sb_24.total_detik_pemanasan);
                             $sb_24.tampil_durasi_aktual = formatTime($sb_24.sisa_detik_masak);
-                            $sb_24.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_24.flag_init_masak === 1) {
+                                $sb_24.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_24.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 24, // Hanya nomor Steambox saja
+                                    sisa: $sb_24.sisa_detik_masak,
+                                    tampilSisa: $sb_24.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_24.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_24.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_24.status_pemanasan = false;
                             $sb_24.status_pemasakan = true;
@@ -5093,19 +5333,18 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_25.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_25.mode_preheat && !$sb_25.status_resep && $sb_25.target_menit === 0 && $sb_25.sisa_detik_masak === 0 && !$sb_25.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_25.mode_preheat && !$sb_25.status_resep && $sb_25.target_menit === 0 && $sb_25.sisa_detik_masak === 0 && !$sb_25.status_selesai && $sb_25.total_detik_pemanasan === 0) {
                     $sb_25.status_kosong = true;
                 }
                 
                 if ($sb_25.status_kosong) {
                     $sb_25.status_banner = txtKosong;
                 } else if ($sb_25.status_selesai) {
-                    if ($sb_25.target_menit === 0) {
-                        $sb_25.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_25.status_banner = txtSelesai;
-                    }
+                    $sb_25.status_banner = txtSelesai;
+                } else if (!$sb_25.status_kosong && !$sb_25.status_selesai && !$sb_25.mode_preheat && !$sb_25.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_25.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_25.mode_preheat) {
                         if ($sb_25.total_detik_pemanasan === 0) {
@@ -5154,7 +5393,6 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.status_pemanasan = false;
                             $sb_25.suhu_akhir = $sb25.temp;
                             $sb_25.flag_init_start = 0;
-                            $sb_25.status_selesai = true;
                             $sb_25.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -5178,14 +5416,26 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.adjust_menit = 0;
                         }
                         
-                        if ($sb25.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb25.temp < 1000) { // Heating (< 100 C)
                             $sb_25.status_pemanasan = true;
                             $sb_25.status_pemasakan = false;
                             $sb_25.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_25.total_detik_pemanasan = $sb_25.total_detik_pemanasan + 1;
                             $sb_25.tampil_pemanasan = formatTime($sb_25.total_detik_pemanasan);
                             $sb_25.tampil_durasi_aktual = formatTime($sb_25.sisa_detik_masak);
-                            $sb_25.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_25.flag_init_masak === 1) {
+                                $sb_25.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_25.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 25, // Hanya nomor Steambox saja
+                                    sisa: $sb_25.sisa_detik_masak,
+                                    tampilSisa: $sb_25.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_25.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_25.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_25.status_pemanasan = false;
                             $sb_25.status_pemasakan = true;
@@ -5301,19 +5551,18 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_26.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_26.mode_preheat && !$sb_26.status_resep && $sb_26.target_menit === 0 && $sb_26.sisa_detik_masak === 0 && !$sb_26.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_26.mode_preheat && !$sb_26.status_resep && $sb_26.target_menit === 0 && $sb_26.sisa_detik_masak === 0 && !$sb_26.status_selesai && $sb_26.total_detik_pemanasan === 0) {
                     $sb_26.status_kosong = true;
                 }
                 
                 if ($sb_26.status_kosong) {
                     $sb_26.status_banner = txtKosong;
                 } else if ($sb_26.status_selesai) {
-                    if ($sb_26.target_menit === 0) {
-                        $sb_26.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_26.status_banner = txtSelesai;
-                    }
+                    $sb_26.status_banner = txtSelesai;
+                } else if (!$sb_26.status_kosong && !$sb_26.status_selesai && !$sb_26.mode_preheat && !$sb_26.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_26.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_26.mode_preheat) {
                         if ($sb_26.total_detik_pemanasan === 0) {
@@ -5362,7 +5611,6 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.status_pemanasan = false;
                             $sb_26.suhu_akhir = $sb26.temp;
                             $sb_26.flag_init_start = 0;
-                            $sb_26.status_selesai = true;
                             $sb_26.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -5386,14 +5634,26 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.adjust_menit = 0;
                         }
                         
-                        if ($sb26.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb26.temp < 1000) { // Heating (< 100 C)
                             $sb_26.status_pemanasan = true;
                             $sb_26.status_pemasakan = false;
                             $sb_26.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_26.total_detik_pemanasan = $sb_26.total_detik_pemanasan + 1;
                             $sb_26.tampil_pemanasan = formatTime($sb_26.total_detik_pemanasan);
                             $sb_26.tampil_durasi_aktual = formatTime($sb_26.sisa_detik_masak);
-                            $sb_26.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_26.flag_init_masak === 1) {
+                                $sb_26.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_26.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 26, // Hanya nomor Steambox saja
+                                    sisa: $sb_26.sisa_detik_masak,
+                                    tampilSisa: $sb_26.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_26.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_26.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_26.status_pemanasan = false;
                             $sb_26.status_pemasakan = true;
@@ -5509,19 +5769,18 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_27.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_27.mode_preheat && !$sb_27.status_resep && $sb_27.target_menit === 0 && $sb_27.sisa_detik_masak === 0 && !$sb_27.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_27.mode_preheat && !$sb_27.status_resep && $sb_27.target_menit === 0 && $sb_27.sisa_detik_masak === 0 && !$sb_27.status_selesai && $sb_27.total_detik_pemanasan === 0) {
                     $sb_27.status_kosong = true;
                 }
                 
                 if ($sb_27.status_kosong) {
                     $sb_27.status_banner = txtKosong;
                 } else if ($sb_27.status_selesai) {
-                    if ($sb_27.target_menit === 0) {
-                        $sb_27.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_27.status_banner = txtSelesai;
-                    }
+                    $sb_27.status_banner = txtSelesai;
+                } else if (!$sb_27.status_kosong && !$sb_27.status_selesai && !$sb_27.mode_preheat && !$sb_27.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_27.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_27.mode_preheat) {
                         if ($sb_27.total_detik_pemanasan === 0) {
@@ -5570,7 +5829,6 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.status_pemanasan = false;
                             $sb_27.suhu_akhir = $sb27.temp;
                             $sb_27.flag_init_start = 0;
-                            $sb_27.status_selesai = true;
                             $sb_27.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -5594,14 +5852,26 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.adjust_menit = 0;
                         }
                         
-                        if ($sb27.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb27.temp < 1000) { // Heating (< 100 C)
                             $sb_27.status_pemanasan = true;
                             $sb_27.status_pemasakan = false;
                             $sb_27.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_27.total_detik_pemanasan = $sb_27.total_detik_pemanasan + 1;
                             $sb_27.tampil_pemanasan = formatTime($sb_27.total_detik_pemanasan);
                             $sb_27.tampil_durasi_aktual = formatTime($sb_27.sisa_detik_masak);
-                            $sb_27.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_27.flag_init_masak === 1) {
+                                $sb_27.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_27.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 27, // Hanya nomor Steambox saja
+                                    sisa: $sb_27.sisa_detik_masak,
+                                    tampilSisa: $sb_27.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_27.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_27.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_27.status_pemanasan = false;
                             $sb_27.status_pemasakan = true;
@@ -5717,19 +5987,18 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_28.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_28.mode_preheat && !$sb_28.status_resep && $sb_28.target_menit === 0 && $sb_28.sisa_detik_masak === 0 && !$sb_28.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_28.mode_preheat && !$sb_28.status_resep && $sb_28.target_menit === 0 && $sb_28.sisa_detik_masak === 0 && !$sb_28.status_selesai && $sb_28.total_detik_pemanasan === 0) {
                     $sb_28.status_kosong = true;
                 }
                 
                 if ($sb_28.status_kosong) {
                     $sb_28.status_banner = txtKosong;
                 } else if ($sb_28.status_selesai) {
-                    if ($sb_28.target_menit === 0) {
-                        $sb_28.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_28.status_banner = txtSelesai;
-                    }
+                    $sb_28.status_banner = txtSelesai;
+                } else if (!$sb_28.status_kosong && !$sb_28.status_selesai && !$sb_28.mode_preheat && !$sb_28.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_28.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_28.mode_preheat) {
                         if ($sb_28.total_detik_pemanasan === 0) {
@@ -5778,7 +6047,6 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.status_pemanasan = false;
                             $sb_28.suhu_akhir = $sb28.temp;
                             $sb_28.flag_init_start = 0;
-                            $sb_28.status_selesai = true;
                             $sb_28.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -5802,14 +6070,26 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.adjust_menit = 0;
                         }
                         
-                        if ($sb28.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb28.temp < 1000) { // Heating (< 100 C)
                             $sb_28.status_pemanasan = true;
                             $sb_28.status_pemasakan = false;
                             $sb_28.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_28.total_detik_pemanasan = $sb_28.total_detik_pemanasan + 1;
                             $sb_28.tampil_pemanasan = formatTime($sb_28.total_detik_pemanasan);
                             $sb_28.tampil_durasi_aktual = formatTime($sb_28.sisa_detik_masak);
-                            $sb_28.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_28.flag_init_masak === 1) {
+                                $sb_28.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_28.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 28, // Hanya nomor Steambox saja
+                                    sisa: $sb_28.sisa_detik_masak,
+                                    tampilSisa: $sb_28.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_28.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_28.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_28.status_pemanasan = false;
                             $sb_28.status_pemasakan = true;
@@ -5925,19 +6205,18 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_29.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_29.mode_preheat && !$sb_29.status_resep && $sb_29.target_menit === 0 && $sb_29.sisa_detik_masak === 0 && !$sb_29.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_29.mode_preheat && !$sb_29.status_resep && $sb_29.target_menit === 0 && $sb_29.sisa_detik_masak === 0 && !$sb_29.status_selesai && $sb_29.total_detik_pemanasan === 0) {
                     $sb_29.status_kosong = true;
                 }
                 
                 if ($sb_29.status_kosong) {
                     $sb_29.status_banner = txtKosong;
                 } else if ($sb_29.status_selesai) {
-                    if ($sb_29.target_menit === 0) {
-                        $sb_29.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_29.status_banner = txtSelesai;
-                    }
+                    $sb_29.status_banner = txtSelesai;
+                } else if (!$sb_29.status_kosong && !$sb_29.status_selesai && !$sb_29.mode_preheat && !$sb_29.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_29.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_29.mode_preheat) {
                         if ($sb_29.total_detik_pemanasan === 0) {
@@ -5986,7 +6265,6 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.status_pemanasan = false;
                             $sb_29.suhu_akhir = $sb29.temp;
                             $sb_29.flag_init_start = 0;
-                            $sb_29.status_selesai = true;
                             $sb_29.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -6010,14 +6288,26 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.adjust_menit = 0;
                         }
                         
-                        if ($sb29.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb29.temp < 1000) { // Heating (< 100 C)
                             $sb_29.status_pemanasan = true;
                             $sb_29.status_pemasakan = false;
                             $sb_29.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_29.total_detik_pemanasan = $sb_29.total_detik_pemanasan + 1;
                             $sb_29.tampil_pemanasan = formatTime($sb_29.total_detik_pemanasan);
                             $sb_29.tampil_durasi_aktual = formatTime($sb_29.sisa_detik_masak);
-                            $sb_29.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_29.flag_init_masak === 1) {
+                                $sb_29.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_29.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 29, // Hanya nomor Steambox saja
+                                    sisa: $sb_29.sisa_detik_masak,
+                                    tampilSisa: $sb_29.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_29.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_29.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_29.status_pemanasan = false;
                             $sb_29.status_pemasakan = true;
@@ -6133,19 +6423,18 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_30.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default
-                if (!$sb_30.mode_preheat && !$sb_30.status_resep && $sb_30.target_menit === 0 && $sb_30.sisa_detik_masak === 0 && !$sb_30.status_selesai) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
+                if (!$sb_30.mode_preheat && !$sb_30.status_resep && $sb_30.target_menit === 0 && $sb_30.sisa_detik_masak === 0 && !$sb_30.status_selesai && $sb_30.total_detik_pemanasan === 0) {
                     $sb_30.status_kosong = true;
                 }
                 
                 if ($sb_30.status_kosong) {
                     $sb_30.status_banner = txtKosong;
                 } else if ($sb_30.status_selesai) {
-                    if ($sb_30.target_menit === 0) {
-                        $sb_30.status_banner = txtSelesaiPreheat;
-                    } else {
-                        $sb_30.status_banner = txtSelesai;
-                    }
+                    $sb_30.status_banner = txtSelesai;
+                } else if (!$sb_30.status_kosong && !$sb_30.status_selesai && !$sb_30.mode_preheat && !$sb_30.status_resep) {
+                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                    $sb_30.status_banner = txtSelesaiPreheat;
                 } else {
                     if ($sb_30.mode_preheat) {
                         if ($sb_30.total_detik_pemanasan === 0) {
@@ -6194,7 +6483,6 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.status_pemanasan = false;
                             $sb_30.suhu_akhir = $sb30.temp;
                             $sb_30.flag_init_start = 0;
-                            $sb_30.status_selesai = true;
                             $sb_30.mode_preheat = false; // Balikkan mode_preheat otomatis ke false
                         }
                     } else { // COOKING MODE
@@ -6218,14 +6506,26 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.adjust_menit = 0;
                         }
                         
-                        if ($sb30.temp < 1000) { // Heating (< 100 C): Durasi aktual belum hitung mundur
+                        if ($sb30.temp < 1000) { // Heating (< 100 C)
                             $sb_30.status_pemanasan = true;
                             $sb_30.status_pemasakan = false;
                             $sb_30.status_banner = txtPemanasan; // Tunggu mendidih
                             $sb_30.total_detik_pemanasan = $sb_30.total_detik_pemanasan + 1;
                             $sb_30.tampil_pemanasan = formatTime($sb_30.total_detik_pemanasan);
                             $sb_30.tampil_durasi_aktual = formatTime($sb_30.sisa_detik_masak);
-                            $sb_30.tampil_jam_selesai = "--:--:--"; // Jam selesai belum terhitung sebelum mendidih
+                            
+                            // Jika sebelumnya sudah pernah mendidih (mengalami drop temp), jam selesai bertambah dan tetap tampil di monitor
+                            if ($sb_30.flag_init_masak === 1) {
+                                $sb_30.tampil_jam_selesai = getEstimasiSelesai(totalDetikSekarang, $sb_30.sisa_detik_masak);
+                                runningRooms.push({
+                                    name: 30, // Hanya nomor Steambox saja
+                                    sisa: $sb_30.sisa_detik_masak,
+                                    tampilSisa: $sb_30.tampil_durasi_aktual,
+                                    tampilSelesai: $sb_30.tampil_jam_selesai
+                                });
+                            } else {
+                                $sb_30.tampil_jam_selesai = "--:--:--";
+                            }
                         } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_30.status_pemanasan = false;
                             $sb_30.status_pemasakan = true;
