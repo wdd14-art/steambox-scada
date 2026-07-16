@@ -43,3 +43,23 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 5.  **Resep Terpasang (Siap Cooking):** `$Sys_Control.txt_siap_cooking || "RESEP TERPASANG - SILAKAN TEKAN START"`
 6.  **Sedang Memasak:** `$Sys_Control.txt_status_pemasakan || "SEDANG MEMASAK (MENDIDIH)"`
 7.  **Selesai Memasak:** `$Sys_Control.txt_status_selesai || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI"`
+
+---
+
+## 5. Perbandingan Ketat Tipe Data HMI (`===`)
+
+*   **ATURAN UTAMA:** Untuk semua variabel HMI tipe Boolean (`BOOL` seperti `run_stop` atau `_commStatus`) yang dibandingkan secara strict (`===`) dengan `1` atau `0`, **wajib di-cast menggunakan fungsi `Number()`** (misalnya `Number($sb1.run_stop) === 1`).
+*   **ALASAN:** Nilai boolean HMI dibaca sebagai `true`/`false` di JavaScript. Membandingkannya secara langsung menggunakan `$tag === 1` atau `$tag === 0` akan selalu menghasilkan `false` karena perbedaan tipe data (Boolean vs Number).
+*   **CONTOH PENULISAN YANG BENAR:**
+    *   *Salah:* `if ($sb1.run_stop === 1)`
+    *   *Benar:* `if (Number($sb1.run_stop) === 1)`
+    *   *Salah:* `if ($sb1.run_stop === 0)`
+    *   *Benar:* `if (Number($sb1.run_stop) === 0)`
+
+---
+
+## 6. Deklarasi Variabel Eksplisit (`var`)
+
+*   **ATURAN UTAMA:** Semua variabel baru wajib dideklarasikan secara eksplisit menggunakan kata kunci **`var`**. Jangan pernah melakukan deklarasi implisit (misalnya `scale_up_1 = ...`).
+*   **ALASAN:** Compiler Haiwell SCADA menerapkan JavaScript mode ketat (*strict mode*). Penggunaan variabel tanpa deklarasi kata kunci `var` akan menyebabkan kegagalan kompilasi dengan pesan error `[variable] is not defined`.
+

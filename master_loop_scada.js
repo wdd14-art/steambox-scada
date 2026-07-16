@@ -111,7 +111,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_1.maintenance_mode) {
             var isSensorError_1 = ($sb1.temp >= tempErrorLimit);
             
-            if ($sb1.run_stop === 1) { // STOPPED
+            if (Number($sb1.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_1.status_pemanasan = false;
                 $sb_1.status_pemasakan = false;
                 $sb_1.flag_init_start = 0;
@@ -276,7 +276,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_1) {
                 $sb_1.sensor_error = true;
-                if ($sb1.run_stop === 0 && $sb_1.flag_init_start === 1) {
+                if (Number($sb1.run_stop) === 0 && $sb_1.flag_init_start === 1) {
                     $sb_1.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_1.status_banner = txtSensorError;
@@ -344,7 +344,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_2.maintenance_mode) {
             var isSensorError_2 = ($sb2.temp >= tempErrorLimit);
             
-            if ($sb2.run_stop === 1) { // STOPPED
+            if (Number($sb2.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_2.status_pemanasan = false;
                 $sb_2.status_pemasakan = false;
                 $sb_2.flag_init_start = 0;
@@ -509,7 +509,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_2) {
                 $sb_2.sensor_error = true;
-                if ($sb2.run_stop === 0 && $sb_2.flag_init_start === 1) {
+                if (Number($sb2.run_stop) === 0 && $sb_2.flag_init_start === 1) {
                     $sb_2.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_2.status_banner = txtSensorError;
@@ -577,7 +577,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_3.maintenance_mode) {
             var isSensorError_3 = ($sb3.temp >= tempErrorLimit);
             
-            if ($sb3.run_stop === 1) { // STOPPED
+            if (Number($sb3.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_3.status_pemanasan = false;
                 $sb_3.status_pemasakan = false;
                 $sb_3.flag_init_start = 0;
@@ -742,7 +742,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_3) {
                 $sb_3.sensor_error = true;
-                if ($sb3.run_stop === 0 && $sb_3.flag_init_start === 1) {
+                if (Number($sb3.run_stop) === 0 && $sb_3.flag_init_start === 1) {
                     $sb_3.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_3.status_banner = txtSensorError;
@@ -810,7 +810,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_4.maintenance_mode) {
             var isSensorError_4 = ($sb4.temp >= tempErrorLimit);
             
-            if ($sb4.run_stop === 1) { // STOPPED
+            if (Number($sb4.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_4.status_pemanasan = false;
                 $sb_4.status_pemasakan = false;
                 $sb_4.flag_init_start = 0;
@@ -975,7 +975,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_4) {
                 $sb_4.sensor_error = true;
-                if ($sb4.run_stop === 0 && $sb_4.flag_init_start === 1) {
+                if (Number($sb4.run_stop) === 0 && $sb_4.flag_init_start === 1) {
                     $sb_4.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_4.status_banner = txtSensorError;
@@ -1043,7 +1043,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_5.maintenance_mode) {
             var isSensorError_5 = ($sb5.temp >= tempErrorLimit);
             
-            if ($sb5.run_stop === 1) { // STOPPED
+            if (Number($sb5.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_5.status_pemanasan = false;
                 $sb_5.status_pemasakan = false;
                 $sb_5.flag_init_start = 0;
@@ -1208,7 +1208,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_5) {
                 $sb_5.sensor_error = true;
-                if ($sb5.run_stop === 0 && $sb_5.flag_init_start === 1) {
+                if (Number($sb5.run_stop) === 0 && $sb_5.flag_init_start === 1) {
                     $sb_5.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_5.status_banner = txtSensorError;
@@ -1276,7 +1276,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_6.maintenance_mode) {
             var isSensorError_6 = ($sb6.temp >= tempErrorLimit);
             
-            if ($sb6.run_stop === 1) { // STOPPED
+            if (Number($sb6.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_6.status_pemanasan = false;
                 $sb_6.status_pemasakan = false;
                 $sb_6.flag_init_start = 0;
@@ -1441,7 +1441,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_6) {
                 $sb_6.sensor_error = true;
-                if ($sb6.run_stop === 0 && $sb_6.flag_init_start === 1) {
+                if (Number($sb6.run_stop) === 0 && $sb_6.flag_init_start === 1) {
                     $sb_6.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_6.status_banner = txtSensorError;
@@ -1509,7 +1509,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_7.maintenance_mode) {
             var isSensorError_7 = ($sb7.temp >= tempErrorLimit);
             
-            if ($sb7.run_stop === 1) { // STOPPED
+            if (Number($sb7.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_7.status_pemanasan = false;
                 $sb_7.status_pemasakan = false;
                 $sb_7.flag_init_start = 0;
@@ -1674,7 +1674,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_7) {
                 $sb_7.sensor_error = true;
-                if ($sb7.run_stop === 0 && $sb_7.flag_init_start === 1) {
+                if (Number($sb7.run_stop) === 0 && $sb_7.flag_init_start === 1) {
                     $sb_7.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_7.status_banner = txtSensorError;
@@ -1742,7 +1742,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_8.maintenance_mode) {
             var isSensorError_8 = ($sb8.temp >= tempErrorLimit);
             
-            if ($sb8.run_stop === 1) { // STOPPED
+            if (Number($sb8.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_8.status_pemanasan = false;
                 $sb_8.status_pemasakan = false;
                 $sb_8.flag_init_start = 0;
@@ -1907,7 +1907,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_8) {
                 $sb_8.sensor_error = true;
-                if ($sb8.run_stop === 0 && $sb_8.flag_init_start === 1) {
+                if (Number($sb8.run_stop) === 0 && $sb_8.flag_init_start === 1) {
                     $sb_8.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_8.status_banner = txtSensorError;
@@ -1975,7 +1975,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_9.maintenance_mode) {
             var isSensorError_9 = ($sb9.temp >= tempErrorLimit);
             
-            if ($sb9.run_stop === 1) { // STOPPED
+            if (Number($sb9.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_9.status_pemanasan = false;
                 $sb_9.status_pemasakan = false;
                 $sb_9.flag_init_start = 0;
@@ -2140,7 +2140,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_9) {
                 $sb_9.sensor_error = true;
-                if ($sb9.run_stop === 0 && $sb_9.flag_init_start === 1) {
+                if (Number($sb9.run_stop) === 0 && $sb_9.flag_init_start === 1) {
                     $sb_9.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_9.status_banner = txtSensorError;
@@ -2208,7 +2208,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_10.maintenance_mode) {
             var isSensorError_10 = ($sb10.temp >= tempErrorLimit);
             
-            if ($sb10.run_stop === 1) { // STOPPED
+            if (Number($sb10.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_10.status_pemanasan = false;
                 $sb_10.status_pemasakan = false;
                 $sb_10.flag_init_start = 0;
@@ -2373,7 +2373,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_10) {
                 $sb_10.sensor_error = true;
-                if ($sb10.run_stop === 0 && $sb_10.flag_init_start === 1) {
+                if (Number($sb10.run_stop) === 0 && $sb_10.flag_init_start === 1) {
                     $sb_10.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_10.status_banner = txtSensorError;
@@ -2441,7 +2441,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_11.maintenance_mode) {
             var isSensorError_11 = ($sb11.temp >= tempErrorLimit);
             
-            if ($sb11.run_stop === 1) { // STOPPED
+            if (Number($sb11.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_11.status_pemanasan = false;
                 $sb_11.status_pemasakan = false;
                 $sb_11.flag_init_start = 0;
@@ -2606,7 +2606,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_11) {
                 $sb_11.sensor_error = true;
-                if ($sb11.run_stop === 0 && $sb_11.flag_init_start === 1) {
+                if (Number($sb11.run_stop) === 0 && $sb_11.flag_init_start === 1) {
                     $sb_11.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_11.status_banner = txtSensorError;
@@ -2674,7 +2674,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_12.maintenance_mode) {
             var isSensorError_12 = ($sb12.temp >= tempErrorLimit);
             
-            if ($sb12.run_stop === 1) { // STOPPED
+            if (Number($sb12.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_12.status_pemanasan = false;
                 $sb_12.status_pemasakan = false;
                 $sb_12.flag_init_start = 0;
@@ -2839,7 +2839,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_12) {
                 $sb_12.sensor_error = true;
-                if ($sb12.run_stop === 0 && $sb_12.flag_init_start === 1) {
+                if (Number($sb12.run_stop) === 0 && $sb_12.flag_init_start === 1) {
                     $sb_12.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_12.status_banner = txtSensorError;
@@ -2907,7 +2907,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_13.maintenance_mode) {
             var isSensorError_13 = ($sb13.temp >= tempErrorLimit);
             
-            if ($sb13.run_stop === 1) { // STOPPED
+            if (Number($sb13.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_13.status_pemanasan = false;
                 $sb_13.status_pemasakan = false;
                 $sb_13.flag_init_start = 0;
@@ -3072,7 +3072,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_13) {
                 $sb_13.sensor_error = true;
-                if ($sb13.run_stop === 0 && $sb_13.flag_init_start === 1) {
+                if (Number($sb13.run_stop) === 0 && $sb_13.flag_init_start === 1) {
                     $sb_13.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_13.status_banner = txtSensorError;
@@ -3140,7 +3140,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_14.maintenance_mode) {
             var isSensorError_14 = ($sb14.temp >= tempErrorLimit);
             
-            if ($sb14.run_stop === 1) { // STOPPED
+            if (Number($sb14.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_14.status_pemanasan = false;
                 $sb_14.status_pemasakan = false;
                 $sb_14.flag_init_start = 0;
@@ -3305,7 +3305,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_14) {
                 $sb_14.sensor_error = true;
-                if ($sb14.run_stop === 0 && $sb_14.flag_init_start === 1) {
+                if (Number($sb14.run_stop) === 0 && $sb_14.flag_init_start === 1) {
                     $sb_14.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_14.status_banner = txtSensorError;
@@ -3373,7 +3373,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_15.maintenance_mode) {
             var isSensorError_15 = ($sb15.temp >= tempErrorLimit);
             
-            if ($sb15.run_stop === 1) { // STOPPED
+            if (Number($sb15.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_15.status_pemanasan = false;
                 $sb_15.status_pemasakan = false;
                 $sb_15.flag_init_start = 0;
@@ -3538,7 +3538,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_15) {
                 $sb_15.sensor_error = true;
-                if ($sb15.run_stop === 0 && $sb_15.flag_init_start === 1) {
+                if (Number($sb15.run_stop) === 0 && $sb_15.flag_init_start === 1) {
                     $sb_15.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_15.status_banner = txtSensorError;
@@ -3606,7 +3606,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_16.maintenance_mode) {
             var isSensorError_16 = ($sb16.temp >= tempErrorLimit);
             
-            if ($sb16.run_stop === 1) { // STOPPED
+            if (Number($sb16.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_16.status_pemanasan = false;
                 $sb_16.status_pemasakan = false;
                 $sb_16.flag_init_start = 0;
@@ -3771,7 +3771,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_16) {
                 $sb_16.sensor_error = true;
-                if ($sb16.run_stop === 0 && $sb_16.flag_init_start === 1) {
+                if (Number($sb16.run_stop) === 0 && $sb_16.flag_init_start === 1) {
                     $sb_16.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_16.status_banner = txtSensorError;
@@ -3839,7 +3839,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_17.maintenance_mode) {
             var isSensorError_17 = ($sb17.temp >= tempErrorLimit);
             
-            if ($sb17.run_stop === 1) { // STOPPED
+            if (Number($sb17.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_17.status_pemanasan = false;
                 $sb_17.status_pemasakan = false;
                 $sb_17.flag_init_start = 0;
@@ -4004,7 +4004,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_17) {
                 $sb_17.sensor_error = true;
-                if ($sb17.run_stop === 0 && $sb_17.flag_init_start === 1) {
+                if (Number($sb17.run_stop) === 0 && $sb_17.flag_init_start === 1) {
                     $sb_17.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_17.status_banner = txtSensorError;
@@ -4072,7 +4072,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_18.maintenance_mode) {
             var isSensorError_18 = ($sb18.temp >= tempErrorLimit);
             
-            if ($sb18.run_stop === 1) { // STOPPED
+            if (Number($sb18.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_18.status_pemanasan = false;
                 $sb_18.status_pemasakan = false;
                 $sb_18.flag_init_start = 0;
@@ -4237,7 +4237,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_18) {
                 $sb_18.sensor_error = true;
-                if ($sb18.run_stop === 0 && $sb_18.flag_init_start === 1) {
+                if (Number($sb18.run_stop) === 0 && $sb_18.flag_init_start === 1) {
                     $sb_18.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_18.status_banner = txtSensorError;
@@ -4305,7 +4305,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_19.maintenance_mode) {
             var isSensorError_19 = ($sb19.temp >= tempErrorLimit);
             
-            if ($sb19.run_stop === 1) { // STOPPED
+            if (Number($sb19.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_19.status_pemanasan = false;
                 $sb_19.status_pemasakan = false;
                 $sb_19.flag_init_start = 0;
@@ -4470,7 +4470,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_19) {
                 $sb_19.sensor_error = true;
-                if ($sb19.run_stop === 0 && $sb_19.flag_init_start === 1) {
+                if (Number($sb19.run_stop) === 0 && $sb_19.flag_init_start === 1) {
                     $sb_19.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_19.status_banner = txtSensorError;
@@ -4538,7 +4538,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_20.maintenance_mode) {
             var isSensorError_20 = ($sb20.temp >= tempErrorLimit);
             
-            if ($sb20.run_stop === 1) { // STOPPED
+            if (Number($sb20.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_20.status_pemanasan = false;
                 $sb_20.status_pemasakan = false;
                 $sb_20.flag_init_start = 0;
@@ -4703,7 +4703,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_20) {
                 $sb_20.sensor_error = true;
-                if ($sb20.run_stop === 0 && $sb_20.flag_init_start === 1) {
+                if (Number($sb20.run_stop) === 0 && $sb_20.flag_init_start === 1) {
                     $sb_20.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_20.status_banner = txtSensorError;
@@ -4771,7 +4771,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_21.maintenance_mode) {
             var isSensorError_21 = ($sb21.temp >= tempErrorLimit);
             
-            if ($sb21.run_stop === 1) { // STOPPED
+            if (Number($sb21.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_21.status_pemanasan = false;
                 $sb_21.status_pemasakan = false;
                 $sb_21.flag_init_start = 0;
@@ -4936,7 +4936,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_21) {
                 $sb_21.sensor_error = true;
-                if ($sb21.run_stop === 0 && $sb_21.flag_init_start === 1) {
+                if (Number($sb21.run_stop) === 0 && $sb_21.flag_init_start === 1) {
                     $sb_21.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_21.status_banner = txtSensorError;
@@ -5004,7 +5004,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_22.maintenance_mode) {
             var isSensorError_22 = ($sb22.temp >= tempErrorLimit);
             
-            if ($sb22.run_stop === 1) { // STOPPED
+            if (Number($sb22.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_22.status_pemanasan = false;
                 $sb_22.status_pemasakan = false;
                 $sb_22.flag_init_start = 0;
@@ -5169,7 +5169,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_22) {
                 $sb_22.sensor_error = true;
-                if ($sb22.run_stop === 0 && $sb_22.flag_init_start === 1) {
+                if (Number($sb22.run_stop) === 0 && $sb_22.flag_init_start === 1) {
                     $sb_22.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_22.status_banner = txtSensorError;
@@ -5237,7 +5237,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_23.maintenance_mode) {
             var isSensorError_23 = ($sb23.temp >= tempErrorLimit);
             
-            if ($sb23.run_stop === 1) { // STOPPED
+            if (Number($sb23.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_23.status_pemanasan = false;
                 $sb_23.status_pemasakan = false;
                 $sb_23.flag_init_start = 0;
@@ -5402,7 +5402,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_23) {
                 $sb_23.sensor_error = true;
-                if ($sb23.run_stop === 0 && $sb_23.flag_init_start === 1) {
+                if (Number($sb23.run_stop) === 0 && $sb_23.flag_init_start === 1) {
                     $sb_23.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_23.status_banner = txtSensorError;
@@ -5470,7 +5470,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_24.maintenance_mode) {
             var isSensorError_24 = ($sb24.temp >= tempErrorLimit);
             
-            if ($sb24.run_stop === 1) { // STOPPED
+            if (Number($sb24.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_24.status_pemanasan = false;
                 $sb_24.status_pemasakan = false;
                 $sb_24.flag_init_start = 0;
@@ -5635,7 +5635,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_24) {
                 $sb_24.sensor_error = true;
-                if ($sb24.run_stop === 0 && $sb_24.flag_init_start === 1) {
+                if (Number($sb24.run_stop) === 0 && $sb_24.flag_init_start === 1) {
                     $sb_24.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_24.status_banner = txtSensorError;
@@ -5703,7 +5703,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_25.maintenance_mode) {
             var isSensorError_25 = ($sb25.temp >= tempErrorLimit);
             
-            if ($sb25.run_stop === 1) { // STOPPED
+            if (Number($sb25.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_25.status_pemanasan = false;
                 $sb_25.status_pemasakan = false;
                 $sb_25.flag_init_start = 0;
@@ -5868,7 +5868,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_25) {
                 $sb_25.sensor_error = true;
-                if ($sb25.run_stop === 0 && $sb_25.flag_init_start === 1) {
+                if (Number($sb25.run_stop) === 0 && $sb_25.flag_init_start === 1) {
                     $sb_25.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_25.status_banner = txtSensorError;
@@ -5936,7 +5936,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_26.maintenance_mode) {
             var isSensorError_26 = ($sb26.temp >= tempErrorLimit);
             
-            if ($sb26.run_stop === 1) { // STOPPED
+            if (Number($sb26.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_26.status_pemanasan = false;
                 $sb_26.status_pemasakan = false;
                 $sb_26.flag_init_start = 0;
@@ -6101,7 +6101,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_26) {
                 $sb_26.sensor_error = true;
-                if ($sb26.run_stop === 0 && $sb_26.flag_init_start === 1) {
+                if (Number($sb26.run_stop) === 0 && $sb_26.flag_init_start === 1) {
                     $sb_26.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_26.status_banner = txtSensorError;
@@ -6169,7 +6169,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_27.maintenance_mode) {
             var isSensorError_27 = ($sb27.temp >= tempErrorLimit);
             
-            if ($sb27.run_stop === 1) { // STOPPED
+            if (Number($sb27.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_27.status_pemanasan = false;
                 $sb_27.status_pemasakan = false;
                 $sb_27.flag_init_start = 0;
@@ -6334,7 +6334,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_27) {
                 $sb_27.sensor_error = true;
-                if ($sb27.run_stop === 0 && $sb_27.flag_init_start === 1) {
+                if (Number($sb27.run_stop) === 0 && $sb_27.flag_init_start === 1) {
                     $sb_27.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_27.status_banner = txtSensorError;
@@ -6402,7 +6402,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_28.maintenance_mode) {
             var isSensorError_28 = ($sb28.temp >= tempErrorLimit);
             
-            if ($sb28.run_stop === 1) { // STOPPED
+            if (Number($sb28.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_28.status_pemanasan = false;
                 $sb_28.status_pemasakan = false;
                 $sb_28.flag_init_start = 0;
@@ -6567,7 +6567,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_28) {
                 $sb_28.sensor_error = true;
-                if ($sb28.run_stop === 0 && $sb_28.flag_init_start === 1) {
+                if (Number($sb28.run_stop) === 0 && $sb_28.flag_init_start === 1) {
                     $sb_28.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_28.status_banner = txtSensorError;
@@ -6635,7 +6635,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_29.maintenance_mode) {
             var isSensorError_29 = ($sb29.temp >= tempErrorLimit);
             
-            if ($sb29.run_stop === 1) { // STOPPED
+            if (Number($sb29.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_29.status_pemanasan = false;
                 $sb_29.status_pemasakan = false;
                 $sb_29.flag_init_start = 0;
@@ -6800,7 +6800,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_29) {
                 $sb_29.sensor_error = true;
-                if ($sb29.run_stop === 0 && $sb_29.flag_init_start === 1) {
+                if (Number($sb29.run_stop) === 0 && $sb_29.flag_init_start === 1) {
                     $sb_29.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_29.status_banner = txtSensorError;
@@ -6868,7 +6868,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_30.maintenance_mode) {
             var isSensorError_30 = ($sb30.temp >= tempErrorLimit);
             
-            if ($sb30.run_stop === 1) { // STOPPED
+            if (Number($sb30.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
                 $sb_30.status_pemanasan = false;
                 $sb_30.status_pemasakan = false;
                 $sb_30.flag_init_start = 0;
@@ -7033,7 +7033,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
             // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
             if (isSensorError_30) {
                 $sb_30.sensor_error = true;
-                if ($sb30.run_stop === 0 && $sb_30.flag_init_start === 1) {
+                if (Number($sb30.run_stop) === 0 && $sb_30.flag_init_start === 1) {
                     $sb_30.status_banner = txtSensorErrorCooking;
                 } else {
                     $sb_30.status_banner = txtSensorError;
