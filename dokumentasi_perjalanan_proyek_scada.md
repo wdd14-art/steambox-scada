@@ -12,8 +12,7 @@ Untuk kemudahan pemeliharaan, folder proyek `Demo2_hp_SB16` telah dirapikan ke d
 ```text
 d:\Project\PTSIAP\Haiwell\Runtime\Demo2_hp_SB16\
 │
-├── master_loop_scada.js         <-- [PRODUKSI] Skrip kalkulasi utama 30 unit (isi = v15 terbaru)
-├── master_loop_scada_v15.js     <-- [BACKUP] Versi terbaru (stabil untuk kalkulasi & perbaikan waktu)
+├── master_loop_scada.js         <-- [PRODUKSI] Skrip kalkulasi utama 30 unit (isi = v16 terbaru)
 ├── transfer_data_selesai_sb1.txt <-- [TRIAL] Skrip event transfer data khusus Unit 1
 ├── Trf_Resep_v3.txt             <-- [PRODUKSI] Skrip transfer resep masakan ke HMI
 ├── run_api_server.bat           <-- [STARTUP] Menjalankan server Node.js di layar Command Prompt
@@ -24,7 +23,7 @@ d:\Project\PTSIAP\Haiwell\Runtime\Demo2_hp_SB16\
 │   ├── config.json              <-- File konfigurasi (scadaHost, machineCode, webapiKey, iv, port)
 │   └── package.json
 │
-├── history/                     <-- [BACKUP HISTORIS] Folder penyimpanan versi skrip lama (v3 s.d v14)
+├── backup_skrip_lama/           <-- [BACKUP] Folder aman untuk skrip cadangan versi (v15, v16, dll.) agar tidak dihapus otomatis oleh SCADA
 ├── tag_exports_csv/             <-- [BACKUP TAG] File ekspor CSV database tag HMI SCADA
 ├── media_resources/             <-- [ASSETS] Foto screenshot antarmuka & video rekaman hasil pengujian
 │
