@@ -41,6 +41,15 @@ for (let i = 1; i <= 30; i++) {
     database[grp + ".suhu_awal"] = 0;
     database[grp + ".suhu_akhir"] = 0;
     database[grp + ".perubahan_waktu"] = 0;
+
+    // Recipe details tags
+    database["recipe_kode." + i] = "";
+    database["recipe_nama." + i] = "";
+    database["recipe_versi." + i] = 0;
+    database["recipe_warna." + i] = "";
+    database["recipe_qty." + i] = 0;
+    database["recipe_batch." + i] = 0;
+    database["recipe_trolly." + i] = "";
 }
 
 // Global SCADA System Variables
