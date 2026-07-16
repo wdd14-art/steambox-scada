@@ -63,3 +63,12 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 *   **ATURAN UTAMA:** Semua variabel baru wajib dideklarasikan secara eksplisit menggunakan kata kunci **`var`**. Jangan pernah melakukan deklarasi implisit (misalnya `scale_up_1 = ...`).
 *   **ALASAN:** Compiler Haiwell SCADA menerapkan JavaScript mode ketat (*strict mode*). Penggunaan variabel tanpa deklarasi kata kunci `var` akan menyebabkan kegagalan kompilasi dengan pesan error `[variable] is not defined`.
 
+---
+
+## 7. Manajemen Versi Berkas Skrip (No Overwrite)
+
+*   **ATURAN UTAMA:** Ketika terjadi perbaikan bug, penyesuaian logika, atau perubahan fitur baru pada skrip, **AI Agent dilarang keras menimpa (overwrite) berkas skrip versi sebelumnya yang sudah ada.**
+*   **PROSEDUR:** AI Agent wajib menduplikasi berkas tersebut dan menyimpannya sebagai berkas baru dengan penambahan versi di akhir nama berkas secara urut (misalnya: `Trf_Resep_v2.txt`, `Trf_Resep_v3.txt`, dst.).
+*   **TUJUAN:** Menjaga keutuhan riwayat kerja (*version control*) agar operator HMI dapat membandingkan berkas atau memilih versi yang stabil jika terjadi kendala integrasi baru.
+
+
