@@ -26,9 +26,10 @@ Dokumen ini adalah acuan utama dan aturan ketat (*behavioral rules*) untuk penge
 
 ## 3. Penulisan Variabel Kelompok Resep (`recipe_kode.X`)
 
-*   **ATURAN UTAMA:** Kelompok tag resep dinamis yang memiliki tanda titik diikuti nomor unit (seperti `recipe_kode.1`, `recipe_nama.29`) wajib ditulis secara statis menggunakan teks literal dalam tanda petik pada fungsi `Variable.SetValue`:
-    `Variable.SetValue("recipe_kode.1", $recipe.kode);`
-*   **ALASAN:** Penulisan `$recipe_kode.1 = ""` akan dibaca parser JavaScript sebagai desimal dan menyebabkan kegagalan kompilasi. Dengan menggunakan teks literal statis, compiler HMI dapat mengikatnya dengan aman tanpa membebani runtime.
+*   **ATURAN UTAMA:** Kelompok tag resep dinamis yang memiliki tanda titik diikuti nomor unit (seperti `$recipe_kode.1`, `$recipe_nama.29`) **wajib ditulis secara langsung menggunakan notasi dot statis dengan simbol `$`** (misalnya: `$recipe_kode.1 = $recipe.kode;`).
+*   **LARANGAN:** Jangan menggunakan fungsi `Variable.SetValue("recipe_kode.1", ...)` karena tidak terikat (unbound) secara fisik dan menyebabkan kegagalan transfer data resep.
+*   **ALASAN:** Preprosesor Haiwell SCADA memproses simbol `$` dan seluruh nama tag (termasuk titik dan nomor unit seperti `$recipe_kode.1`) sebelum kode JavaScript dikompilasi oleh parser standar. Oleh karena itu, notasi dot langsung ini 100% didukung, berhasil dikompilasi, dan terbukti sukses melakukan transfer data resep secara fisik.
+
 
 ---
 
@@ -49,18 +50,21 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 ## 5. Perbandingan Ketat Tipe Data HMI (`===`)
 
 *   **ATURAN UTAMA:** Untuk semua variabel HMI tipe Boolean (`BOOL` seperti `run_stop` atau `_commStatus`) yang dibandingkan secara strict (`===`) dengan `1` atau `0`, **wajib di-cast menggunakan fungsi `Number()`** (misalnya `Number($sb1.run_stop) === 1`).
+*   **LARANGAN PENGGUNAAN `==`:** Compiler/linter SCADA melarang keras operator perbandingan longgar `==` untuk nilai `0` atau `1`. Perbandingan seperti `run_stop == 0` akan menghasilkan error `Use '===' to compare with '0'`.
 *   **ALASAN:** Nilai boolean HMI dibaca sebagai `true`/`false` di JavaScript. Membandingkannya secara langsung menggunakan `$tag === 1` atau `$tag === 0` akan selalu menghasilkan `false` karena perbedaan tipe data (Boolean vs Number).
 *   **CONTOH PENULISAN YANG BENAR:**
     *   *Salah:* `if ($sb1.run_stop === 1)`
     *   *Benar:* `if (Number($sb1.run_stop) === 1)`
     *   *Salah:* `if ($sb1.run_stop === 0)`
     *   *Benar:* `if (Number($sb1.run_stop) === 0)`
+    *   *Salah:* `if ($sb1.run_stop == 0)`
 
 ---
 
 ## 6. Deklarasi Variabel Eksplisit (`var`)
 
-*   **ATURAN UTAMA:** Semua variabel baru wajib dideklarasikan secara eksplisit menggunakan kata kunci **`var`**. Jangan pernah melakukan deklarasi implisit (misalnya `scale_up_1 = ...`).
+*   **ATURAN UTAMA:** Semua variabel baru wajib dideklarasikan secara eksplisit menggunakan kata kunci **`var`**. Jangan pernah melakukan deklarasi implisit (misalnya `scale_up_1 = ...` tanpa deklarasi `var` terlebih dahulu).
+*   **KHUSUS VARIABEL BANTU (`scale_up_X`):** Semua variabel pembantu kalkulasi (seperti `scale_up_1` s.d. `scale_up_30`) wajib dideklarasikan secara eksplisit dengan `var` di awal cakupan blok unit sebelum digunakan dalam ekspresi atau penugasan (contoh: `var scale_up_1 = 0;`).
 *   **ALASAN:** Compiler Haiwell SCADA menerapkan JavaScript mode ketat (*strict mode*). Penggunaan variabel tanpa deklarasi kata kunci `var` akan menyebabkan kegagalan kompilasi dengan pesan error `[variable] is not defined`.
 
 ---
@@ -70,5 +74,13 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 *   **ATURAN UTAMA:** Ketika terjadi perbaikan bug, penyesuaian logika, atau perubahan fitur baru pada skrip, **AI Agent dilarang keras menimpa (overwrite) berkas skrip versi sebelumnya yang sudah ada.**
 *   **PROSEDUR:** AI Agent wajib menduplikasi berkas tersebut dan menyimpannya sebagai berkas baru dengan penambahan versi di akhir nama berkas secara urut (misalnya: `Trf_Resep_v2.txt`, `Trf_Resep_v3.txt`, dst.).
 *   **TUJUAN:** Menjaga keutuhan riwayat kerja (*version control*) agar operator HMI dapat membandingkan berkas atau memilih versi yang stabil jika terjadi kendala integrasi baru.
+
+---
+
+## 8. Format Berkas Skrip untuk Integrasi (No .hwExport)
+
+*   **ATURAN UTAMA:** AI Agent hanya diperbolehkan membuat berkas baru dalam format teks mentah (**`.txt`** atau **`.js`**). **Dilarang keras membuat atau memperbarui berkas berkekstensi `.hwExport`.**
+*   **ALASAN:** Proses impor berkas `.hwExport` yang berisi naskah sangat panjang (seperti master loop yang mencapai ~7000 baris) membutuhkan waktu pemrosesan yang sangat lama di editor SCADA Haiwell. Menggunakan format `.txt` atau `.js` memungkinkan operator melakukan salin-tempel (*copy-paste*) kode secara instan dan cepat.
+
 
 
