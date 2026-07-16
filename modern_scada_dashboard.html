@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMI SCADA Steambox - PT SIAP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Design System - Poka-Yoke SCADA Layout (No Sidebar) */
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #131c38;
+            --bg-header: #1e293b;
+            --text-header: #f8fafc;
+            --bg-label: #2d3748;
+            --text-label: #cbd5e1;
+            --bg-value: #0f172a;
+            --text-value: #f8fafc;
+            --border-color: #3b4252;
+            
+            /* Status Colors */
+            --color-idle: #475569;
+            --color-pemanasan: #eab308;     /* Yellow */
+            --color-pemasakan: #22c55e;     /* Green */
+            --color-warning: #0ea5e9;       /* Blue */
+            --color-danger: #ef4444;        /* Red */
+            --color-maint: #a855f7;         /* Purple */
+            --color-selesai: #3b82f6;       /* Bright Blue */
+            
+            /* Buttons */
+            --btn-green: #22c55e;
+            --btn-red: #ef4444;
+            --btn-blue: #3b82f6;
+            --btn-orange: #f97316;
+            --btn-purple: #8b5cf6;
+            
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        [data-theme="light"] {
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-header: #cbd5e1;
+            --text-header: #0f172a;
+            --bg-label: #e2e8f0;
+            --text-label: #334155;
+            --bg-value: #ffffff;
+            --text-value: #0f172a;
+            --border-color: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-value);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header Control Bar */
+        .top-bar {
+            background-color: var(--bg-card);
+            border-bottom: 2px solid var(--border-color);
+            padding: 0.4rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .top-bar-title h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .top-bar-title h1 span {
+            color: var(--btn-orange);
+        }
+
+        .top-bar-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-value);
+            padding: 0.25rem 0.5rem 0.25rem 1.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            outline: none;
+            width: 160px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            stroke: var(--text-label);
+            fill: none;
+        }
+
+        .btn-top {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-value);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-top:hover {
+            background-color: var(--bg-label);
+        }
+
+        /* Status Legend & Pagination Bar */
+        .legend-bar {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.3rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 34px;
+            flex-shrink: 0;
+        }
+
+        .legends-list {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+            list-style: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+        }
+
+        .legend-badge.idle { background-color: var(--color-idle); }
+        .legend-badge.pemanasan { background-color: var(--color-pemanasan); }
+        .legend-badge.pemasakan { background-color: var(--color-pemasakan); }
+        .legend-badge.selesai { background-color: var(--color-selesai); }
+        .legend-badge.danger { background-color: var(--color-danger); }
+        .legend-badge.maint { background-color: var(--color-maint); }
+
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-page {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-value);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-page:hover, .btn-page.active {
+            background-color: var(--btn-blue);
+            color: #ffffff;
+            border-color: var(--btn-blue);
+        }
+
+        /* 5 Units Dashboard Container */
+        .cards-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 4px 8px;
+            gap: 4px;
+            box-sizing: border-box;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Simplified Table Grid Card (No nesting table overflow) */
+        .steambox-card {
+            display: grid;
+            grid-template-columns: 10% 13% 11% 33% 33%;
+            grid-template-rows: 22px 1fr;
+            height: calc((100vh - 96px) / 5); /* exact fit for 5 cards */
+            border: 1.5px solid var(--border-color);
+            background-color: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Grid header cells */
+        .grid-hdr {
+            background-color: var(--bg-header);
+            color: var(--text-header);
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1.5px solid var(--border-color);
+            border-right: 1.5px solid var(--border-color);
+        }
+        .grid-hdr:last-child {
+            border-right: none;
+        }
+
+        /* Inner blocks */
+        .card-block-unit {
+            grid-column: 1;
+            grid-row: 2;
+            display: grid;
+            grid-template-rows: 1fr 22px;
+            border-right: 1.5px solid var(--border-color);
+        }
+
+        .card-block-banner {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            text-align: center;
+            border-right: 1.5px solid var(--border-color);
+        }
+
+        .card-block-ctrl {
+            grid-column: 3;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 2px;
+            justify-content: space-around;
+            border-right: 1.5px solid var(--border-color);
+        }
+
+        .card-block-resep {
+            grid-column: 4;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            border-right: 1.5px solid var(--border-color);
+        }
+
+        .card-block-proses {
+            grid-column: 5;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            border-right: none;
+        }
+
+        /* Grid cells styling */
+        .grid-cell-pair {
+            display: flex;
+            align-items: stretch;
+            border-right: 0.5px solid var(--border-color);
+            border-bottom: 0.5px solid var(--border-color);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .grid-cell-pair.full-width {
+            grid-column: span 2;
+        }
+
+        .cell-lbl {
+            background-color: var(--bg-label);
+            color: var(--text-label);
+            font-weight: 600;
+            text-align: center;
+            width: 70px;
+            font-size: 0.68rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-right: 0.5px solid var(--border-color);
+        }
+
+        .cell-val {
+            background-color: var(--bg-value);
+            color: var(--text-value);
+            font-family: var(--font-mono);
+            font-weight: 500;
+            font-size: 0.72rem;
+            padding-left: 6px;
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cell-val.highlight {
+            color: var(--color-pemasakan);
+            font-weight: 700;
+            font-size: 0.8rem;
+            justify-content: center;
+            padding-left: 0;
+        }
+
+        /* Unit Identification block */
+        .unit-number-display {
+            font-weight: 800;
+            font-size: 2.2rem;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: all 0.2s ease;
+            border-bottom: 1.5px solid var(--border-color);
+        }
+
+        .unit-number-display.state-idle { background-color: var(--color-idle); color: #ffffff; }
+        .unit-number-display.state-pemanasan { background-color: var(--color-pemanasan); color: #000000; }
+        .unit-number-display.state-pemasakan { background-color: var(--color-pemasakan); color: #ffffff; }
+        .unit-number-display.state-warning { background-color: var(--color-pemasakan); color: #ffffff; animation: warning-blink 1.5s infinite; }
+        .unit-number-display.state-selesai { background-color: var(--color-selesai); color: #ffffff; animation: finish-blink 1s infinite; }
+        .unit-number-display.state-danger { background-color: var(--color-danger); color: #ffffff; }
+        .unit-number-display.state-maint { background-color: var(--color-maint); color: #ffffff; }
+
+        @keyframes warning-blink {
+            0%, 100% { background-color: var(--color-pemasakan); }
+            50% { background-color: var(--color-warning); }
+        }
+
+        @keyframes finish-blink {
+            0%, 100% { background-color: var(--color-selesai); }
+            50% { background-color: var(--color-idle); }
+        }
+
+        .suhu-bar {
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .suhu-bar .cell-val {
+            font-weight: 700;
+            font-size: 0.78rem;
+            justify-content: center;
+            padding-left: 0;
+        }
+
+        /* Dim effect for inactive units to focus operator's attention */
+        .state-idle-dim {
+            opacity: 0.35;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Large Status Banner Cell */
+        .banner-status-display {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: #ffffff;
+            text-transform: uppercase;
+            padding: 4px;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+
+        .banner-status-display.state-idle { background-color: rgba(71, 85, 105, 0.2); color: var(--text-label); }
+        .banner-status-display.state-pemanasan { background-color: rgba(234, 179, 8, 0.2); color: var(--color-pemanasan); }
+        .banner-status-display.state-pemasakan { background-color: rgba(34, 197, 94, 0.2); color: var(--color-pemasakan); }
+        .banner-status-display.state-warning { background-color: rgba(14, 165, 233, 0.25); color: var(--color-warning); }
+        .banner-status-display.state-selesai { background-color: rgba(59, 130, 246, 0.3); color: var(--color-selesai); font-size: 0.78rem; animation: text-pulse 1s infinite; }
+        .banner-status-display.state-danger { background-color: rgba(239, 68, 68, 0.2); color: var(--color-danger); }
+        .banner-status-display.state-maint { background-color: rgba(168, 85, 247, 0.2); color: var(--color-maint); }
+
+        @keyframes text-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        /* Poka-Yoke Operator Buttons Panel */
+        .btn-action {
+            width: 100%;
+            flex: 1;
+            border: none;
+            outline: none;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.7rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+            background-color: #1e293b !important;
+            color: #64748b !important;
+        }
+
+        .btn-action.tugas { background-color: var(--btn-green); }
+        .btn-action.tugas:not(:disabled):hover { opacity: 0.85; }
+
+        .btn-action.stop { background-color: var(--btn-red); }
+        .btn-action.stop:not(:disabled):hover { opacity: 0.85; }
+
+        .btn-action.reset { background-color: var(--btn-orange); }
+        .btn-action.reset:not(:disabled):hover { opacity: 0.85; }
+        .btn-action.reset.pulse { animation: button-pulse 1s infinite; }
+
+        @keyframes button-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+            50% { box-shadow: 0 0 0 4px rgba(249, 115, 22, 0); }
+        }
+
+        .btn-action.maint { background-color: var(--btn-purple); }
+        .btn-action.maint:hover { opacity: 0.85; }
+        .btn-action.maint.active-mode { background-color: #3b82f6; }
+
+        /* Modal Dialog Style */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 360px;
+            padding: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            color: var(--text-label);
+            font-weight: 600;
+        }
+
+        .form-select, .form-input {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-value);
+            padding: 0.4rem;
+            border-radius: 4px;
+            outline: none;
+            font-size: 0.8rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-top: 0.4rem;
+        }
+
+        .btn-modal {
+            padding: 0.4rem 0.85rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 0.78rem;
+        }
+
+        .btn-modal.cancel {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-value);
+        }
+
+        .btn-modal.submit {
+            background-color: var(--btn-green);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top bar -->
+    <div class="top-bar">
+        <div class="top-bar-title">
+            <h1>PT. SURYA INTI ANEKA PANGAN — <span>HMI Steambox Monitor</span></h1>
+        </div>
+        
+        <div class="top-bar-controls">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" placeholder="Search Steambox..." id="searchBox">
+            </div>
+            
+            <div class="control-input-group">
+                <span style="font-size:0.75rem; color:var(--text-label)">Std Pemanasan:</span>
+                <input type="text" class="control-input" value="30">
+                <span style="font-size:0.75rem; color:var(--text-label)">menit</span>
+            </div>
+            
+            <button class="btn-top" id="themeToggle">Light Mode</button>
+        </div>
+    </div>
+
+    <!-- Legend and Pagination Bar -->
+    <div class="legend-bar">
+        <ul class="legends-list">
+            <li class="legend-item"><div class="legend-badge idle"></div> Belum terisi</li>
+            <li class="legend-item"><div class="legend-badge pemanasan"></div> Pemanasan</li>
+            <li class="legend-item"><div class="legend-badge pemasakan"></div> Pemasakan</li>
+            <li class="legend-item"><div class="legend-badge selesai"></div> Selesai (Bongkar)</li>
+            <li class="legend-item"><div class="legend-badge danger"></div> COMM Error</li>
+            <li class="legend-item"><div class="legend-badge maint"></div> Maintenance</li>
+        </ul>
+        
+        <div class="pagination-container" id="pagination">
+            <!-- Pages 1-5, 6-10, etc. loaded dynamically -->
+        </div>
+    </div>
+
+    <!-- 5 Units Container (No scroll) -->
+    <div class="cards-container" id="cardsContainer">
+        <!-- Loaded via Javascript to match strict Poka-Yoke layout -->
+    </div>
+
+    <!-- Modal Form Tugas Baru -->
+    <div class="modal-overlay" id="startModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalTitle">Mulai Tugas Baru</h3>
+            </div>
+            <div class="form-group">
+                <label for="recipeSelect">Pilih SKU Resep</label>
+                <select class="form-select" id="recipeSelect">
+                    <option value="0">Surya Bintang Mentor (74 menit)</option>
+                    <option value="1">Steambox Tipe A Standard (45 menit)</option>
+                    <option value="2">Steambox Tipe B Express (15 menit)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="batchInput">Nomor Batch</label>
+                <input type="text" class="form-input" id="batchInput" value="Batch 1">
+            </div>
+            <div class="form-group">
+                <label for="trollySelect">Jenis Troli</label>
+                <select class="form-select" id="trollySelect">
+                    <option value="Longgar">Longgar</option>
+                    <option value="Rapat">Rapat</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="qtyInput">Quantity (Gelondong)</label>
+                <input type="number" class="form-input" id="qtyInput" value="168">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal cancel" id="btnCancelStart">Batal</button>
+                <button class="btn-modal submit" id="btnSubmitStart">Mulai Proses</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database & State Management for 30 Units
+        const recipes = [
+            { kode: "SBM", nama: "Surya Bintang Mentor", versi: 4, warna: "Putih", qty: 168, trolly: "Longgar", durasi: 74 },
+            { kode: "STA", nama: "Steambox Tipe A Std", versi: 2, warna: "Putih", qty: 150, trolly: "Rapat", durasi: 45 },
+            { kode: "STB", nama: "Steambox Tipe B Exp", versi: 1, warna: "Kuning", qty: 120, trolly: "Longgar", durasi: 15 }
+        ];
+
+        // Generate 30 units mock data matching HMI registry
+        const database = Array.from({ length: 30 }, (_, index) => {
+            const id = index + 1;
+            let status = 'pemasakan';
+            let recipe = { ...recipes[index % 3], batch: "Batch " + (index + 1) };
+            let temp_awal = 45.0 + (index % 5);
+            let temp_aktual = 100.4 + (index % 2 === 0 ? 0.2 : -0.2);
+            let sisaTime = (10 + (index * 2)) * 60; // unique countdown time per unit
+            let process = {
+                jam_mulai: "07:00:00",
+                durasi_pemanasan: "00:10:00",
+                jam_masak: "07:10:00",
+                durasi_pemasakan: `${pad2(recipe.durasi)}:00`,
+                tambahan: "+ 00:00:00",
+                jam_selesai: "08:30:00",
+                sisa: sisaTime
+            };
+            let banner_text = '';
+
+            if (id === 1) {
+                status = 'pemanasan';
+                recipe = { ...recipes[0], batch: "Batch 1" };
+                temp_awal = 28.5;
+                temp_aktual = 47.2;
+                process = { jam_mulai: "07:30:00", durasi_pemanasan: "00:04:15", jam_masak: "--:--:--", durasi_pemasakan: "01:14:00", tambahan: "+ 00:00:00", jam_selesai: "08:44:00", sisa: 74 * 60 };
+            } else if (id === 2) {
+                status = 'pemasakan';
+                recipe = { ...recipes[0], batch: "Batch 1" };
+                temp_awal = 46.4;
+                temp_aktual = 100.8;
+                process = { jam_mulai: "07:07:52", durasi_pemanasan: "00:14:08", jam_masak: "07:22:00", durasi_pemasakan: "01:14:00", tambahan: "+ 00:00:00", jam_selesai: "08:36:00", sisa: 50 * 60 };
+            } else if (id === 3) {
+                status = 'selesai'; // Finished, flashing blue!
+                recipe = { ...recipes[0], batch: "Batch 3" };
+                temp_awal = 45.0;
+                temp_aktual = 98.4;
+                process = { jam_mulai: "06:00:00", durasi_pemanasan: "00:12:00", jam_masak: "06:12:00", durasi_pemasakan: "01:14:00", tambahan: "+ 00:10:00", jam_selesai: "07:36:00", sisa: 0 };
+            } else if (id === 4) {
+                status = 'warning'; // 15 Min Warning
+                recipe = { ...recipes[1], batch: "Batch 2" };
+                temp_awal = 49.1;
+                temp_aktual = 101.2;
+                process = { jam_mulai: "07:45:00", durasi_pemanasan: "00:12:00", jam_masak: "07:57:00", durasi_pemasakan: "00:45:00", tambahan: "+ 00:00:00", jam_selesai: "08:42:00", sisa: 10 * 60 };
+            } else if (id === 8) {
+                status = 'danger'; // Comm Error
+                temp_awal = 0;
+                temp_aktual = 0;
+                recipe = null;
+                process = null;
+            } else if (id === 12) {
+                status = 'maint'; // Maintenance
+                temp_awal = 35.0;
+                temp_aktual = 42.1;
+                recipe = null;
+                process = null;
+            }
+
+            return {
+                id,
+                status,
+                temp_awal,
+                temp_aktual,
+                recipe,
+                process,
+                banner_text: banner_text
+            };
+        });
+
+        let currentPage = 1;
+        let selectedUnitForModal = null;
+
+        // Render Pagination buttons
+        const pagination = document.getElementById('pagination');
+        function renderPagination() {
+            pagination.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                const startNum = (i - 1) * 5 + 1;
+                const endNum = i * 5;
+                const btn = document.createElement('button');
+                btn.className = `btn-page ${currentPage === i ? 'active' : ''}`;
+                btn.textContent = `Unit ${startNum}-${endNum}`;
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderPagination();
+                    renderCards();
+                };
+                pagination.appendChild(btn);
+            }
+        }
+
+        // Pad number helper
+        function pad2(num) {
+            return String(num).padStart(2, '0');
+        }
+
+        // Format Seconds to HH:MM:SS
+        function formatSeconds(totalSecs) {
+            if (totalSecs === null || totalSecs === undefined || totalSecs < 0) return "--:--:--";
+            const h = Math.floor(totalSecs / 3600);
+            const m = Math.floor((totalSecs % 3600) / 60);
+            const s = totalSecs % 60;
+            return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+        }
+
+        // Render Dashboard Table Cards
+        const cardsContainer = document.getElementById('cardsContainer');
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            
+            const startIdx = (currentPage - 1) * 5;
+            const endIdx = startIdx + 5;
+            const displayedUnits = database.slice(startIdx, endIdx);
+
+            displayedUnits.forEach(unit => {
+                const card = document.createElement('div');
+                card.className = 'steambox-card';
+                card.id = `card-${unit.id}`;
+
+                // Left cell background class
+                let leftBgClass = 'state-idle';
+                if (unit.status === 'pemanasan') leftBgClass = 'state-pemanasan';
+                else if (unit.status === 'pemasakan') leftBgClass = 'state-pemasakan';
+                else if (unit.status === 'warning') leftBgClass = 'state-warning';
+                else if (unit.status === 'selesai') leftBgClass = 'state-selesai';
+                else if (unit.status === 'danger') leftBgClass = 'state-danger';
+                else if (unit.status === 'maint') leftBgClass = 'state-maint';
+
+                // Variables Mapping
+                const hasRecipe = unit.recipe !== null;
+                const kode = hasRecipe ? unit.recipe.kode : '--';
+                const batch = hasRecipe ? unit.recipe.batch : '--';
+                const versi = hasRecipe ? unit.recipe.versi : '--';
+                const warna = hasRecipe ? unit.recipe.warna : '--';
+                const trolly = hasRecipe ? unit.recipe.trolly : '--';
+                const qty = hasRecipe ? unit.recipe.qty : '--';
+                const recipeHeader = hasRecipe ? unit.recipe.nama : 'TANGKI KOSONG - BELUM ADA TUGAS';
+
+                const hasProcess = unit.process !== null;
+                const jamMulai = hasProcess ? unit.process.jam_mulai : '--:--:--';
+                const durasiPemanasan = hasProcess ? unit.process.durasi_pemanasan : '--:--:--';
+                const jamMasak = hasProcess ? unit.process.jam_masak : '--:--:--';
+                const targetWaktu = hasRecipe ? `${unit.recipe.durasi} Menit` : '--:--:--';
+                const jamSelesai = hasProcess ? unit.process.jam_selesai : '--:--:--';
+                const adjustTime = hasProcess ? unit.process.tambahan : '--:--:--';
+                const durasiAktual = hasProcess ? formatSeconds(unit.process.sisa) : '--:--:--';
+
+                // Banner Status Text Logic
+                let statusText = '';
+                let bannerClass = 'state-idle';
+                
+                if (unit.status === 'idle') {
+                    statusText = 'Tangki Kosong - Siap Memulai';
+                    bannerClass = 'state-idle';
+                } else if (unit.status === 'pemanasan') {
+                    statusText = 'Pre-heating (< 100°C)';
+                    bannerClass = 'state-pemanasan';
+                } else if (unit.status === 'pemasakan') {
+                    statusText = 'Memasak (Mendidih)';
+                    bannerClass = 'state-pemasakan';
+                } else if (unit.status === 'warning') {
+                    statusText = '15 Menit Menuju Selesai';
+                    bannerClass = 'state-warning';
+                } else if (unit.status === 'selesai') {
+                    statusText = 'Selesai - Kosongkan Tangki!';
+                    bannerClass = 'state-selesai';
+                } else if (unit.status === 'danger') {
+                    statusText = 'COMM ERROR (MCB TRIP)';
+                    bannerClass = 'state-danger';
+                } else if (unit.status === 'maint') {
+                    statusText = 'Mode Maintenance (Manual)';
+                    bannerClass = 'state-maint';
+                }
+
+                if (unit.banner_text) {
+                    statusText = unit.banner_text;
+                }
+
+                let suhuText = unit.temp_aktual ? `${unit.temp_aktual.toFixed(1)} °C` : '0.0 °C';
+                if (unit.status === 'danger') suhuText = 'COMM ERR';
+
+                // Poka-Yoke Controls Logic
+                const isRunning = ['pemanasan', 'pemasakan', 'warning'].includes(unit.status);
+                const isTugasDisabled = isRunning || unit.status === 'danger' || unit.status === 'maint' || unit.status === 'selesai';
+                const isStopDisabled = !isRunning;
+                const isResetDisabled = unit.status !== 'selesai' && (unit.status !== 'idle' || !unit.banner_text.includes('PAUSED'));
+                const isMaintActive = unit.status === 'maint';
+                
+                // Dim effect for inactive units to focus operator's attention
+                const dimClass = (unit.status === 'idle' && !unit.banner_text) ? 'state-idle-dim' : '';
+
+                card.innerHTML = `
+                    <!-- Header Row -->
+                    <div class="grid-hdr">Steambox</div>
+                    <div class="grid-hdr">Status Mesin</div>
+                    <div class="grid-hdr">Kontrol HMI</div>
+                    <div class="grid-hdr ${dimClass}">Detail Resep: ${recipeHeader}</div>
+                    <div class="grid-hdr ${dimClass}">Waktu Operasional</div>
+
+                    <!-- Block 1: Unit & Suhu -->
+                    <div class="card-block-unit">
+                        <div class="unit-number-display ${leftBgClass}">${pad2(unit.id)}</div>
+                        <div class="grid-cell-pair suhu-bar">
+                            <span class="cell-lbl">Suhu</span>
+                            <span class="cell-val">${suhuText}</span>
+                        </div>
+                    </div>
+
+                    <!-- Block 2: Detail Resep -->
+                    <div class="card-block-resep ${dimClass}">
+                        <div class="grid-cell-pair"><span class="cell-lbl">Kode</span><span class="cell-val">${kode}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Batch</span><span class="cell-val">${batch}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Versi</span><span class="cell-val">${versi}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Warna</span><span class="cell-val">${warna}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Troli</span><span class="cell-val">${trolly}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Qty</span><span class="cell-val">${qty}</span></div>
+                    </div>
+
+                    <!-- Block 3: Detail Proses / Waktu -->
+                    <div class="card-block-proses ${dimClass}">
+                        <div class="grid-cell-pair"><span class="cell-lbl">Jam Mulai</span><span class="cell-val">${jamMulai}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Pre-heat</span><span class="cell-val">${durasiPemanasan}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Jam Masak</span><span class="cell-val">${jamMasak}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Target</span><span class="cell-val">${targetWaktu}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Jam Selesai</span><span class="cell-val">${jamSelesai}</span></div>
+                        <div class="grid-cell-pair"><span class="cell-lbl">Adjust</span><span class="cell-val">${adjustTime}</span></div>
+                        <div class="grid-cell-pair full-width">
+                            <span class="cell-lbl">Durasi Aktual</span>
+                            <span class="cell-timer-val ${dimClass}" style="color: ${unit.status === 'warning' ? 'var(--color-danger)' : (unit.status === 'selesai' ? 'var(--color-selesai)' : 'var(--color-pemasakan)')}">${durasiAktual}</span>
+                        </div>
+                    </div>
+
+                    <!-- Block 4: Status Banner -->
+                    <div class="card-block-banner">
+                        <div class="banner-status-display ${bannerClass}">${statusText}</div>
+                    </div>
+
+                    <!-- Block 5: Kontrol Panel -->
+                    <div class="card-block-ctrl">
+                        <button class="btn-action tugas" ${isTugasDisabled ? 'disabled' : ''} onclick="startProcess(${unit.id})">Tugas Baru</button>
+                        <button class="btn-action stop" ${isStopDisabled ? 'disabled' : ''} onclick="stopProcess(${unit.id})">STOP</button>
+                        <button class="btn-action reset ${unit.status === 'selesai' ? 'pulse' : ''}" ${isResetDisabled ? 'disabled' : ''} onclick="resetProcess(${unit.id})">RESET</button>
+                        <button class="btn-action maint ${isMaintActive ? 'active-mode' : ''}" onclick="toggleMaint(${unit.id})">${isMaintActive ? 'Maint' : 'Normal'}</button>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        // Open Tugas Baru Modal Dialog
+        const startModal = document.getElementById('startModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const recipeSelect = document.getElementById('recipeSelect');
+        const batchInput = document.getElementById('batchInput');
+        const trollySelect = document.getElementById('trollySelect');
+        const qtyInput = document.getElementById('qtyInput');
+
+        function startProcess(unitId) {
+            selectedUnitForModal = unitId;
+            modalTitle.textContent = `Mulai Tugas Baru - Steambox ${pad2(unitId)}`;
+            startModal.style.display = 'flex';
+        }
+
+        document.getElementById('btnCancelStart').onclick = () => {
+            startModal.style.display = 'none';
+        };
+
+        document.getElementById('btnSubmitStart').onclick = () => {
+            const unit = database.find(u => u.id === selectedUnitForModal);
+            const recIdx = parseInt(recipeSelect.value);
+            const recipeData = { ...recipes[recIdx] };
+            recipeData.batch = batchInput.value;
+            recipeData.trolly = trollySelect.value;
+            recipeData.qty = parseInt(qtyInput.value);
+
+            const now = new Date();
+            const timeStartStr = now.toTimeString().split(' ')[0];
+            
+            const finishTime = new Date(now.getTime() + (recipeData.durasi * 60 * 1000) + (12 * 1000)); // adds mock 12s preheat
+            const timeFinishStr = finishTime.toTimeString().split(' ')[0];
+
+            unit.status = 'pemanasan';
+            unit.temp_awal = 30.5;
+            unit.temp_aktual = 30.5;
+            unit.recipe = recipeData;
+            unit.banner_text = '';
+            unit.process = {
+                jam_mulai: timeStartStr,
+                durasi_pemanasan: "00:00:00",
+                jam_masak: "--:--:--",
+                durasi_pemasakan: `${pad2(recipeData.durasi)}:00`,
+                tambahan: "+ 00:00:00",
+                jam_selesai: timeFinishStr,
+                sisa: recipeData.durasi * 60,
+                total_pemanasan_secs: 0
+            };
+
+            startModal.style.display = 'none';
+            renderCards();
+        };
+
+        // Stop Process (Emergency Pause)
+        function stopProcess(unitId) {
+            const unit = database.find(u => u.id === unitId);
+            if (confirm(`Apakah Anda yakin ingin mematikan paksa pemanas Unit ${unitId}?`)) {
+                unit.status = 'idle';
+                unit.banner_text = 'MESIN BERHENTI (PAUSED)';
+                renderCards();
+            }
+        }
+
+        // Reset Process (Emptying / Unloading finished tank)
+        function resetProcess(unitId) {
+            const unit = database.find(u => u.id === unitId);
+            if (confirm(`Apakah tangki Unit ${unitId} sudah dikosongkan/dibilas? Tekan OK untuk me-reset.`)) {
+                unit.status = 'idle';
+                unit.banner_text = '';
+                unit.recipe = null;
+                unit.process = null;
+                renderCards();
+            }
+        }
+
+        // Toggle Maintenance Mode
+        function toggleMaint(unitId) {
+            const unit = database.find(u => u.id === unitId);
+            if (unit.status === 'maint') {
+                unit.status = 'idle';
+                unit.banner_text = '';
+            } else {
+                unit.status = 'maint';
+                unit.banner_text = '';
+                unit.recipe = null;
+                unit.process = null;
+            }
+            renderCards();
+        }
+
+        // Theme switching (Dark/Light Mode)
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.onclick = () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.textContent = "Dark Mode";
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.textContent = "Light Mode";
+            }
+        };
+
+        // Real-time values simulation (counting down remaining cooking time, rising temp)
+        setInterval(() => {
+            database.forEach(unit => {
+                if (['pemanasan', 'pemasakan', 'warning'].includes(unit.status) && unit.process) {
+                    const proc = unit.process;
+                    
+                    if (unit.status === 'pemanasan') {
+                        unit.temp_aktual += 0.5 + Math.random() * 0.4;
+                        proc.total_pemanasan_secs += 1;
+                        proc.durasi_pemanasan = formatSeconds(proc.total_pemanasan_secs);
+                        
+                        if (unit.temp_aktual >= 100.0) {
+                            unit.temp_aktual = 100.0 + Math.random() * 0.5;
+                            unit.status = 'pemasakan';
+                            const now = new Date();
+                            proc.jam_masak = now.toTimeString().split(' ')[0];
+                        }
+                    } else {
+                        // Fluctuating cooking temp
+                        unit.temp_aktual = 100.0 + (Math.sin(Date.now() / 4000) * 0.2) + Math.random() * 0.2;
+                        
+                        if (proc.sisa > 0) {
+                            proc.sisa -= 1;
+                            if (proc.sisa <= 15 * 60 && proc.sisa > 0) {
+                                unit.status = 'warning';
+                            }
+                        } else {
+                            unit.status = 'selesai';
+                        }
+                    }
+                }
+            });
+            renderCards();
+        }, 1000);
+
+        // Search Box input mapping
+        const searchBox = document.getElementById('searchBox');
+        searchBox.oninput = () => {
+            const query = searchBox.value.trim();
+            if (query !== "") {
+                const targetUnit = parseInt(query);
+                if (!isNaN(targetUnit) && targetUnit >= 1 && targetUnit <= 30) {
+                    currentPage = Math.ceil(targetUnit / 5);
+                    renderPagination();
+                    renderCards();
+                    
+                    const card = document.getElementById(`card-${targetUnit}`);
+                    if (card) {
+                        card.style.outline = '3px solid var(--btn-orange)';
+                        setTimeout(() => { card.style.outline = 'none'; }, 2500);
+                    }
+                }
+            }
+        };
+
+        // Initial render
+        renderPagination();
+        renderCards();
+    </script>
+</body>
+</html>

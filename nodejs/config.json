@@ -1,0 +1,7 @@
+{
+  "scadaHost": "http://127.0.0.1:8888",
+  "machineCode": "5751428633031624442",
+  "webapiKey": "1705119a5c2ec5e3",
+  "iv": "abc1234567890efg",
+  "port": 3000
+}

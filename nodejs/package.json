@@ -1,0 +1,13 @@
+{
+  "name": "haiwell-api-engine",
+  "version": "1.0.0",
+  "description": "Background server for Haiwell WebAPI local encryption and tag relaying",
+  "main": "engine.js",
+  "scripts": {
+    "start": "node engine.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "axios": "^1.7.2"
+  }
+}

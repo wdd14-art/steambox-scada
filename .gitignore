@@ -12,3 +12,8 @@ keepvalue/
 # Ignore stackdumps or temp files
 *.stackdump
 output.txt
+
+# Ignore Node.js dependencies
+node_modules/
+**/node_modules/
+

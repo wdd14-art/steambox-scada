@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMI Steambox Fixed Full Screen - Poka Yoke</title>
+    <style>
+        :root {
+            --bg-pabrik: #141a24;
+            --panel-gelap: #1c2430;
+            --panel-konten: #253142;
+            --status-run: #2ecc71;
+            --status-error: #e74c3c;
+            --aksen-kuning: #f1c40f;
+            --text-terang: #ffffff;
+            --text-redup: #95a5a6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* PAKSA LOCK SCREEN: Tidak boleh ada scrollbar sama sekali */
+        body {
+            background-color: var(--bg-pabrik);
+            color: var(--text-terang);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        /* HEADER FIXED HEIGHT */
+        header {
+            height: 45px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2c3e50;
+            padding: 0 10px;
+            margin-bottom: 10px;
+        }
+
+        header h1 { font-size: 20px; letter-spacing: 1px; }
+        header .sub-title { color: var(--aksen-kuning); font-weight: bold; font-size: 13px; }
+
+        /* MAIN LAYOUT: Membagi Layar Kiri & Kanan secara Horizontal */
+        .main-container {
+            display: flex;
+            gap: 15px;
+            flex: 1; /* Menghabiskan sisa tinggi layar */
+            height: calc(100vh - 75px);
+        }
+
+        /* KULUM KIRI: Matrix Grid Unit Mesin */
+        .left-column {
+            flex: 4; /* Mengambil 40% lebar layar */
+            background-color: var(--panel-gelap);
+            border-radius: 10px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr); /* Siap untuk kelipatan unit */
+            gap: 12px;
+        }
+
+        .sb-card {
+            background-color: var(--panel-konten);
+            border-radius: 8px;
+            border: 2px solid #34495e;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .sb-card.active-selection {
+            border-color: var(--aksen-kuning);
+            background-color: #2c3e50;
+        }
+
+        .sb-card.running {
+            background-color: #1b5e20;
+            border-color: var(--status-run);
+        }
+
+        .sb-number { font-size: 22px; font-weight: bold; }
+        .sb-temp { font-size: 26px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px 0; }
+        .sb-status-text { font-size: 11px; font-weight: bold; color: var(--text-redup); }
+
+        /* KOLOM KANAN: Panel Detail Kontrol Utama */
+        .right-column {
+            flex: 6; /* Mengambil 60% lebar layar */
+            background-color: var(--panel-gelap);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Menjaga komponen tersebar pas dari atas sampai bawah */
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--aksen-kuning);
+            text-align: center;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 5px;
+        }
+
+        /* BLOK 1: DATA MONITORING RAKSASA */
+        .monitor-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #0f141d;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .monitor-label { font-size: 11px; color: var(--text-redup); text-transform: uppercase; }
+        .monitor-value { font-size: 40px; font-weight: bold; color: #ffffff; }
+
+        /* BLOK 2: TEMPAT UNTUK NATIVE RECIPE BROWSER HAIWELL */
+        .haiwell-recipe-placeholder {
+            border: 2px dashed var(--aksen-kuning);
+            background: rgba(241, 196, 15, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 120px; /* Ukuran pas untuk komponen browser resep bawaan */
+        }
+
+        .placeholder-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--aksen-kuning);
+            margin-bottom: 5px;
+        }
+
+        .placeholder-sub {
+            font-size: 11px;
+            color: var(--text-redup);
+        }
+
+        /* BLOK 3: ACTION BUTTONS RAKSASA DI CORNER BAWAH */
+        .action-block {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 18px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-start { background-color: var(--status-run); color: white; }
+        .btn-start:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+        .btn-stop { background-color: var(--status-error); color: white; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>STEAMBOX CONTROL HMI</h1>
+        <div class="sub-title">RESOLUSI TERKUNCI (NO-SCROLL) ● MODE OPERATOR</div>
+    </header>
+
+    <div class="main-container">
+        <!-- KIRI: GRID MESIN -->
+        <div class="left-column">
+            <div class="sb-card active-selection" id="card-1" onclick="pilihSteambox(1)">
+                <span class="sb-number">SB 01</span>
+                <div class="sb-temp" id="grid-temp-1">30.0°C</div>
+                <div class="sb-status-text" id="grid-status-1">STANDBY</div>
+            </div>
+            <div class="sb-card" id="card-2" onclick="pilihSteambox(2)">
+                <span class="sb-number">SB 02</span>
+                <div class="sb-temp" id="grid-temp-2">34.6°C</div>
+                <div class="sb-status-text" id="grid-status-2">STANDBY</div>
+            </div>
+            <!-- Duplikasi kartu kosong untuk gambaran grid SCADA -->
+            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 03</span><div class="sb-temp">0.0°C</div></div>
+            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 04</span><div class="sb-temp">0.0°C</div></div>
+            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 05</span><div class="sb-temp">0.0°C</div></div>
+            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 06</span><div class="sb-temp">0.0°C</div></div>
+        </div>
+
+        <!-- KANAN: PANEL DETAIL KONTROL -->
+        <div class="right-column">
+            <div class="panel-title" id="panel-title">KONTROL UTAMA : STEAMBOX 01</div>
+
+            <!-- BLOK 1: MONITORING RAKSASA -->
+            <div class="monitor-block">
+                <div>
+                    <div class="monitor-label">Suhu Aktual</div>
+                    <div class="monitor-value" id="mon-suhu">30.0°C</div>
+                </div>
+                <div>
+                    <div class="monitor-label">Sisa Waktu Proses</div>
+                    <div class="monitor-value" id="mon-waktu">00:00</div>
+                </div>
+            </div>
+
+            <!-- BLOK 2: RUMAH UNTUK NATIVE RECIPE BROWSER HAIWELL -->
+            <div class="haiwell-recipe-placeholder">
+                <div class="placeholder-text">[ AREA NATIVE RECIPE BROWSER HAIWELL ]</div>
+                <div class="placeholder-sub">Letakkan komponen grid resep bawaan Haiwell tepat di koordinat kotak ini.</div>
+                <div class="placeholder-sub" style="color:#fff; margin-top:5px;">Target Terkunci: <span id="lbl-resep">Silahkan Pilih di Grid Resep Bawaan</span></div>
+            </div>
+
+            <!-- BLOK 3: ACTION BUTTONS (Selalu Terkunci di Paling Bawah Layar) -->
+            <div class="action-block">
+                <button class="btn btn-start" id="btn-start" onclick="mulaiMasak()">MULAI MASAK</button>
+                <button class="btn btn-stop" id="btn-stop" onclick="stopMasak()">STOP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeSB = 1;
+        let isRunning = { 1: false, 2: false };
+        let currentTemp = { 1: 30.0, 2: 34.6 };
+
+        setInterval(() => {
+            for(let i=1; i<=2; i++) {
+                if(isRunning[i]) {
+                    if(currentTemp[i] < 90) currentTemp[i] += 2.1;
+                } else {
+                    if(currentTemp[i] > 30) currentTemp[i] -= 0.4;
+                }
+                document.getElementById(`grid-temp-${i}`).innerText = currentTemp[i].toFixed(1) + "°C";
+            }
+            document.getElementById("mon-suhu").innerText = currentTemp[activeSB].toFixed(1) + "°C";
+        }, 1000);
+
+        function pilihSteambox(num) {
+            // Hapus seleksi aktif lama
+            document.getElementById(`card-${activeSB}`).classList.remove("active-selection");
+            activeSB = num;
+            // Tambah seleksi aktif baru
+            document.getElementById(`card-${num}`).classList.add("active-selection");
+            document.getElementById("panel-title").innerText = `KONTROL UTAMA : STEAMBOX 0${num}`;
+            
+            if(isRunning[num]) {
+                document.getElementById("btn-start").disabled = true;
+                document.getElementById("btn-start").innerText = "PROSES BERJALAN";
+            } else {
+                document.getElementById("btn-start").disabled = false;
+                document.getElementById("btn-start").innerText = "MULAI MASAK";
+            }
+        }
+
+        function mulaiMasak() {
+            isRunning[activeSB] = true;
+            document.getElementById(`card-${activeSB}`).classList.add("running");
+            document.getElementById(`grid-status-${activeSB}`).innerText = "RUNNING";
+            document.getElementById("mon-waktu").innerText = "00:30:00";
+            pilihSteambox(activeSB);
+        }
+
+        function stopMasak() {
+            isRunning[activeSB] = false;
+            document.getElementById(`card-${activeSB}`).classList.remove("running");
+            document.getElementById(`grid-status-${activeSB}`).innerText = "STANDBY";
+            document.getElementById("mon-waktu").innerText = "00:00:00";
+            pilihSteambox(activeSB);
+        }
+    </script>
+</body>
+</html>

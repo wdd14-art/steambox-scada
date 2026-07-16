@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Desain Tombol & Dashboard SCADA Modern</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Variables (Default to Light Mode / Slate-50) */
+        :root {
+            --bg-base: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+            --shadow-button: 0 4px 12px rgba(79, 70, 229, 0.15);
+            
+            /* Button Colors */
+            --color-primary: #4f46e5;
+            --color-primary-hover: #4338ca;
+            --color-primary-text: #ffffff;
+            
+            --color-run: #10b981;
+            --color-run-hover: #059669;
+            --color-stop: #ef4444;
+            --color-stop-hover: #dc2626;
+            
+            --color-reset-border: #cbd5e1;
+            --color-reset-bg: #ffffff;
+            --color-reset-text: #475569;
+            --color-reset-hover: #f1f5f9;
+            
+            --color-maint: #8b5cf6;
+            --color-maint-hover: #7c3aed;
+            --color-maint-text: #ffffff;
+        }
+
+        /* Dark Mode Override */
+        [data-theme="dark"] {
+            --bg-base: #0b0f19;
+            --bg-card: #111827;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.35);
+            --shadow-button: 0 4px 12px rgba(99, 102, 241, 0.2);
+            
+            --color-reset-border: #475569;
+            --color-reset-bg: #1f2937;
+            --color-reset-text: #e2e8f0;
+            --color-reset-hover: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* Container Dashboard */
+        .dashboard-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+        }
+
+        /* Header Dashboard */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .dashboard-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .dashboard-title p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Toolbar Area (Button Showcase) */
+        .button-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Modern Button Base Styling */
+        .btn-modern {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            outline: none;
+            user-select: none;
+        }
+
+        .btn-modern svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .btn-modern:active {
+            transform: scale(0.97);
+        }
+
+        /* 1. Button Tugas Baru */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), #6366f1);
+            color: var(--color-primary-text);
+            box-shadow: var(--shadow-button);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* 2. Button Run / Stop (Stateful) */
+        .btn-runstate {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .btn-runstate.state-stop {
+            background: linear-gradient(135deg, var(--color-run), #34d399);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .btn-runstate.state-stop:hover {
+            background: var(--color-run-hover);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-runstate.state-run {
+            background: linear-gradient(135deg, var(--color-stop), #f87171);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .btn-runstate.state-run:hover {
+            background: var(--color-stop-hover);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* 3. Button Reset (Sleek Outline) */
+        .btn-reset {
+            background-color: var(--color-reset-bg);
+            border: 1px solid var(--color-reset-border);
+            color: var(--color-reset-text);
+        }
+
+        .btn-reset:hover {
+            background-color: var(--color-reset-hover);
+            transform: translateY(-1px);
+        }
+
+        /* 4. Button Maintenance */
+        .btn-maintenance {
+            background: linear-gradient(135deg, var(--color-maint), #a78bfa);
+            color: var(--color-maint-text);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+        }
+
+        .btn-maintenance:hover {
+            background: var(--color-maint-hover);
+            box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* System Action Terminal / Logger */
+        .console-logger {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .console-header {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .console-log-line {
+            margin-bottom: 0.35rem;
+            line-height: 1.4;
+            color: var(--text-main);
+        }
+
+        .console-log-line .timestamp {
+            color: var(--text-muted);
+            margin-right: 0.5rem;
+        }
+
+        .console-log-line .tag {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .console-log-line.tag-info .tag { color: var(--color-primary); }
+        .console-log-line.tag-success .tag { color: var(--color-run); }
+        .console-log-line.tag-danger .tag { color: #f43f5e; }
+        .console-log-line.tag-warning .tag { color: #d97706; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">
+                <h1>Steambox SCADA Dashboard</h1>
+                <p>Uji coba kontrol mesin dan desain tombol modern</p>
+            </div>
+            
+            <button class="theme-toggle-btn" id="themeToggle">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" id="themeIcon">
+                    <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+                </svg>
+                <span id="themeText">Dark Mode</span>
+            </button>
+        </div>
+
+        <!-- Button Showcase Grid -->
+        <div class="button-showcase">
+            <!-- Tombol Tugas Baru -->
+            <button class="btn-modern btn-primary" id="btnTugasBaru">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Tugas Baru
+            </button>
+
+            <!-- Tombol Run / Stop -->
+            <button class="btn-modern btn-runstate state-stop" id="btnRunStop" data-state="stopped">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="runStopIcon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                </svg>
+                <span id="runStopText">Run</span>
+            </button>
+
+            <!-- Tombol Reset -->
+            <button class="btn-modern btn-reset" id="btnReset">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/>
+                </svg>
+                Reset
+            </button>
+
+            <!-- Tombol Maintenance -->
+            <button class="btn-modern btn-maintenance" id="btnMaint">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Maintenance
+            </button>
+        </div>
+
+        <!-- Terminal Logger -->
+        <div class="console-logger">
+            <div class="console-header">
+                <span>System Console Log</span>
+                <span id="sysStatus">Status: Siap</span>
+            </div>
+            <div id="logsContainer">
+                <div class="console-log-line tag-info">
+                    <span class="timestamp">[16:30:00]</span><span class="tag">[INFO]</span><span>Sistem SCADA diinisialisasi.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addLog(tag, text) {
+            const container = document.getElementById('logsContainer');
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            
+            const line = document.createElement('div');
+            line.className = `console-log-line tag-${tag}`;
+            line.innerHTML = `<span class="timestamp">[${timeStr}]</span><span class="tag">[${tag.toUpperCase()}]</span><span>${text}</span>`;
+            
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                themeText.textContent = "Dark Mode";
+                themeIcon.innerHTML = `<path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>`;
+                addLog('info', 'Background diubah ke Light Mode.');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeText.textContent = "Light Mode";
+                themeIcon.innerHTML = `<path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>`;
+                addLog('info', 'Background diubah ke Dark Mode.');
+            }
+        });
+
+        document.getElementById('btnTugasBaru').addEventListener('click', () => {
+            addLog('info', 'Melakukan inisialisasi tugas baru...');
+        });
+
+        const btnRunStop = document.getElementById('btnRunStop');
+        const runStopIcon = document.getElementById('runStopIcon');
+        const runStopText = document.getElementById('runStopText');
+        const sysStatus = document.getElementById('sysStatus');
+
+        btnRunStop.addEventListener('click', () => {
+            const currentState = btnRunStop.getAttribute('data-state');
+            if (currentState === 'stopped') {
+                btnRunStop.setAttribute('data-state', 'running');
+                btnRunStop.classList.remove('state-stop');
+                btnRunStop.classList.add('state-run');
+                runStopText.textContent = "Stop";
+                sysStatus.textContent = "Status: RUNNING";
+                runStopIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />`;
+                addLog('success', 'Sistem di-RUN (heater aktif).');
+            } else {
+                btnRunStop.setAttribute('data-state', 'stopped');
+                btnRunStop.classList.remove('state-run');
+                btnRunStop.classList.add('state-stop');
+                runStopText.textContent = "Run";
+                sysStatus.textContent = "Status: STOPPED";
+                runStopIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />`;
+                addLog('danger', 'Sistem di-STOP.');
+            }
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            const conf = confirm('Reset data SCADA?');
+            if (conf) {
+                addLog('warning', 'Data di-reset.');
+            }
+        });
+
+        document.getElementById('btnMaint').addEventListener('click', () => {
+            addLog('warning', 'Mode Maintenance Aktif.');
+        });
+    </script>
+</body>
+</html>

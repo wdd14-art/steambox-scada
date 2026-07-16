@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Recipe Browser</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 15px;
+        }
+        .search-box {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .search-box:focus {
+            border-color: #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        th, td {
+            border: 1px solid #475569;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #334155;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        tr:hover {
+            background: #1e293b;
+            cursor: pointer;
+        }
+        .btn-transfer {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+        .btn-transfer:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+
+    <h3>Custom Recipe Browser - PT SIAP</h3>
+    <input type="text" class="search-box" id="search" placeholder="Cari Kode Resep atau Nama Produk...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Kode</th>
+                <th>Nama Produk</th>
+                <th>Durasi (Menit)</th>
+                <th>Troli</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="recipe-list">
+            <!-- Data Resep Mock -->
+        </tbody>
+    </table>
+
+    <script>
+        const recipes = [
+            { kode: "SBM", nama: "Surya Bintang Mentor", durasi: 74, trolly: "Longgar" },
+            { kode: "STA", nama: "Steambox Tipe A Std", durasi: 45, trolly: "Rapat" },
+            { kode: "STB", nama: "Steambox Tipe B Exp", durasi: 15, trolly: "Longgar" }
+        ];
+
+        function renderRecipes(filter = "") {
+            const list = document.getElementById("recipe-list");
+            list.innerHTML = "";
+            recipes.forEach(r => {
+                if (r.kode.toLowerCase().includes(filter) || r.nama.toLowerCase().includes(filter)) {
+                    list.innerHTML += `
+                        <tr>
+                            <td><strong>${r.kode}</strong></td>
+                            <td>${r.nama}</td>
+                            <td>${r.durasi} Menit</td>
+                            <td>${r.trolly}</td>
+                            <td><button class="btn-transfer" onclick="transferRecipe('${r.kode}')">Transfer</button></td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        async function transferRecipe(kodeResep) {
+            const targetUnit = prompt("Masukkan nomor unit Steambox tujuan (1 - 30):", "1");
+            if (!targetUnit || isNaN(targetUnit) || targetUnit < 1 || targetUnit > 30) {
+                alert("Nomor unit tidak valid!");
+                return;
+            }
+
+            const recipe = recipes.find(r => r.kode === kodeResep);
+            
+            // Format tag penulisan parameter HMI SCADA
+            // Contoh tag: "recipe_kode.1", "recipe_nama.1", "sb_1.target_menit"
+            const tagsToWrite = {};
+            tagsToWrite[`recipe_kode.${targetUnit}`] = recipe.kode;
+            tagsToWrite[`recipe_nama.${targetUnit}`] = recipe.nama;
+            tagsToWrite[`recipe_trolly.${targetUnit}`] = recipe.trolly;
+            tagsToWrite[`sb_${targetUnit}.target_menit`] = recipe.durasi;
+
+            try {
+                const response = await fetch("/api/scada/write", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        groupTag: "Group_Resep", // Harus sesuai dengan nama Group Tag di SCADA
+                        tags: tagsToWrite,
+                        timeout: 5
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Resep ${recipe.kode} berhasil ditransfer ke Steambox ${targetUnit}!`);
+                } else {
+                    alert("Gagal mentransfer resep: " + result.error);
+                }
+            } catch (err) {
+                alert("Terjadi kesalahan jaringan: " + err.message);
+            }
+        }
+
+        document.getElementById("search").oninput = (e) => {
+            renderRecipes(e.target.value.toLowerCase());
+        };
+
+        // Render Awal
+        renderRecipes();
+    </script>
+</body>
+</html>
