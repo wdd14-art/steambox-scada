@@ -8,20 +8,20 @@ var waktuSekarangString = ("0" + ($Hour || 0)).slice(-2) + ":" + ("0" + ($Minute
 var totalDetikSekarang = (($Hour || 0) * 3600) + (($Minute || 0) * 60) + ($Second || 0);
 
 // 2. Auto-Inisialisasi / Tulis Default ke Tag HMI jika Kosong (Agar bisa diedit dari Layar SCADA)
-$Sys_Control.txt_status_kosong = $Sys_Control.txt_status_kosong || "STEAMBOX KOSONG";
+$Sys_Control.txt_status_kosong = $Sys_Control.txt_status_kosong || "Unit online, Steambox kosong/ready";
 $Sys_Control.txt_status_preheat = $Sys_Control.txt_status_preheat || "SEDANG PEMANASAN";
-$Sys_Control.txt_status_pemanasan = $Sys_Control.txt_status_pemanasan || "MENUNGGU MENDIDIH (< 100 C)";
-$Sys_Control.txt_status_pemasakan = $Sys_Control.txt_status_pemasakan || "SEDANG MEMASAK (MENDIDIH)";
-$Sys_Control.txt_status_selesai = $Sys_Control.txt_status_selesai || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
-$Sys_Control.txt_selesai_preheat = $Sys_Control.txt_selesai_preheat || "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN";
-$Sys_Control.txt_siap_preheat = $Sys_Control.txt_siap_preheat || "SIAP PEMANASAN - SILAKAN TEKAN START";
-$Sys_Control.txt_siap_cooking = $Sys_Control.txt_siap_cooking || "RESEP TERPASANG - SILAKAN TEKAN START";
-$Sys_Control.txt_status_resep = $Sys_Control.txt_status_resep || "RESEP TERPASANG - SILAKAN TEKAN START";
+$Sys_Control.txt_status_pemanasan = $Sys_Control.txt_status_pemanasan || "tunggu mendidih sampai 100 derajat celcius";
+$Sys_Control.txt_status_pemasakan = $Sys_Control.txt_status_pemasakan || "proses memasak sedang berlangsung";
+$Sys_Control.txt_status_selesai = $Sys_Control.txt_status_selesai || "proses selesai, tekan tugas baru untuk bacth selanjutnya";
+$Sys_Control.txt_selesai_preheat = $Sys_Control.txt_selesai_preheat || "pemanasan selesai,siap untuk memasak";
+$Sys_Control.txt_siap_preheat = $Sys_Control.txt_siap_preheat || "siap pemanasan silakan tekan start";
+$Sys_Control.txt_siap_cooking = $Sys_Control.txt_siap_cooking || "resep sudah siap, silakan tekan start";
+$Sys_Control.txt_status_resep = $Sys_Control.txt_status_resep || "resep sudah siap, silakan tekan start";
 $Sys_Control.txt_preheat_paused = $Sys_Control.txt_preheat_paused || "PRE-HEAT DIHENTIKAN (PAUSED)";
 $Sys_Control.txt_status_paused = $Sys_Control.txt_status_paused || "MESIN BERHENTI (PAUSED)";
 $Sys_Control.txt_status_maintenance = $Sys_Control.txt_status_maintenance || "MODE MAINTENANCE (KONTROL MANUAL)";
-$Sys_Control.txt_status_offline = $Sys_Control.txt_status_offline || "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
-$Sys_Control.txt_status_disable = $Sys_Control.txt_status_disable || "UNIT TIDAK DIPAKAI";
+$Sys_Control.txt_status_offline = $Sys_Control.txt_status_offline || "Unit offline, Periksa Unit";
+$Sys_Control.txt_status_disable = $Sys_Control.txt_status_disable || "unit tidak dipakai";
 $Sys_Control.txt_status_sensor_error = $Sys_Control.txt_status_sensor_error || "ERROR SENSOR (OPENLOOP/HHHH)";
 $Sys_Control.txt_sensor_error = $Sys_Control.txt_sensor_error || "proses memasak, tetapi sensor error, cek segera !";
 
@@ -86,13 +86,13 @@ if ($sb_1.reset) {
     $sb_1.suhu_akhir = 0;
     $sb_1.perubahan_waktu = 0;
     
-    $recipe_kode.1 = "";
-    $recipe_nama.1 = "--";
-    $recipe_versi.1 = 0;
-    $recipe_warna.1 = "";
-    $recipe_qty.1 = 0;
-    $recipe_batch.1 = 0;
-    $recipe_trolly.1 = "";
+    Variable.SetValue("recipe_kode.1", "");
+    Variable.SetValue("recipe_nama.1", "--");
+    Variable.SetValue("recipe_versi.1", 0);
+    Variable.SetValue("recipe_warna.1", "");
+    Variable.SetValue("recipe_qty.1", 0);
+    Variable.SetValue("recipe_batch.1", 0);
+    Variable.SetValue("recipe_trolly.1", "");
     
     $sb_1.status_kosong = true;
     $sb_1.status_resep = false;
@@ -111,7 +111,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_1.maintenance_mode) {
             var isSensorError_1 = ($sb1.temp >= tempErrorLimit);
             
-            if (Number($sb1.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb1.run_stop) === 1) { // STOPPED
                 $sb_1.status_pemanasan = false;
                 $sb_1.status_pemasakan = false;
                 $sb_1.flag_init_start = 0;
@@ -121,8 +121,8 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_1.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_1.mode_preheat && !$sb_1.status_resep && $sb_1.target_menit === 0 && $sb_1.sisa_detik_masak === 0 && !$sb_1.status_selesai && $sb_1.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_1.mode_preheat && !$sb_1.status_resep && !$sb_1.status_selesai && $sb_1.total_detik_pemanasan === 0) {
                     $sb_1.status_kosong = true;
                 }
                 
@@ -130,23 +130,29 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_1.status_banner = txtKosong;
                 } else if ($sb_1.status_selesai) {
                     $sb_1.status_banner = txtSelesai;
-                } else if (!$sb_1.status_kosong && !$sb_1.status_selesai && !$sb_1.mode_preheat && !$sb_1.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_1.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_1.tampil_jam_mulai = "--:--:--";
+                    $sb_1.tampil_jam_masak = "--:--:--";
+                    $sb_1.tampil_jam_selesai = "--:--:--";
+                    $sb_1.tampil_durasi_aktual = "--";
+                    $sb_1.durasi_aktual_up = "--";
+                    if ($sb_1.total_detik_pemanasan === 0) {
+                        $sb_1.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_1.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_1.status_resep) {
+                    if ($sb_1.flag_init_masak === 0) {
+                        $sb_1.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_1.status_banner = txtPaused;
+                    }
+                } else if ($sb_1.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_1.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_1.mode_preheat) {
-                        if ($sb_1.total_detik_pemanasan === 0) {
-                            $sb_1.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_1.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_1.status_resep && $sb_1.sisa_detik_masak === 0) {
-                            $sb_1.status_banner = txtStatusResep;
-                        } else {
-                            $sb_1.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_1.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -163,12 +169,13 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_1.status_pemasakan = false;
                         $sb_1.status_banner = txtPreheat;
                         
+                        $sb_1.tampil_jam_mulai = "--:--:--";
+                        $sb_1.tampil_jam_masak = "--:--:--";
+                        $sb_1.tampil_jam_selesai = "--:--:--";
+                        $sb_1.tampil_durasi_aktual = "--";
+                        $sb_1.durasi_aktual_up = "--";
+                        
                         if ($sb_1.flag_init_start === 0) {
-                            $sb_1.tampil_jam_mulai = "--:--:--";
-                            $sb_1.tampil_jam_masak = "--:--:--";
-                            $sb_1.tampil_jam_selesai = "--:--:--";
-                            $sb_1.tampil_durasi_aktual = "--";
-                            $sb_1.durasi_aktual_up = "--";
                             $sb_1.flag_init_start = 1;
                             $sb_1.total_detik_pemanasan = 0;
                             $sb_1.suhu_awal = $sb1.temp;
@@ -205,7 +212,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_1.adjust_menit = 0;
                         }
                         
-                        if ($sb1.temp < 1000) { // Heating (< 100 C)
+                        if ($sb1.temp < 1000 && !isSensorError_1) { // Heating (< 100 C)
                             $sb_1.status_pemanasan = true;
                             $sb_1.status_pemasakan = false;
                             $sb_1.status_banner = txtPemanasan; // Tunggu mendidih
@@ -229,10 +236,15 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_1.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_1.status_pemanasan = false;
                             $sb_1.status_pemasakan = true;
-                            $sb_1.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_1) {
+                                $sb_1.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_1.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_1.flag_init_masak === 0) {
                                 $sb_1.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -273,7 +285,7 @@ if (!$sb1._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_1) {
                 $sb_1.sensor_error = true;
                 if (Number($sb1.run_stop) === 0 && $sb_1.flag_init_start === 1) {
@@ -319,13 +331,13 @@ if ($sb_2.reset) {
     $sb_2.suhu_akhir = 0;
     $sb_2.perubahan_waktu = 0;
     
-    $recipe_kode.2 = "";
-    $recipe_nama.2 = "--";
-    $recipe_versi.2 = 0;
-    $recipe_warna.2 = "";
-    $recipe_qty.2 = 0;
-    $recipe_batch.2 = 0;
-    $recipe_trolly.2 = "";
+    Variable.SetValue("recipe_kode.2", "");
+    Variable.SetValue("recipe_nama.2", "--");
+    Variable.SetValue("recipe_versi.2", 0);
+    Variable.SetValue("recipe_warna.2", "");
+    Variable.SetValue("recipe_qty.2", 0);
+    Variable.SetValue("recipe_batch.2", 0);
+    Variable.SetValue("recipe_trolly.2", "");
     
     $sb_2.status_kosong = true;
     $sb_2.status_resep = false;
@@ -344,7 +356,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_2.maintenance_mode) {
             var isSensorError_2 = ($sb2.temp >= tempErrorLimit);
             
-            if (Number($sb2.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb2.run_stop) === 1) { // STOPPED
                 $sb_2.status_pemanasan = false;
                 $sb_2.status_pemasakan = false;
                 $sb_2.flag_init_start = 0;
@@ -354,8 +366,8 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_2.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_2.mode_preheat && !$sb_2.status_resep && $sb_2.target_menit === 0 && $sb_2.sisa_detik_masak === 0 && !$sb_2.status_selesai && $sb_2.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_2.mode_preheat && !$sb_2.status_resep && !$sb_2.status_selesai && $sb_2.total_detik_pemanasan === 0) {
                     $sb_2.status_kosong = true;
                 }
                 
@@ -363,23 +375,29 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_2.status_banner = txtKosong;
                 } else if ($sb_2.status_selesai) {
                     $sb_2.status_banner = txtSelesai;
-                } else if (!$sb_2.status_kosong && !$sb_2.status_selesai && !$sb_2.mode_preheat && !$sb_2.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_2.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_2.tampil_jam_mulai = "--:--:--";
+                    $sb_2.tampil_jam_masak = "--:--:--";
+                    $sb_2.tampil_jam_selesai = "--:--:--";
+                    $sb_2.tampil_durasi_aktual = "--";
+                    $sb_2.durasi_aktual_up = "--";
+                    if ($sb_2.total_detik_pemanasan === 0) {
+                        $sb_2.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_2.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_2.status_resep) {
+                    if ($sb_2.flag_init_masak === 0) {
+                        $sb_2.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_2.status_banner = txtPaused;
+                    }
+                } else if ($sb_2.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_2.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_2.mode_preheat) {
-                        if ($sb_2.total_detik_pemanasan === 0) {
-                            $sb_2.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_2.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_2.status_resep && $sb_2.sisa_detik_masak === 0) {
-                            $sb_2.status_banner = txtStatusResep;
-                        } else {
-                            $sb_2.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_2.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -396,12 +414,13 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_2.status_pemasakan = false;
                         $sb_2.status_banner = txtPreheat;
                         
+                        $sb_2.tampil_jam_mulai = "--:--:--";
+                        $sb_2.tampil_jam_masak = "--:--:--";
+                        $sb_2.tampil_jam_selesai = "--:--:--";
+                        $sb_2.tampil_durasi_aktual = "--";
+                        $sb_2.durasi_aktual_up = "--";
+                        
                         if ($sb_2.flag_init_start === 0) {
-                            $sb_2.tampil_jam_mulai = "--:--:--";
-                            $sb_2.tampil_jam_masak = "--:--:--";
-                            $sb_2.tampil_jam_selesai = "--:--:--";
-                            $sb_2.tampil_durasi_aktual = "--";
-                            $sb_2.durasi_aktual_up = "--";
                             $sb_2.flag_init_start = 1;
                             $sb_2.total_detik_pemanasan = 0;
                             $sb_2.suhu_awal = $sb2.temp;
@@ -438,7 +457,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_2.adjust_menit = 0;
                         }
                         
-                        if ($sb2.temp < 1000) { // Heating (< 100 C)
+                        if ($sb2.temp < 1000 && !isSensorError_2) { // Heating (< 100 C)
                             $sb_2.status_pemanasan = true;
                             $sb_2.status_pemasakan = false;
                             $sb_2.status_banner = txtPemanasan; // Tunggu mendidih
@@ -462,10 +481,15 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_2.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_2.status_pemanasan = false;
                             $sb_2.status_pemasakan = true;
-                            $sb_2.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_2) {
+                                $sb_2.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_2.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_2.flag_init_masak === 0) {
                                 $sb_2.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -506,7 +530,7 @@ if (!$sb2._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_2) {
                 $sb_2.sensor_error = true;
                 if (Number($sb2.run_stop) === 0 && $sb_2.flag_init_start === 1) {
@@ -552,13 +576,13 @@ if ($sb_3.reset) {
     $sb_3.suhu_akhir = 0;
     $sb_3.perubahan_waktu = 0;
     
-    $recipe_kode.3 = "";
-    $recipe_nama.3 = "--";
-    $recipe_versi.3 = 0;
-    $recipe_warna.3 = "";
-    $recipe_qty.3 = 0;
-    $recipe_batch.3 = 0;
-    $recipe_trolly.3 = "";
+    Variable.SetValue("recipe_kode.3", "");
+    Variable.SetValue("recipe_nama.3", "--");
+    Variable.SetValue("recipe_versi.3", 0);
+    Variable.SetValue("recipe_warna.3", "");
+    Variable.SetValue("recipe_qty.3", 0);
+    Variable.SetValue("recipe_batch.3", 0);
+    Variable.SetValue("recipe_trolly.3", "");
     
     $sb_3.status_kosong = true;
     $sb_3.status_resep = false;
@@ -577,7 +601,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_3.maintenance_mode) {
             var isSensorError_3 = ($sb3.temp >= tempErrorLimit);
             
-            if (Number($sb3.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb3.run_stop) === 1) { // STOPPED
                 $sb_3.status_pemanasan = false;
                 $sb_3.status_pemasakan = false;
                 $sb_3.flag_init_start = 0;
@@ -587,8 +611,8 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_3.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_3.mode_preheat && !$sb_3.status_resep && $sb_3.target_menit === 0 && $sb_3.sisa_detik_masak === 0 && !$sb_3.status_selesai && $sb_3.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_3.mode_preheat && !$sb_3.status_resep && !$sb_3.status_selesai && $sb_3.total_detik_pemanasan === 0) {
                     $sb_3.status_kosong = true;
                 }
                 
@@ -596,23 +620,29 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_3.status_banner = txtKosong;
                 } else if ($sb_3.status_selesai) {
                     $sb_3.status_banner = txtSelesai;
-                } else if (!$sb_3.status_kosong && !$sb_3.status_selesai && !$sb_3.mode_preheat && !$sb_3.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_3.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_3.tampil_jam_mulai = "--:--:--";
+                    $sb_3.tampil_jam_masak = "--:--:--";
+                    $sb_3.tampil_jam_selesai = "--:--:--";
+                    $sb_3.tampil_durasi_aktual = "--";
+                    $sb_3.durasi_aktual_up = "--";
+                    if ($sb_3.total_detik_pemanasan === 0) {
+                        $sb_3.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_3.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_3.status_resep) {
+                    if ($sb_3.flag_init_masak === 0) {
+                        $sb_3.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_3.status_banner = txtPaused;
+                    }
+                } else if ($sb_3.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_3.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_3.mode_preheat) {
-                        if ($sb_3.total_detik_pemanasan === 0) {
-                            $sb_3.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_3.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_3.status_resep && $sb_3.sisa_detik_masak === 0) {
-                            $sb_3.status_banner = txtStatusResep;
-                        } else {
-                            $sb_3.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_3.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -629,12 +659,13 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_3.status_pemasakan = false;
                         $sb_3.status_banner = txtPreheat;
                         
+                        $sb_3.tampil_jam_mulai = "--:--:--";
+                        $sb_3.tampil_jam_masak = "--:--:--";
+                        $sb_3.tampil_jam_selesai = "--:--:--";
+                        $sb_3.tampil_durasi_aktual = "--";
+                        $sb_3.durasi_aktual_up = "--";
+                        
                         if ($sb_3.flag_init_start === 0) {
-                            $sb_3.tampil_jam_mulai = "--:--:--";
-                            $sb_3.tampil_jam_masak = "--:--:--";
-                            $sb_3.tampil_jam_selesai = "--:--:--";
-                            $sb_3.tampil_durasi_aktual = "--";
-                            $sb_3.durasi_aktual_up = "--";
                             $sb_3.flag_init_start = 1;
                             $sb_3.total_detik_pemanasan = 0;
                             $sb_3.suhu_awal = $sb3.temp;
@@ -671,7 +702,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_3.adjust_menit = 0;
                         }
                         
-                        if ($sb3.temp < 1000) { // Heating (< 100 C)
+                        if ($sb3.temp < 1000 && !isSensorError_3) { // Heating (< 100 C)
                             $sb_3.status_pemanasan = true;
                             $sb_3.status_pemasakan = false;
                             $sb_3.status_banner = txtPemanasan; // Tunggu mendidih
@@ -695,10 +726,15 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_3.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_3.status_pemanasan = false;
                             $sb_3.status_pemasakan = true;
-                            $sb_3.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_3) {
+                                $sb_3.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_3.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_3.flag_init_masak === 0) {
                                 $sb_3.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -739,7 +775,7 @@ if (!$sb3._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_3) {
                 $sb_3.sensor_error = true;
                 if (Number($sb3.run_stop) === 0 && $sb_3.flag_init_start === 1) {
@@ -785,13 +821,13 @@ if ($sb_4.reset) {
     $sb_4.suhu_akhir = 0;
     $sb_4.perubahan_waktu = 0;
     
-    $recipe_kode.4 = "";
-    $recipe_nama.4 = "--";
-    $recipe_versi.4 = 0;
-    $recipe_warna.4 = "";
-    $recipe_qty.4 = 0;
-    $recipe_batch.4 = 0;
-    $recipe_trolly.4 = "";
+    Variable.SetValue("recipe_kode.4", "");
+    Variable.SetValue("recipe_nama.4", "--");
+    Variable.SetValue("recipe_versi.4", 0);
+    Variable.SetValue("recipe_warna.4", "");
+    Variable.SetValue("recipe_qty.4", 0);
+    Variable.SetValue("recipe_batch.4", 0);
+    Variable.SetValue("recipe_trolly.4", "");
     
     $sb_4.status_kosong = true;
     $sb_4.status_resep = false;
@@ -810,7 +846,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_4.maintenance_mode) {
             var isSensorError_4 = ($sb4.temp >= tempErrorLimit);
             
-            if (Number($sb4.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb4.run_stop) === 1) { // STOPPED
                 $sb_4.status_pemanasan = false;
                 $sb_4.status_pemasakan = false;
                 $sb_4.flag_init_start = 0;
@@ -820,8 +856,8 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_4.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_4.mode_preheat && !$sb_4.status_resep && $sb_4.target_menit === 0 && $sb_4.sisa_detik_masak === 0 && !$sb_4.status_selesai && $sb_4.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_4.mode_preheat && !$sb_4.status_resep && !$sb_4.status_selesai && $sb_4.total_detik_pemanasan === 0) {
                     $sb_4.status_kosong = true;
                 }
                 
@@ -829,23 +865,29 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_4.status_banner = txtKosong;
                 } else if ($sb_4.status_selesai) {
                     $sb_4.status_banner = txtSelesai;
-                } else if (!$sb_4.status_kosong && !$sb_4.status_selesai && !$sb_4.mode_preheat && !$sb_4.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_4.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_4.tampil_jam_mulai = "--:--:--";
+                    $sb_4.tampil_jam_masak = "--:--:--";
+                    $sb_4.tampil_jam_selesai = "--:--:--";
+                    $sb_4.tampil_durasi_aktual = "--";
+                    $sb_4.durasi_aktual_up = "--";
+                    if ($sb_4.total_detik_pemanasan === 0) {
+                        $sb_4.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_4.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_4.status_resep) {
+                    if ($sb_4.flag_init_masak === 0) {
+                        $sb_4.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_4.status_banner = txtPaused;
+                    }
+                } else if ($sb_4.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_4.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_4.mode_preheat) {
-                        if ($sb_4.total_detik_pemanasan === 0) {
-                            $sb_4.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_4.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_4.status_resep && $sb_4.sisa_detik_masak === 0) {
-                            $sb_4.status_banner = txtStatusResep;
-                        } else {
-                            $sb_4.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_4.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -862,12 +904,13 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_4.status_pemasakan = false;
                         $sb_4.status_banner = txtPreheat;
                         
+                        $sb_4.tampil_jam_mulai = "--:--:--";
+                        $sb_4.tampil_jam_masak = "--:--:--";
+                        $sb_4.tampil_jam_selesai = "--:--:--";
+                        $sb_4.tampil_durasi_aktual = "--";
+                        $sb_4.durasi_aktual_up = "--";
+                        
                         if ($sb_4.flag_init_start === 0) {
-                            $sb_4.tampil_jam_mulai = "--:--:--";
-                            $sb_4.tampil_jam_masak = "--:--:--";
-                            $sb_4.tampil_jam_selesai = "--:--:--";
-                            $sb_4.tampil_durasi_aktual = "--";
-                            $sb_4.durasi_aktual_up = "--";
                             $sb_4.flag_init_start = 1;
                             $sb_4.total_detik_pemanasan = 0;
                             $sb_4.suhu_awal = $sb4.temp;
@@ -904,7 +947,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_4.adjust_menit = 0;
                         }
                         
-                        if ($sb4.temp < 1000) { // Heating (< 100 C)
+                        if ($sb4.temp < 1000 && !isSensorError_4) { // Heating (< 100 C)
                             $sb_4.status_pemanasan = true;
                             $sb_4.status_pemasakan = false;
                             $sb_4.status_banner = txtPemanasan; // Tunggu mendidih
@@ -928,10 +971,15 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_4.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_4.status_pemanasan = false;
                             $sb_4.status_pemasakan = true;
-                            $sb_4.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_4) {
+                                $sb_4.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_4.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_4.flag_init_masak === 0) {
                                 $sb_4.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -972,7 +1020,7 @@ if (!$sb4._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_4) {
                 $sb_4.sensor_error = true;
                 if (Number($sb4.run_stop) === 0 && $sb_4.flag_init_start === 1) {
@@ -1018,13 +1066,13 @@ if ($sb_5.reset) {
     $sb_5.suhu_akhir = 0;
     $sb_5.perubahan_waktu = 0;
     
-    $recipe_kode.5 = "";
-    $recipe_nama.5 = "--";
-    $recipe_versi.5 = 0;
-    $recipe_warna.5 = "";
-    $recipe_qty.5 = 0;
-    $recipe_batch.5 = 0;
-    $recipe_trolly.5 = "";
+    Variable.SetValue("recipe_kode.5", "");
+    Variable.SetValue("recipe_nama.5", "--");
+    Variable.SetValue("recipe_versi.5", 0);
+    Variable.SetValue("recipe_warna.5", "");
+    Variable.SetValue("recipe_qty.5", 0);
+    Variable.SetValue("recipe_batch.5", 0);
+    Variable.SetValue("recipe_trolly.5", "");
     
     $sb_5.status_kosong = true;
     $sb_5.status_resep = false;
@@ -1043,7 +1091,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_5.maintenance_mode) {
             var isSensorError_5 = ($sb5.temp >= tempErrorLimit);
             
-            if (Number($sb5.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb5.run_stop) === 1) { // STOPPED
                 $sb_5.status_pemanasan = false;
                 $sb_5.status_pemasakan = false;
                 $sb_5.flag_init_start = 0;
@@ -1053,8 +1101,8 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_5.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_5.mode_preheat && !$sb_5.status_resep && $sb_5.target_menit === 0 && $sb_5.sisa_detik_masak === 0 && !$sb_5.status_selesai && $sb_5.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_5.mode_preheat && !$sb_5.status_resep && !$sb_5.status_selesai && $sb_5.total_detik_pemanasan === 0) {
                     $sb_5.status_kosong = true;
                 }
                 
@@ -1062,23 +1110,29 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_5.status_banner = txtKosong;
                 } else if ($sb_5.status_selesai) {
                     $sb_5.status_banner = txtSelesai;
-                } else if (!$sb_5.status_kosong && !$sb_5.status_selesai && !$sb_5.mode_preheat && !$sb_5.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_5.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_5.tampil_jam_mulai = "--:--:--";
+                    $sb_5.tampil_jam_masak = "--:--:--";
+                    $sb_5.tampil_jam_selesai = "--:--:--";
+                    $sb_5.tampil_durasi_aktual = "--";
+                    $sb_5.durasi_aktual_up = "--";
+                    if ($sb_5.total_detik_pemanasan === 0) {
+                        $sb_5.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_5.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_5.status_resep) {
+                    if ($sb_5.flag_init_masak === 0) {
+                        $sb_5.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_5.status_banner = txtPaused;
+                    }
+                } else if ($sb_5.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_5.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_5.mode_preheat) {
-                        if ($sb_5.total_detik_pemanasan === 0) {
-                            $sb_5.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_5.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_5.status_resep && $sb_5.sisa_detik_masak === 0) {
-                            $sb_5.status_banner = txtStatusResep;
-                        } else {
-                            $sb_5.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_5.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -1095,12 +1149,13 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_5.status_pemasakan = false;
                         $sb_5.status_banner = txtPreheat;
                         
+                        $sb_5.tampil_jam_mulai = "--:--:--";
+                        $sb_5.tampil_jam_masak = "--:--:--";
+                        $sb_5.tampil_jam_selesai = "--:--:--";
+                        $sb_5.tampil_durasi_aktual = "--";
+                        $sb_5.durasi_aktual_up = "--";
+                        
                         if ($sb_5.flag_init_start === 0) {
-                            $sb_5.tampil_jam_mulai = "--:--:--";
-                            $sb_5.tampil_jam_masak = "--:--:--";
-                            $sb_5.tampil_jam_selesai = "--:--:--";
-                            $sb_5.tampil_durasi_aktual = "--";
-                            $sb_5.durasi_aktual_up = "--";
                             $sb_5.flag_init_start = 1;
                             $sb_5.total_detik_pemanasan = 0;
                             $sb_5.suhu_awal = $sb5.temp;
@@ -1137,7 +1192,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_5.adjust_menit = 0;
                         }
                         
-                        if ($sb5.temp < 1000) { // Heating (< 100 C)
+                        if ($sb5.temp < 1000 && !isSensorError_5) { // Heating (< 100 C)
                             $sb_5.status_pemanasan = true;
                             $sb_5.status_pemasakan = false;
                             $sb_5.status_banner = txtPemanasan; // Tunggu mendidih
@@ -1161,10 +1216,15 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_5.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_5.status_pemanasan = false;
                             $sb_5.status_pemasakan = true;
-                            $sb_5.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_5) {
+                                $sb_5.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_5.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_5.flag_init_masak === 0) {
                                 $sb_5.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -1205,7 +1265,7 @@ if (!$sb5._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_5) {
                 $sb_5.sensor_error = true;
                 if (Number($sb5.run_stop) === 0 && $sb_5.flag_init_start === 1) {
@@ -1251,13 +1311,13 @@ if ($sb_6.reset) {
     $sb_6.suhu_akhir = 0;
     $sb_6.perubahan_waktu = 0;
     
-    $recipe_kode.6 = "";
-    $recipe_nama.6 = "--";
-    $recipe_versi.6 = 0;
-    $recipe_warna.6 = "";
-    $recipe_qty.6 = 0;
-    $recipe_batch.6 = 0;
-    $recipe_trolly.6 = "";
+    Variable.SetValue("recipe_kode.6", "");
+    Variable.SetValue("recipe_nama.6", "--");
+    Variable.SetValue("recipe_versi.6", 0);
+    Variable.SetValue("recipe_warna.6", "");
+    Variable.SetValue("recipe_qty.6", 0);
+    Variable.SetValue("recipe_batch.6", 0);
+    Variable.SetValue("recipe_trolly.6", "");
     
     $sb_6.status_kosong = true;
     $sb_6.status_resep = false;
@@ -1276,7 +1336,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_6.maintenance_mode) {
             var isSensorError_6 = ($sb6.temp >= tempErrorLimit);
             
-            if (Number($sb6.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb6.run_stop) === 1) { // STOPPED
                 $sb_6.status_pemanasan = false;
                 $sb_6.status_pemasakan = false;
                 $sb_6.flag_init_start = 0;
@@ -1286,8 +1346,8 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_6.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_6.mode_preheat && !$sb_6.status_resep && $sb_6.target_menit === 0 && $sb_6.sisa_detik_masak === 0 && !$sb_6.status_selesai && $sb_6.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_6.mode_preheat && !$sb_6.status_resep && !$sb_6.status_selesai && $sb_6.total_detik_pemanasan === 0) {
                     $sb_6.status_kosong = true;
                 }
                 
@@ -1295,23 +1355,29 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_6.status_banner = txtKosong;
                 } else if ($sb_6.status_selesai) {
                     $sb_6.status_banner = txtSelesai;
-                } else if (!$sb_6.status_kosong && !$sb_6.status_selesai && !$sb_6.mode_preheat && !$sb_6.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_6.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_6.tampil_jam_mulai = "--:--:--";
+                    $sb_6.tampil_jam_masak = "--:--:--";
+                    $sb_6.tampil_jam_selesai = "--:--:--";
+                    $sb_6.tampil_durasi_aktual = "--";
+                    $sb_6.durasi_aktual_up = "--";
+                    if ($sb_6.total_detik_pemanasan === 0) {
+                        $sb_6.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_6.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_6.status_resep) {
+                    if ($sb_6.flag_init_masak === 0) {
+                        $sb_6.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_6.status_banner = txtPaused;
+                    }
+                } else if ($sb_6.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_6.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_6.mode_preheat) {
-                        if ($sb_6.total_detik_pemanasan === 0) {
-                            $sb_6.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_6.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_6.status_resep && $sb_6.sisa_detik_masak === 0) {
-                            $sb_6.status_banner = txtStatusResep;
-                        } else {
-                            $sb_6.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_6.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -1328,12 +1394,13 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_6.status_pemasakan = false;
                         $sb_6.status_banner = txtPreheat;
                         
+                        $sb_6.tampil_jam_mulai = "--:--:--";
+                        $sb_6.tampil_jam_masak = "--:--:--";
+                        $sb_6.tampil_jam_selesai = "--:--:--";
+                        $sb_6.tampil_durasi_aktual = "--";
+                        $sb_6.durasi_aktual_up = "--";
+                        
                         if ($sb_6.flag_init_start === 0) {
-                            $sb_6.tampil_jam_mulai = "--:--:--";
-                            $sb_6.tampil_jam_masak = "--:--:--";
-                            $sb_6.tampil_jam_selesai = "--:--:--";
-                            $sb_6.tampil_durasi_aktual = "--";
-                            $sb_6.durasi_aktual_up = "--";
                             $sb_6.flag_init_start = 1;
                             $sb_6.total_detik_pemanasan = 0;
                             $sb_6.suhu_awal = $sb6.temp;
@@ -1370,7 +1437,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_6.adjust_menit = 0;
                         }
                         
-                        if ($sb6.temp < 1000) { // Heating (< 100 C)
+                        if ($sb6.temp < 1000 && !isSensorError_6) { // Heating (< 100 C)
                             $sb_6.status_pemanasan = true;
                             $sb_6.status_pemasakan = false;
                             $sb_6.status_banner = txtPemanasan; // Tunggu mendidih
@@ -1394,10 +1461,15 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_6.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_6.status_pemanasan = false;
                             $sb_6.status_pemasakan = true;
-                            $sb_6.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_6) {
+                                $sb_6.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_6.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_6.flag_init_masak === 0) {
                                 $sb_6.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -1438,7 +1510,7 @@ if (!$sb6._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_6) {
                 $sb_6.sensor_error = true;
                 if (Number($sb6.run_stop) === 0 && $sb_6.flag_init_start === 1) {
@@ -1484,13 +1556,13 @@ if ($sb_7.reset) {
     $sb_7.suhu_akhir = 0;
     $sb_7.perubahan_waktu = 0;
     
-    $recipe_kode.7 = "";
-    $recipe_nama.7 = "--";
-    $recipe_versi.7 = 0;
-    $recipe_warna.7 = "";
-    $recipe_qty.7 = 0;
-    $recipe_batch.7 = 0;
-    $recipe_trolly.7 = "";
+    Variable.SetValue("recipe_kode.7", "");
+    Variable.SetValue("recipe_nama.7", "--");
+    Variable.SetValue("recipe_versi.7", 0);
+    Variable.SetValue("recipe_warna.7", "");
+    Variable.SetValue("recipe_qty.7", 0);
+    Variable.SetValue("recipe_batch.7", 0);
+    Variable.SetValue("recipe_trolly.7", "");
     
     $sb_7.status_kosong = true;
     $sb_7.status_resep = false;
@@ -1509,7 +1581,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_7.maintenance_mode) {
             var isSensorError_7 = ($sb7.temp >= tempErrorLimit);
             
-            if (Number($sb7.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb7.run_stop) === 1) { // STOPPED
                 $sb_7.status_pemanasan = false;
                 $sb_7.status_pemasakan = false;
                 $sb_7.flag_init_start = 0;
@@ -1519,8 +1591,8 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_7.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_7.mode_preheat && !$sb_7.status_resep && $sb_7.target_menit === 0 && $sb_7.sisa_detik_masak === 0 && !$sb_7.status_selesai && $sb_7.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_7.mode_preheat && !$sb_7.status_resep && !$sb_7.status_selesai && $sb_7.total_detik_pemanasan === 0) {
                     $sb_7.status_kosong = true;
                 }
                 
@@ -1528,23 +1600,29 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_7.status_banner = txtKosong;
                 } else if ($sb_7.status_selesai) {
                     $sb_7.status_banner = txtSelesai;
-                } else if (!$sb_7.status_kosong && !$sb_7.status_selesai && !$sb_7.mode_preheat && !$sb_7.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_7.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_7.tampil_jam_mulai = "--:--:--";
+                    $sb_7.tampil_jam_masak = "--:--:--";
+                    $sb_7.tampil_jam_selesai = "--:--:--";
+                    $sb_7.tampil_durasi_aktual = "--";
+                    $sb_7.durasi_aktual_up = "--";
+                    if ($sb_7.total_detik_pemanasan === 0) {
+                        $sb_7.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_7.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_7.status_resep) {
+                    if ($sb_7.flag_init_masak === 0) {
+                        $sb_7.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_7.status_banner = txtPaused;
+                    }
+                } else if ($sb_7.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_7.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_7.mode_preheat) {
-                        if ($sb_7.total_detik_pemanasan === 0) {
-                            $sb_7.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_7.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_7.status_resep && $sb_7.sisa_detik_masak === 0) {
-                            $sb_7.status_banner = txtStatusResep;
-                        } else {
-                            $sb_7.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_7.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -1561,12 +1639,13 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_7.status_pemasakan = false;
                         $sb_7.status_banner = txtPreheat;
                         
+                        $sb_7.tampil_jam_mulai = "--:--:--";
+                        $sb_7.tampil_jam_masak = "--:--:--";
+                        $sb_7.tampil_jam_selesai = "--:--:--";
+                        $sb_7.tampil_durasi_aktual = "--";
+                        $sb_7.durasi_aktual_up = "--";
+                        
                         if ($sb_7.flag_init_start === 0) {
-                            $sb_7.tampil_jam_mulai = "--:--:--";
-                            $sb_7.tampil_jam_masak = "--:--:--";
-                            $sb_7.tampil_jam_selesai = "--:--:--";
-                            $sb_7.tampil_durasi_aktual = "--";
-                            $sb_7.durasi_aktual_up = "--";
                             $sb_7.flag_init_start = 1;
                             $sb_7.total_detik_pemanasan = 0;
                             $sb_7.suhu_awal = $sb7.temp;
@@ -1603,7 +1682,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_7.adjust_menit = 0;
                         }
                         
-                        if ($sb7.temp < 1000) { // Heating (< 100 C)
+                        if ($sb7.temp < 1000 && !isSensorError_7) { // Heating (< 100 C)
                             $sb_7.status_pemanasan = true;
                             $sb_7.status_pemasakan = false;
                             $sb_7.status_banner = txtPemanasan; // Tunggu mendidih
@@ -1627,10 +1706,15 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_7.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_7.status_pemanasan = false;
                             $sb_7.status_pemasakan = true;
-                            $sb_7.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_7) {
+                                $sb_7.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_7.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_7.flag_init_masak === 0) {
                                 $sb_7.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -1671,7 +1755,7 @@ if (!$sb7._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_7) {
                 $sb_7.sensor_error = true;
                 if (Number($sb7.run_stop) === 0 && $sb_7.flag_init_start === 1) {
@@ -1717,13 +1801,13 @@ if ($sb_8.reset) {
     $sb_8.suhu_akhir = 0;
     $sb_8.perubahan_waktu = 0;
     
-    $recipe_kode.8 = "";
-    $recipe_nama.8 = "--";
-    $recipe_versi.8 = 0;
-    $recipe_warna.8 = "";
-    $recipe_qty.8 = 0;
-    $recipe_batch.8 = 0;
-    $recipe_trolly.8 = "";
+    Variable.SetValue("recipe_kode.8", "");
+    Variable.SetValue("recipe_nama.8", "--");
+    Variable.SetValue("recipe_versi.8", 0);
+    Variable.SetValue("recipe_warna.8", "");
+    Variable.SetValue("recipe_qty.8", 0);
+    Variable.SetValue("recipe_batch.8", 0);
+    Variable.SetValue("recipe_trolly.8", "");
     
     $sb_8.status_kosong = true;
     $sb_8.status_resep = false;
@@ -1742,7 +1826,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_8.maintenance_mode) {
             var isSensorError_8 = ($sb8.temp >= tempErrorLimit);
             
-            if (Number($sb8.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb8.run_stop) === 1) { // STOPPED
                 $sb_8.status_pemanasan = false;
                 $sb_8.status_pemasakan = false;
                 $sb_8.flag_init_start = 0;
@@ -1752,8 +1836,8 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_8.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_8.mode_preheat && !$sb_8.status_resep && $sb_8.target_menit === 0 && $sb_8.sisa_detik_masak === 0 && !$sb_8.status_selesai && $sb_8.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_8.mode_preheat && !$sb_8.status_resep && !$sb_8.status_selesai && $sb_8.total_detik_pemanasan === 0) {
                     $sb_8.status_kosong = true;
                 }
                 
@@ -1761,23 +1845,29 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_8.status_banner = txtKosong;
                 } else if ($sb_8.status_selesai) {
                     $sb_8.status_banner = txtSelesai;
-                } else if (!$sb_8.status_kosong && !$sb_8.status_selesai && !$sb_8.mode_preheat && !$sb_8.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_8.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_8.tampil_jam_mulai = "--:--:--";
+                    $sb_8.tampil_jam_masak = "--:--:--";
+                    $sb_8.tampil_jam_selesai = "--:--:--";
+                    $sb_8.tampil_durasi_aktual = "--";
+                    $sb_8.durasi_aktual_up = "--";
+                    if ($sb_8.total_detik_pemanasan === 0) {
+                        $sb_8.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_8.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_8.status_resep) {
+                    if ($sb_8.flag_init_masak === 0) {
+                        $sb_8.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_8.status_banner = txtPaused;
+                    }
+                } else if ($sb_8.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_8.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_8.mode_preheat) {
-                        if ($sb_8.total_detik_pemanasan === 0) {
-                            $sb_8.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_8.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_8.status_resep && $sb_8.sisa_detik_masak === 0) {
-                            $sb_8.status_banner = txtStatusResep;
-                        } else {
-                            $sb_8.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_8.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -1794,12 +1884,13 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_8.status_pemasakan = false;
                         $sb_8.status_banner = txtPreheat;
                         
+                        $sb_8.tampil_jam_mulai = "--:--:--";
+                        $sb_8.tampil_jam_masak = "--:--:--";
+                        $sb_8.tampil_jam_selesai = "--:--:--";
+                        $sb_8.tampil_durasi_aktual = "--";
+                        $sb_8.durasi_aktual_up = "--";
+                        
                         if ($sb_8.flag_init_start === 0) {
-                            $sb_8.tampil_jam_mulai = "--:--:--";
-                            $sb_8.tampil_jam_masak = "--:--:--";
-                            $sb_8.tampil_jam_selesai = "--:--:--";
-                            $sb_8.tampil_durasi_aktual = "--";
-                            $sb_8.durasi_aktual_up = "--";
                             $sb_8.flag_init_start = 1;
                             $sb_8.total_detik_pemanasan = 0;
                             $sb_8.suhu_awal = $sb8.temp;
@@ -1836,7 +1927,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_8.adjust_menit = 0;
                         }
                         
-                        if ($sb8.temp < 1000) { // Heating (< 100 C)
+                        if ($sb8.temp < 1000 && !isSensorError_8) { // Heating (< 100 C)
                             $sb_8.status_pemanasan = true;
                             $sb_8.status_pemasakan = false;
                             $sb_8.status_banner = txtPemanasan; // Tunggu mendidih
@@ -1860,10 +1951,15 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_8.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_8.status_pemanasan = false;
                             $sb_8.status_pemasakan = true;
-                            $sb_8.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_8) {
+                                $sb_8.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_8.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_8.flag_init_masak === 0) {
                                 $sb_8.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -1904,7 +2000,7 @@ if (!$sb8._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_8) {
                 $sb_8.sensor_error = true;
                 if (Number($sb8.run_stop) === 0 && $sb_8.flag_init_start === 1) {
@@ -1950,13 +2046,13 @@ if ($sb_9.reset) {
     $sb_9.suhu_akhir = 0;
     $sb_9.perubahan_waktu = 0;
     
-    $recipe_kode.9 = "";
-    $recipe_nama.9 = "--";
-    $recipe_versi.9 = 0;
-    $recipe_warna.9 = "";
-    $recipe_qty.9 = 0;
-    $recipe_batch.9 = 0;
-    $recipe_trolly.9 = "";
+    Variable.SetValue("recipe_kode.9", "");
+    Variable.SetValue("recipe_nama.9", "--");
+    Variable.SetValue("recipe_versi.9", 0);
+    Variable.SetValue("recipe_warna.9", "");
+    Variable.SetValue("recipe_qty.9", 0);
+    Variable.SetValue("recipe_batch.9", 0);
+    Variable.SetValue("recipe_trolly.9", "");
     
     $sb_9.status_kosong = true;
     $sb_9.status_resep = false;
@@ -1975,7 +2071,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_9.maintenance_mode) {
             var isSensorError_9 = ($sb9.temp >= tempErrorLimit);
             
-            if (Number($sb9.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb9.run_stop) === 1) { // STOPPED
                 $sb_9.status_pemanasan = false;
                 $sb_9.status_pemasakan = false;
                 $sb_9.flag_init_start = 0;
@@ -1985,8 +2081,8 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_9.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_9.mode_preheat && !$sb_9.status_resep && $sb_9.target_menit === 0 && $sb_9.sisa_detik_masak === 0 && !$sb_9.status_selesai && $sb_9.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_9.mode_preheat && !$sb_9.status_resep && !$sb_9.status_selesai && $sb_9.total_detik_pemanasan === 0) {
                     $sb_9.status_kosong = true;
                 }
                 
@@ -1994,23 +2090,29 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_9.status_banner = txtKosong;
                 } else if ($sb_9.status_selesai) {
                     $sb_9.status_banner = txtSelesai;
-                } else if (!$sb_9.status_kosong && !$sb_9.status_selesai && !$sb_9.mode_preheat && !$sb_9.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_9.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_9.tampil_jam_mulai = "--:--:--";
+                    $sb_9.tampil_jam_masak = "--:--:--";
+                    $sb_9.tampil_jam_selesai = "--:--:--";
+                    $sb_9.tampil_durasi_aktual = "--";
+                    $sb_9.durasi_aktual_up = "--";
+                    if ($sb_9.total_detik_pemanasan === 0) {
+                        $sb_9.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_9.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_9.status_resep) {
+                    if ($sb_9.flag_init_masak === 0) {
+                        $sb_9.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_9.status_banner = txtPaused;
+                    }
+                } else if ($sb_9.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_9.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_9.mode_preheat) {
-                        if ($sb_9.total_detik_pemanasan === 0) {
-                            $sb_9.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_9.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_9.status_resep && $sb_9.sisa_detik_masak === 0) {
-                            $sb_9.status_banner = txtStatusResep;
-                        } else {
-                            $sb_9.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_9.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -2027,12 +2129,13 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_9.status_pemasakan = false;
                         $sb_9.status_banner = txtPreheat;
                         
+                        $sb_9.tampil_jam_mulai = "--:--:--";
+                        $sb_9.tampil_jam_masak = "--:--:--";
+                        $sb_9.tampil_jam_selesai = "--:--:--";
+                        $sb_9.tampil_durasi_aktual = "--";
+                        $sb_9.durasi_aktual_up = "--";
+                        
                         if ($sb_9.flag_init_start === 0) {
-                            $sb_9.tampil_jam_mulai = "--:--:--";
-                            $sb_9.tampil_jam_masak = "--:--:--";
-                            $sb_9.tampil_jam_selesai = "--:--:--";
-                            $sb_9.tampil_durasi_aktual = "--";
-                            $sb_9.durasi_aktual_up = "--";
                             $sb_9.flag_init_start = 1;
                             $sb_9.total_detik_pemanasan = 0;
                             $sb_9.suhu_awal = $sb9.temp;
@@ -2069,7 +2172,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_9.adjust_menit = 0;
                         }
                         
-                        if ($sb9.temp < 1000) { // Heating (< 100 C)
+                        if ($sb9.temp < 1000 && !isSensorError_9) { // Heating (< 100 C)
                             $sb_9.status_pemanasan = true;
                             $sb_9.status_pemasakan = false;
                             $sb_9.status_banner = txtPemanasan; // Tunggu mendidih
@@ -2093,10 +2196,15 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_9.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_9.status_pemanasan = false;
                             $sb_9.status_pemasakan = true;
-                            $sb_9.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_9) {
+                                $sb_9.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_9.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_9.flag_init_masak === 0) {
                                 $sb_9.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -2137,7 +2245,7 @@ if (!$sb9._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_9) {
                 $sb_9.sensor_error = true;
                 if (Number($sb9.run_stop) === 0 && $sb_9.flag_init_start === 1) {
@@ -2183,13 +2291,13 @@ if ($sb_10.reset) {
     $sb_10.suhu_akhir = 0;
     $sb_10.perubahan_waktu = 0;
     
-    $recipe_kode.10 = "";
-    $recipe_nama.10 = "--";
-    $recipe_versi.10 = 0;
-    $recipe_warna.10 = "";
-    $recipe_qty.10 = 0;
-    $recipe_batch.10 = 0;
-    $recipe_trolly.10 = "";
+    Variable.SetValue("recipe_kode.10", "");
+    Variable.SetValue("recipe_nama.10", "--");
+    Variable.SetValue("recipe_versi.10", 0);
+    Variable.SetValue("recipe_warna.10", "");
+    Variable.SetValue("recipe_qty.10", 0);
+    Variable.SetValue("recipe_batch.10", 0);
+    Variable.SetValue("recipe_trolly.10", "");
     
     $sb_10.status_kosong = true;
     $sb_10.status_resep = false;
@@ -2208,7 +2316,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_10.maintenance_mode) {
             var isSensorError_10 = ($sb10.temp >= tempErrorLimit);
             
-            if (Number($sb10.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb10.run_stop) === 1) { // STOPPED
                 $sb_10.status_pemanasan = false;
                 $sb_10.status_pemasakan = false;
                 $sb_10.flag_init_start = 0;
@@ -2218,8 +2326,8 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_10.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_10.mode_preheat && !$sb_10.status_resep && $sb_10.target_menit === 0 && $sb_10.sisa_detik_masak === 0 && !$sb_10.status_selesai && $sb_10.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_10.mode_preheat && !$sb_10.status_resep && !$sb_10.status_selesai && $sb_10.total_detik_pemanasan === 0) {
                     $sb_10.status_kosong = true;
                 }
                 
@@ -2227,23 +2335,29 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_10.status_banner = txtKosong;
                 } else if ($sb_10.status_selesai) {
                     $sb_10.status_banner = txtSelesai;
-                } else if (!$sb_10.status_kosong && !$sb_10.status_selesai && !$sb_10.mode_preheat && !$sb_10.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_10.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_10.tampil_jam_mulai = "--:--:--";
+                    $sb_10.tampil_jam_masak = "--:--:--";
+                    $sb_10.tampil_jam_selesai = "--:--:--";
+                    $sb_10.tampil_durasi_aktual = "--";
+                    $sb_10.durasi_aktual_up = "--";
+                    if ($sb_10.total_detik_pemanasan === 0) {
+                        $sb_10.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_10.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_10.status_resep) {
+                    if ($sb_10.flag_init_masak === 0) {
+                        $sb_10.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_10.status_banner = txtPaused;
+                    }
+                } else if ($sb_10.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_10.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_10.mode_preheat) {
-                        if ($sb_10.total_detik_pemanasan === 0) {
-                            $sb_10.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_10.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_10.status_resep && $sb_10.sisa_detik_masak === 0) {
-                            $sb_10.status_banner = txtStatusResep;
-                        } else {
-                            $sb_10.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_10.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -2260,12 +2374,13 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_10.status_pemasakan = false;
                         $sb_10.status_banner = txtPreheat;
                         
+                        $sb_10.tampil_jam_mulai = "--:--:--";
+                        $sb_10.tampil_jam_masak = "--:--:--";
+                        $sb_10.tampil_jam_selesai = "--:--:--";
+                        $sb_10.tampil_durasi_aktual = "--";
+                        $sb_10.durasi_aktual_up = "--";
+                        
                         if ($sb_10.flag_init_start === 0) {
-                            $sb_10.tampil_jam_mulai = "--:--:--";
-                            $sb_10.tampil_jam_masak = "--:--:--";
-                            $sb_10.tampil_jam_selesai = "--:--:--";
-                            $sb_10.tampil_durasi_aktual = "--";
-                            $sb_10.durasi_aktual_up = "--";
                             $sb_10.flag_init_start = 1;
                             $sb_10.total_detik_pemanasan = 0;
                             $sb_10.suhu_awal = $sb10.temp;
@@ -2302,7 +2417,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_10.adjust_menit = 0;
                         }
                         
-                        if ($sb10.temp < 1000) { // Heating (< 100 C)
+                        if ($sb10.temp < 1000 && !isSensorError_10) { // Heating (< 100 C)
                             $sb_10.status_pemanasan = true;
                             $sb_10.status_pemasakan = false;
                             $sb_10.status_banner = txtPemanasan; // Tunggu mendidih
@@ -2326,10 +2441,15 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_10.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_10.status_pemanasan = false;
                             $sb_10.status_pemasakan = true;
-                            $sb_10.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_10) {
+                                $sb_10.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_10.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_10.flag_init_masak === 0) {
                                 $sb_10.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -2370,7 +2490,7 @@ if (!$sb10._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_10) {
                 $sb_10.sensor_error = true;
                 if (Number($sb10.run_stop) === 0 && $sb_10.flag_init_start === 1) {
@@ -2416,13 +2536,13 @@ if ($sb_11.reset) {
     $sb_11.suhu_akhir = 0;
     $sb_11.perubahan_waktu = 0;
     
-    $recipe_kode.11 = "";
-    $recipe_nama.11 = "--";
-    $recipe_versi.11 = 0;
-    $recipe_warna.11 = "";
-    $recipe_qty.11 = 0;
-    $recipe_batch.11 = 0;
-    $recipe_trolly.11 = "";
+    Variable.SetValue("recipe_kode.11", "");
+    Variable.SetValue("recipe_nama.11", "--");
+    Variable.SetValue("recipe_versi.11", 0);
+    Variable.SetValue("recipe_warna.11", "");
+    Variable.SetValue("recipe_qty.11", 0);
+    Variable.SetValue("recipe_batch.11", 0);
+    Variable.SetValue("recipe_trolly.11", "");
     
     $sb_11.status_kosong = true;
     $sb_11.status_resep = false;
@@ -2441,7 +2561,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_11.maintenance_mode) {
             var isSensorError_11 = ($sb11.temp >= tempErrorLimit);
             
-            if (Number($sb11.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb11.run_stop) === 1) { // STOPPED
                 $sb_11.status_pemanasan = false;
                 $sb_11.status_pemasakan = false;
                 $sb_11.flag_init_start = 0;
@@ -2451,8 +2571,8 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_11.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_11.mode_preheat && !$sb_11.status_resep && $sb_11.target_menit === 0 && $sb_11.sisa_detik_masak === 0 && !$sb_11.status_selesai && $sb_11.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_11.mode_preheat && !$sb_11.status_resep && !$sb_11.status_selesai && $sb_11.total_detik_pemanasan === 0) {
                     $sb_11.status_kosong = true;
                 }
                 
@@ -2460,23 +2580,29 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_11.status_banner = txtKosong;
                 } else if ($sb_11.status_selesai) {
                     $sb_11.status_banner = txtSelesai;
-                } else if (!$sb_11.status_kosong && !$sb_11.status_selesai && !$sb_11.mode_preheat && !$sb_11.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_11.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_11.tampil_jam_mulai = "--:--:--";
+                    $sb_11.tampil_jam_masak = "--:--:--";
+                    $sb_11.tampil_jam_selesai = "--:--:--";
+                    $sb_11.tampil_durasi_aktual = "--";
+                    $sb_11.durasi_aktual_up = "--";
+                    if ($sb_11.total_detik_pemanasan === 0) {
+                        $sb_11.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_11.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_11.status_resep) {
+                    if ($sb_11.flag_init_masak === 0) {
+                        $sb_11.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_11.status_banner = txtPaused;
+                    }
+                } else if ($sb_11.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_11.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_11.mode_preheat) {
-                        if ($sb_11.total_detik_pemanasan === 0) {
-                            $sb_11.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_11.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_11.status_resep && $sb_11.sisa_detik_masak === 0) {
-                            $sb_11.status_banner = txtStatusResep;
-                        } else {
-                            $sb_11.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_11.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -2493,12 +2619,13 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_11.status_pemasakan = false;
                         $sb_11.status_banner = txtPreheat;
                         
+                        $sb_11.tampil_jam_mulai = "--:--:--";
+                        $sb_11.tampil_jam_masak = "--:--:--";
+                        $sb_11.tampil_jam_selesai = "--:--:--";
+                        $sb_11.tampil_durasi_aktual = "--";
+                        $sb_11.durasi_aktual_up = "--";
+                        
                         if ($sb_11.flag_init_start === 0) {
-                            $sb_11.tampil_jam_mulai = "--:--:--";
-                            $sb_11.tampil_jam_masak = "--:--:--";
-                            $sb_11.tampil_jam_selesai = "--:--:--";
-                            $sb_11.tampil_durasi_aktual = "--";
-                            $sb_11.durasi_aktual_up = "--";
                             $sb_11.flag_init_start = 1;
                             $sb_11.total_detik_pemanasan = 0;
                             $sb_11.suhu_awal = $sb11.temp;
@@ -2535,7 +2662,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_11.adjust_menit = 0;
                         }
                         
-                        if ($sb11.temp < 1000) { // Heating (< 100 C)
+                        if ($sb11.temp < 1000 && !isSensorError_11) { // Heating (< 100 C)
                             $sb_11.status_pemanasan = true;
                             $sb_11.status_pemasakan = false;
                             $sb_11.status_banner = txtPemanasan; // Tunggu mendidih
@@ -2559,10 +2686,15 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_11.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_11.status_pemanasan = false;
                             $sb_11.status_pemasakan = true;
-                            $sb_11.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_11) {
+                                $sb_11.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_11.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_11.flag_init_masak === 0) {
                                 $sb_11.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -2603,7 +2735,7 @@ if (!$sb11._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_11) {
                 $sb_11.sensor_error = true;
                 if (Number($sb11.run_stop) === 0 && $sb_11.flag_init_start === 1) {
@@ -2649,13 +2781,13 @@ if ($sb_12.reset) {
     $sb_12.suhu_akhir = 0;
     $sb_12.perubahan_waktu = 0;
     
-    $recipe_kode.12 = "";
-    $recipe_nama.12 = "--";
-    $recipe_versi.12 = 0;
-    $recipe_warna.12 = "";
-    $recipe_qty.12 = 0;
-    $recipe_batch.12 = 0;
-    $recipe_trolly.12 = "";
+    Variable.SetValue("recipe_kode.12", "");
+    Variable.SetValue("recipe_nama.12", "--");
+    Variable.SetValue("recipe_versi.12", 0);
+    Variable.SetValue("recipe_warna.12", "");
+    Variable.SetValue("recipe_qty.12", 0);
+    Variable.SetValue("recipe_batch.12", 0);
+    Variable.SetValue("recipe_trolly.12", "");
     
     $sb_12.status_kosong = true;
     $sb_12.status_resep = false;
@@ -2674,7 +2806,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_12.maintenance_mode) {
             var isSensorError_12 = ($sb12.temp >= tempErrorLimit);
             
-            if (Number($sb12.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb12.run_stop) === 1) { // STOPPED
                 $sb_12.status_pemanasan = false;
                 $sb_12.status_pemasakan = false;
                 $sb_12.flag_init_start = 0;
@@ -2684,8 +2816,8 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_12.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_12.mode_preheat && !$sb_12.status_resep && $sb_12.target_menit === 0 && $sb_12.sisa_detik_masak === 0 && !$sb_12.status_selesai && $sb_12.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_12.mode_preheat && !$sb_12.status_resep && !$sb_12.status_selesai && $sb_12.total_detik_pemanasan === 0) {
                     $sb_12.status_kosong = true;
                 }
                 
@@ -2693,23 +2825,29 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_12.status_banner = txtKosong;
                 } else if ($sb_12.status_selesai) {
                     $sb_12.status_banner = txtSelesai;
-                } else if (!$sb_12.status_kosong && !$sb_12.status_selesai && !$sb_12.mode_preheat && !$sb_12.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_12.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_12.tampil_jam_mulai = "--:--:--";
+                    $sb_12.tampil_jam_masak = "--:--:--";
+                    $sb_12.tampil_jam_selesai = "--:--:--";
+                    $sb_12.tampil_durasi_aktual = "--";
+                    $sb_12.durasi_aktual_up = "--";
+                    if ($sb_12.total_detik_pemanasan === 0) {
+                        $sb_12.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_12.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_12.status_resep) {
+                    if ($sb_12.flag_init_masak === 0) {
+                        $sb_12.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_12.status_banner = txtPaused;
+                    }
+                } else if ($sb_12.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_12.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_12.mode_preheat) {
-                        if ($sb_12.total_detik_pemanasan === 0) {
-                            $sb_12.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_12.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_12.status_resep && $sb_12.sisa_detik_masak === 0) {
-                            $sb_12.status_banner = txtStatusResep;
-                        } else {
-                            $sb_12.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_12.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -2726,12 +2864,13 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_12.status_pemasakan = false;
                         $sb_12.status_banner = txtPreheat;
                         
+                        $sb_12.tampil_jam_mulai = "--:--:--";
+                        $sb_12.tampil_jam_masak = "--:--:--";
+                        $sb_12.tampil_jam_selesai = "--:--:--";
+                        $sb_12.tampil_durasi_aktual = "--";
+                        $sb_12.durasi_aktual_up = "--";
+                        
                         if ($sb_12.flag_init_start === 0) {
-                            $sb_12.tampil_jam_mulai = "--:--:--";
-                            $sb_12.tampil_jam_masak = "--:--:--";
-                            $sb_12.tampil_jam_selesai = "--:--:--";
-                            $sb_12.tampil_durasi_aktual = "--";
-                            $sb_12.durasi_aktual_up = "--";
                             $sb_12.flag_init_start = 1;
                             $sb_12.total_detik_pemanasan = 0;
                             $sb_12.suhu_awal = $sb12.temp;
@@ -2768,7 +2907,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_12.adjust_menit = 0;
                         }
                         
-                        if ($sb12.temp < 1000) { // Heating (< 100 C)
+                        if ($sb12.temp < 1000 && !isSensorError_12) { // Heating (< 100 C)
                             $sb_12.status_pemanasan = true;
                             $sb_12.status_pemasakan = false;
                             $sb_12.status_banner = txtPemanasan; // Tunggu mendidih
@@ -2792,10 +2931,15 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_12.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_12.status_pemanasan = false;
                             $sb_12.status_pemasakan = true;
-                            $sb_12.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_12) {
+                                $sb_12.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_12.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_12.flag_init_masak === 0) {
                                 $sb_12.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -2836,7 +2980,7 @@ if (!$sb12._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_12) {
                 $sb_12.sensor_error = true;
                 if (Number($sb12.run_stop) === 0 && $sb_12.flag_init_start === 1) {
@@ -2882,13 +3026,13 @@ if ($sb_13.reset) {
     $sb_13.suhu_akhir = 0;
     $sb_13.perubahan_waktu = 0;
     
-    $recipe_kode.13 = "";
-    $recipe_nama.13 = "--";
-    $recipe_versi.13 = 0;
-    $recipe_warna.13 = "";
-    $recipe_qty.13 = 0;
-    $recipe_batch.13 = 0;
-    $recipe_trolly.13 = "";
+    Variable.SetValue("recipe_kode.13", "");
+    Variable.SetValue("recipe_nama.13", "--");
+    Variable.SetValue("recipe_versi.13", 0);
+    Variable.SetValue("recipe_warna.13", "");
+    Variable.SetValue("recipe_qty.13", 0);
+    Variable.SetValue("recipe_batch.13", 0);
+    Variable.SetValue("recipe_trolly.13", "");
     
     $sb_13.status_kosong = true;
     $sb_13.status_resep = false;
@@ -2907,7 +3051,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_13.maintenance_mode) {
             var isSensorError_13 = ($sb13.temp >= tempErrorLimit);
             
-            if (Number($sb13.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb13.run_stop) === 1) { // STOPPED
                 $sb_13.status_pemanasan = false;
                 $sb_13.status_pemasakan = false;
                 $sb_13.flag_init_start = 0;
@@ -2917,8 +3061,8 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_13.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_13.mode_preheat && !$sb_13.status_resep && $sb_13.target_menit === 0 && $sb_13.sisa_detik_masak === 0 && !$sb_13.status_selesai && $sb_13.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_13.mode_preheat && !$sb_13.status_resep && !$sb_13.status_selesai && $sb_13.total_detik_pemanasan === 0) {
                     $sb_13.status_kosong = true;
                 }
                 
@@ -2926,23 +3070,29 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_13.status_banner = txtKosong;
                 } else if ($sb_13.status_selesai) {
                     $sb_13.status_banner = txtSelesai;
-                } else if (!$sb_13.status_kosong && !$sb_13.status_selesai && !$sb_13.mode_preheat && !$sb_13.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_13.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_13.tampil_jam_mulai = "--:--:--";
+                    $sb_13.tampil_jam_masak = "--:--:--";
+                    $sb_13.tampil_jam_selesai = "--:--:--";
+                    $sb_13.tampil_durasi_aktual = "--";
+                    $sb_13.durasi_aktual_up = "--";
+                    if ($sb_13.total_detik_pemanasan === 0) {
+                        $sb_13.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_13.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_13.status_resep) {
+                    if ($sb_13.flag_init_masak === 0) {
+                        $sb_13.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_13.status_banner = txtPaused;
+                    }
+                } else if ($sb_13.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_13.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_13.mode_preheat) {
-                        if ($sb_13.total_detik_pemanasan === 0) {
-                            $sb_13.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_13.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_13.status_resep && $sb_13.sisa_detik_masak === 0) {
-                            $sb_13.status_banner = txtStatusResep;
-                        } else {
-                            $sb_13.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_13.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -2959,12 +3109,13 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_13.status_pemasakan = false;
                         $sb_13.status_banner = txtPreheat;
                         
+                        $sb_13.tampil_jam_mulai = "--:--:--";
+                        $sb_13.tampil_jam_masak = "--:--:--";
+                        $sb_13.tampil_jam_selesai = "--:--:--";
+                        $sb_13.tampil_durasi_aktual = "--";
+                        $sb_13.durasi_aktual_up = "--";
+                        
                         if ($sb_13.flag_init_start === 0) {
-                            $sb_13.tampil_jam_mulai = "--:--:--";
-                            $sb_13.tampil_jam_masak = "--:--:--";
-                            $sb_13.tampil_jam_selesai = "--:--:--";
-                            $sb_13.tampil_durasi_aktual = "--";
-                            $sb_13.durasi_aktual_up = "--";
                             $sb_13.flag_init_start = 1;
                             $sb_13.total_detik_pemanasan = 0;
                             $sb_13.suhu_awal = $sb13.temp;
@@ -3001,7 +3152,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_13.adjust_menit = 0;
                         }
                         
-                        if ($sb13.temp < 1000) { // Heating (< 100 C)
+                        if ($sb13.temp < 1000 && !isSensorError_13) { // Heating (< 100 C)
                             $sb_13.status_pemanasan = true;
                             $sb_13.status_pemasakan = false;
                             $sb_13.status_banner = txtPemanasan; // Tunggu mendidih
@@ -3025,10 +3176,15 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_13.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_13.status_pemanasan = false;
                             $sb_13.status_pemasakan = true;
-                            $sb_13.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_13) {
+                                $sb_13.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_13.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_13.flag_init_masak === 0) {
                                 $sb_13.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -3069,7 +3225,7 @@ if (!$sb13._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_13) {
                 $sb_13.sensor_error = true;
                 if (Number($sb13.run_stop) === 0 && $sb_13.flag_init_start === 1) {
@@ -3115,13 +3271,13 @@ if ($sb_14.reset) {
     $sb_14.suhu_akhir = 0;
     $sb_14.perubahan_waktu = 0;
     
-    $recipe_kode.14 = "";
-    $recipe_nama.14 = "--";
-    $recipe_versi.14 = 0;
-    $recipe_warna.14 = "";
-    $recipe_qty.14 = 0;
-    $recipe_batch.14 = 0;
-    $recipe_trolly.14 = "";
+    Variable.SetValue("recipe_kode.14", "");
+    Variable.SetValue("recipe_nama.14", "--");
+    Variable.SetValue("recipe_versi.14", 0);
+    Variable.SetValue("recipe_warna.14", "");
+    Variable.SetValue("recipe_qty.14", 0);
+    Variable.SetValue("recipe_batch.14", 0);
+    Variable.SetValue("recipe_trolly.14", "");
     
     $sb_14.status_kosong = true;
     $sb_14.status_resep = false;
@@ -3140,7 +3296,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_14.maintenance_mode) {
             var isSensorError_14 = ($sb14.temp >= tempErrorLimit);
             
-            if (Number($sb14.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb14.run_stop) === 1) { // STOPPED
                 $sb_14.status_pemanasan = false;
                 $sb_14.status_pemasakan = false;
                 $sb_14.flag_init_start = 0;
@@ -3150,8 +3306,8 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_14.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_14.mode_preheat && !$sb_14.status_resep && $sb_14.target_menit === 0 && $sb_14.sisa_detik_masak === 0 && !$sb_14.status_selesai && $sb_14.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_14.mode_preheat && !$sb_14.status_resep && !$sb_14.status_selesai && $sb_14.total_detik_pemanasan === 0) {
                     $sb_14.status_kosong = true;
                 }
                 
@@ -3159,23 +3315,29 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_14.status_banner = txtKosong;
                 } else if ($sb_14.status_selesai) {
                     $sb_14.status_banner = txtSelesai;
-                } else if (!$sb_14.status_kosong && !$sb_14.status_selesai && !$sb_14.mode_preheat && !$sb_14.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_14.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_14.tampil_jam_mulai = "--:--:--";
+                    $sb_14.tampil_jam_masak = "--:--:--";
+                    $sb_14.tampil_jam_selesai = "--:--:--";
+                    $sb_14.tampil_durasi_aktual = "--";
+                    $sb_14.durasi_aktual_up = "--";
+                    if ($sb_14.total_detik_pemanasan === 0) {
+                        $sb_14.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_14.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_14.status_resep) {
+                    if ($sb_14.flag_init_masak === 0) {
+                        $sb_14.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_14.status_banner = txtPaused;
+                    }
+                } else if ($sb_14.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_14.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_14.mode_preheat) {
-                        if ($sb_14.total_detik_pemanasan === 0) {
-                            $sb_14.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_14.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_14.status_resep && $sb_14.sisa_detik_masak === 0) {
-                            $sb_14.status_banner = txtStatusResep;
-                        } else {
-                            $sb_14.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_14.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -3192,12 +3354,13 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_14.status_pemasakan = false;
                         $sb_14.status_banner = txtPreheat;
                         
+                        $sb_14.tampil_jam_mulai = "--:--:--";
+                        $sb_14.tampil_jam_masak = "--:--:--";
+                        $sb_14.tampil_jam_selesai = "--:--:--";
+                        $sb_14.tampil_durasi_aktual = "--";
+                        $sb_14.durasi_aktual_up = "--";
+                        
                         if ($sb_14.flag_init_start === 0) {
-                            $sb_14.tampil_jam_mulai = "--:--:--";
-                            $sb_14.tampil_jam_masak = "--:--:--";
-                            $sb_14.tampil_jam_selesai = "--:--:--";
-                            $sb_14.tampil_durasi_aktual = "--";
-                            $sb_14.durasi_aktual_up = "--";
                             $sb_14.flag_init_start = 1;
                             $sb_14.total_detik_pemanasan = 0;
                             $sb_14.suhu_awal = $sb14.temp;
@@ -3234,7 +3397,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_14.adjust_menit = 0;
                         }
                         
-                        if ($sb14.temp < 1000) { // Heating (< 100 C)
+                        if ($sb14.temp < 1000 && !isSensorError_14) { // Heating (< 100 C)
                             $sb_14.status_pemanasan = true;
                             $sb_14.status_pemasakan = false;
                             $sb_14.status_banner = txtPemanasan; // Tunggu mendidih
@@ -3258,10 +3421,15 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_14.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_14.status_pemanasan = false;
                             $sb_14.status_pemasakan = true;
-                            $sb_14.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_14) {
+                                $sb_14.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_14.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_14.flag_init_masak === 0) {
                                 $sb_14.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -3302,7 +3470,7 @@ if (!$sb14._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_14) {
                 $sb_14.sensor_error = true;
                 if (Number($sb14.run_stop) === 0 && $sb_14.flag_init_start === 1) {
@@ -3348,13 +3516,13 @@ if ($sb_15.reset) {
     $sb_15.suhu_akhir = 0;
     $sb_15.perubahan_waktu = 0;
     
-    $recipe_kode.15 = "";
-    $recipe_nama.15 = "--";
-    $recipe_versi.15 = 0;
-    $recipe_warna.15 = "";
-    $recipe_qty.15 = 0;
-    $recipe_batch.15 = 0;
-    $recipe_trolly.15 = "";
+    Variable.SetValue("recipe_kode.15", "");
+    Variable.SetValue("recipe_nama.15", "--");
+    Variable.SetValue("recipe_versi.15", 0);
+    Variable.SetValue("recipe_warna.15", "");
+    Variable.SetValue("recipe_qty.15", 0);
+    Variable.SetValue("recipe_batch.15", 0);
+    Variable.SetValue("recipe_trolly.15", "");
     
     $sb_15.status_kosong = true;
     $sb_15.status_resep = false;
@@ -3373,7 +3541,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_15.maintenance_mode) {
             var isSensorError_15 = ($sb15.temp >= tempErrorLimit);
             
-            if (Number($sb15.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb15.run_stop) === 1) { // STOPPED
                 $sb_15.status_pemanasan = false;
                 $sb_15.status_pemasakan = false;
                 $sb_15.flag_init_start = 0;
@@ -3383,8 +3551,8 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_15.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_15.mode_preheat && !$sb_15.status_resep && $sb_15.target_menit === 0 && $sb_15.sisa_detik_masak === 0 && !$sb_15.status_selesai && $sb_15.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_15.mode_preheat && !$sb_15.status_resep && !$sb_15.status_selesai && $sb_15.total_detik_pemanasan === 0) {
                     $sb_15.status_kosong = true;
                 }
                 
@@ -3392,23 +3560,29 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_15.status_banner = txtKosong;
                 } else if ($sb_15.status_selesai) {
                     $sb_15.status_banner = txtSelesai;
-                } else if (!$sb_15.status_kosong && !$sb_15.status_selesai && !$sb_15.mode_preheat && !$sb_15.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_15.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_15.tampil_jam_mulai = "--:--:--";
+                    $sb_15.tampil_jam_masak = "--:--:--";
+                    $sb_15.tampil_jam_selesai = "--:--:--";
+                    $sb_15.tampil_durasi_aktual = "--";
+                    $sb_15.durasi_aktual_up = "--";
+                    if ($sb_15.total_detik_pemanasan === 0) {
+                        $sb_15.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_15.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_15.status_resep) {
+                    if ($sb_15.flag_init_masak === 0) {
+                        $sb_15.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_15.status_banner = txtPaused;
+                    }
+                } else if ($sb_15.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_15.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_15.mode_preheat) {
-                        if ($sb_15.total_detik_pemanasan === 0) {
-                            $sb_15.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_15.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_15.status_resep && $sb_15.sisa_detik_masak === 0) {
-                            $sb_15.status_banner = txtStatusResep;
-                        } else {
-                            $sb_15.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_15.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -3425,12 +3599,13 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_15.status_pemasakan = false;
                         $sb_15.status_banner = txtPreheat;
                         
+                        $sb_15.tampil_jam_mulai = "--:--:--";
+                        $sb_15.tampil_jam_masak = "--:--:--";
+                        $sb_15.tampil_jam_selesai = "--:--:--";
+                        $sb_15.tampil_durasi_aktual = "--";
+                        $sb_15.durasi_aktual_up = "--";
+                        
                         if ($sb_15.flag_init_start === 0) {
-                            $sb_15.tampil_jam_mulai = "--:--:--";
-                            $sb_15.tampil_jam_masak = "--:--:--";
-                            $sb_15.tampil_jam_selesai = "--:--:--";
-                            $sb_15.tampil_durasi_aktual = "--";
-                            $sb_15.durasi_aktual_up = "--";
                             $sb_15.flag_init_start = 1;
                             $sb_15.total_detik_pemanasan = 0;
                             $sb_15.suhu_awal = $sb15.temp;
@@ -3467,7 +3642,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_15.adjust_menit = 0;
                         }
                         
-                        if ($sb15.temp < 1000) { // Heating (< 100 C)
+                        if ($sb15.temp < 1000 && !isSensorError_15) { // Heating (< 100 C)
                             $sb_15.status_pemanasan = true;
                             $sb_15.status_pemasakan = false;
                             $sb_15.status_banner = txtPemanasan; // Tunggu mendidih
@@ -3491,10 +3666,15 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_15.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_15.status_pemanasan = false;
                             $sb_15.status_pemasakan = true;
-                            $sb_15.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_15) {
+                                $sb_15.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_15.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_15.flag_init_masak === 0) {
                                 $sb_15.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -3535,7 +3715,7 @@ if (!$sb15._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_15) {
                 $sb_15.sensor_error = true;
                 if (Number($sb15.run_stop) === 0 && $sb_15.flag_init_start === 1) {
@@ -3581,13 +3761,13 @@ if ($sb_16.reset) {
     $sb_16.suhu_akhir = 0;
     $sb_16.perubahan_waktu = 0;
     
-    $recipe_kode.16 = "";
-    $recipe_nama.16 = "--";
-    $recipe_versi.16 = 0;
-    $recipe_warna.16 = "";
-    $recipe_qty.16 = 0;
-    $recipe_batch.16 = 0;
-    $recipe_trolly.16 = "";
+    Variable.SetValue("recipe_kode.16", "");
+    Variable.SetValue("recipe_nama.16", "--");
+    Variable.SetValue("recipe_versi.16", 0);
+    Variable.SetValue("recipe_warna.16", "");
+    Variable.SetValue("recipe_qty.16", 0);
+    Variable.SetValue("recipe_batch.16", 0);
+    Variable.SetValue("recipe_trolly.16", "");
     
     $sb_16.status_kosong = true;
     $sb_16.status_resep = false;
@@ -3606,7 +3786,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_16.maintenance_mode) {
             var isSensorError_16 = ($sb16.temp >= tempErrorLimit);
             
-            if (Number($sb16.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb16.run_stop) === 1) { // STOPPED
                 $sb_16.status_pemanasan = false;
                 $sb_16.status_pemasakan = false;
                 $sb_16.flag_init_start = 0;
@@ -3616,8 +3796,8 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_16.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_16.mode_preheat && !$sb_16.status_resep && $sb_16.target_menit === 0 && $sb_16.sisa_detik_masak === 0 && !$sb_16.status_selesai && $sb_16.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_16.mode_preheat && !$sb_16.status_resep && !$sb_16.status_selesai && $sb_16.total_detik_pemanasan === 0) {
                     $sb_16.status_kosong = true;
                 }
                 
@@ -3625,23 +3805,29 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_16.status_banner = txtKosong;
                 } else if ($sb_16.status_selesai) {
                     $sb_16.status_banner = txtSelesai;
-                } else if (!$sb_16.status_kosong && !$sb_16.status_selesai && !$sb_16.mode_preheat && !$sb_16.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_16.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_16.tampil_jam_mulai = "--:--:--";
+                    $sb_16.tampil_jam_masak = "--:--:--";
+                    $sb_16.tampil_jam_selesai = "--:--:--";
+                    $sb_16.tampil_durasi_aktual = "--";
+                    $sb_16.durasi_aktual_up = "--";
+                    if ($sb_16.total_detik_pemanasan === 0) {
+                        $sb_16.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_16.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_16.status_resep) {
+                    if ($sb_16.flag_init_masak === 0) {
+                        $sb_16.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_16.status_banner = txtPaused;
+                    }
+                } else if ($sb_16.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_16.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_16.mode_preheat) {
-                        if ($sb_16.total_detik_pemanasan === 0) {
-                            $sb_16.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_16.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_16.status_resep && $sb_16.sisa_detik_masak === 0) {
-                            $sb_16.status_banner = txtStatusResep;
-                        } else {
-                            $sb_16.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_16.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -3658,12 +3844,13 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_16.status_pemasakan = false;
                         $sb_16.status_banner = txtPreheat;
                         
+                        $sb_16.tampil_jam_mulai = "--:--:--";
+                        $sb_16.tampil_jam_masak = "--:--:--";
+                        $sb_16.tampil_jam_selesai = "--:--:--";
+                        $sb_16.tampil_durasi_aktual = "--";
+                        $sb_16.durasi_aktual_up = "--";
+                        
                         if ($sb_16.flag_init_start === 0) {
-                            $sb_16.tampil_jam_mulai = "--:--:--";
-                            $sb_16.tampil_jam_masak = "--:--:--";
-                            $sb_16.tampil_jam_selesai = "--:--:--";
-                            $sb_16.tampil_durasi_aktual = "--";
-                            $sb_16.durasi_aktual_up = "--";
                             $sb_16.flag_init_start = 1;
                             $sb_16.total_detik_pemanasan = 0;
                             $sb_16.suhu_awal = $sb16.temp;
@@ -3700,7 +3887,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_16.adjust_menit = 0;
                         }
                         
-                        if ($sb16.temp < 1000) { // Heating (< 100 C)
+                        if ($sb16.temp < 1000 && !isSensorError_16) { // Heating (< 100 C)
                             $sb_16.status_pemanasan = true;
                             $sb_16.status_pemasakan = false;
                             $sb_16.status_banner = txtPemanasan; // Tunggu mendidih
@@ -3724,10 +3911,15 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_16.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_16.status_pemanasan = false;
                             $sb_16.status_pemasakan = true;
-                            $sb_16.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_16) {
+                                $sb_16.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_16.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_16.flag_init_masak === 0) {
                                 $sb_16.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -3768,7 +3960,7 @@ if (!$sb16._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_16) {
                 $sb_16.sensor_error = true;
                 if (Number($sb16.run_stop) === 0 && $sb_16.flag_init_start === 1) {
@@ -3814,13 +4006,13 @@ if ($sb_17.reset) {
     $sb_17.suhu_akhir = 0;
     $sb_17.perubahan_waktu = 0;
     
-    $recipe_kode.17 = "";
-    $recipe_nama.17 = "--";
-    $recipe_versi.17 = 0;
-    $recipe_warna.17 = "";
-    $recipe_qty.17 = 0;
-    $recipe_batch.17 = 0;
-    $recipe_trolly.17 = "";
+    Variable.SetValue("recipe_kode.17", "");
+    Variable.SetValue("recipe_nama.17", "--");
+    Variable.SetValue("recipe_versi.17", 0);
+    Variable.SetValue("recipe_warna.17", "");
+    Variable.SetValue("recipe_qty.17", 0);
+    Variable.SetValue("recipe_batch.17", 0);
+    Variable.SetValue("recipe_trolly.17", "");
     
     $sb_17.status_kosong = true;
     $sb_17.status_resep = false;
@@ -3839,7 +4031,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_17.maintenance_mode) {
             var isSensorError_17 = ($sb17.temp >= tempErrorLimit);
             
-            if (Number($sb17.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb17.run_stop) === 1) { // STOPPED
                 $sb_17.status_pemanasan = false;
                 $sb_17.status_pemasakan = false;
                 $sb_17.flag_init_start = 0;
@@ -3849,8 +4041,8 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_17.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_17.mode_preheat && !$sb_17.status_resep && $sb_17.target_menit === 0 && $sb_17.sisa_detik_masak === 0 && !$sb_17.status_selesai && $sb_17.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_17.mode_preheat && !$sb_17.status_resep && !$sb_17.status_selesai && $sb_17.total_detik_pemanasan === 0) {
                     $sb_17.status_kosong = true;
                 }
                 
@@ -3858,23 +4050,29 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_17.status_banner = txtKosong;
                 } else if ($sb_17.status_selesai) {
                     $sb_17.status_banner = txtSelesai;
-                } else if (!$sb_17.status_kosong && !$sb_17.status_selesai && !$sb_17.mode_preheat && !$sb_17.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_17.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_17.tampil_jam_mulai = "--:--:--";
+                    $sb_17.tampil_jam_masak = "--:--:--";
+                    $sb_17.tampil_jam_selesai = "--:--:--";
+                    $sb_17.tampil_durasi_aktual = "--";
+                    $sb_17.durasi_aktual_up = "--";
+                    if ($sb_17.total_detik_pemanasan === 0) {
+                        $sb_17.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_17.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_17.status_resep) {
+                    if ($sb_17.flag_init_masak === 0) {
+                        $sb_17.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_17.status_banner = txtPaused;
+                    }
+                } else if ($sb_17.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_17.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_17.mode_preheat) {
-                        if ($sb_17.total_detik_pemanasan === 0) {
-                            $sb_17.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_17.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_17.status_resep && $sb_17.sisa_detik_masak === 0) {
-                            $sb_17.status_banner = txtStatusResep;
-                        } else {
-                            $sb_17.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_17.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -3891,12 +4089,13 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_17.status_pemasakan = false;
                         $sb_17.status_banner = txtPreheat;
                         
+                        $sb_17.tampil_jam_mulai = "--:--:--";
+                        $sb_17.tampil_jam_masak = "--:--:--";
+                        $sb_17.tampil_jam_selesai = "--:--:--";
+                        $sb_17.tampil_durasi_aktual = "--";
+                        $sb_17.durasi_aktual_up = "--";
+                        
                         if ($sb_17.flag_init_start === 0) {
-                            $sb_17.tampil_jam_mulai = "--:--:--";
-                            $sb_17.tampil_jam_masak = "--:--:--";
-                            $sb_17.tampil_jam_selesai = "--:--:--";
-                            $sb_17.tampil_durasi_aktual = "--";
-                            $sb_17.durasi_aktual_up = "--";
                             $sb_17.flag_init_start = 1;
                             $sb_17.total_detik_pemanasan = 0;
                             $sb_17.suhu_awal = $sb17.temp;
@@ -3933,7 +4132,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_17.adjust_menit = 0;
                         }
                         
-                        if ($sb17.temp < 1000) { // Heating (< 100 C)
+                        if ($sb17.temp < 1000 && !isSensorError_17) { // Heating (< 100 C)
                             $sb_17.status_pemanasan = true;
                             $sb_17.status_pemasakan = false;
                             $sb_17.status_banner = txtPemanasan; // Tunggu mendidih
@@ -3957,10 +4156,15 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_17.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_17.status_pemanasan = false;
                             $sb_17.status_pemasakan = true;
-                            $sb_17.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_17) {
+                                $sb_17.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_17.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_17.flag_init_masak === 0) {
                                 $sb_17.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -4001,7 +4205,7 @@ if (!$sb17._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_17) {
                 $sb_17.sensor_error = true;
                 if (Number($sb17.run_stop) === 0 && $sb_17.flag_init_start === 1) {
@@ -4047,13 +4251,13 @@ if ($sb_18.reset) {
     $sb_18.suhu_akhir = 0;
     $sb_18.perubahan_waktu = 0;
     
-    $recipe_kode.18 = "";
-    $recipe_nama.18 = "--";
-    $recipe_versi.18 = 0;
-    $recipe_warna.18 = "";
-    $recipe_qty.18 = 0;
-    $recipe_batch.18 = 0;
-    $recipe_trolly.18 = "";
+    Variable.SetValue("recipe_kode.18", "");
+    Variable.SetValue("recipe_nama.18", "--");
+    Variable.SetValue("recipe_versi.18", 0);
+    Variable.SetValue("recipe_warna.18", "");
+    Variable.SetValue("recipe_qty.18", 0);
+    Variable.SetValue("recipe_batch.18", 0);
+    Variable.SetValue("recipe_trolly.18", "");
     
     $sb_18.status_kosong = true;
     $sb_18.status_resep = false;
@@ -4072,7 +4276,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_18.maintenance_mode) {
             var isSensorError_18 = ($sb18.temp >= tempErrorLimit);
             
-            if (Number($sb18.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb18.run_stop) === 1) { // STOPPED
                 $sb_18.status_pemanasan = false;
                 $sb_18.status_pemasakan = false;
                 $sb_18.flag_init_start = 0;
@@ -4082,8 +4286,8 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_18.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_18.mode_preheat && !$sb_18.status_resep && $sb_18.target_menit === 0 && $sb_18.sisa_detik_masak === 0 && !$sb_18.status_selesai && $sb_18.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_18.mode_preheat && !$sb_18.status_resep && !$sb_18.status_selesai && $sb_18.total_detik_pemanasan === 0) {
                     $sb_18.status_kosong = true;
                 }
                 
@@ -4091,23 +4295,29 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_18.status_banner = txtKosong;
                 } else if ($sb_18.status_selesai) {
                     $sb_18.status_banner = txtSelesai;
-                } else if (!$sb_18.status_kosong && !$sb_18.status_selesai && !$sb_18.mode_preheat && !$sb_18.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_18.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_18.tampil_jam_mulai = "--:--:--";
+                    $sb_18.tampil_jam_masak = "--:--:--";
+                    $sb_18.tampil_jam_selesai = "--:--:--";
+                    $sb_18.tampil_durasi_aktual = "--";
+                    $sb_18.durasi_aktual_up = "--";
+                    if ($sb_18.total_detik_pemanasan === 0) {
+                        $sb_18.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_18.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_18.status_resep) {
+                    if ($sb_18.flag_init_masak === 0) {
+                        $sb_18.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_18.status_banner = txtPaused;
+                    }
+                } else if ($sb_18.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_18.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_18.mode_preheat) {
-                        if ($sb_18.total_detik_pemanasan === 0) {
-                            $sb_18.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_18.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_18.status_resep && $sb_18.sisa_detik_masak === 0) {
-                            $sb_18.status_banner = txtStatusResep;
-                        } else {
-                            $sb_18.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_18.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -4124,12 +4334,13 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_18.status_pemasakan = false;
                         $sb_18.status_banner = txtPreheat;
                         
+                        $sb_18.tampil_jam_mulai = "--:--:--";
+                        $sb_18.tampil_jam_masak = "--:--:--";
+                        $sb_18.tampil_jam_selesai = "--:--:--";
+                        $sb_18.tampil_durasi_aktual = "--";
+                        $sb_18.durasi_aktual_up = "--";
+                        
                         if ($sb_18.flag_init_start === 0) {
-                            $sb_18.tampil_jam_mulai = "--:--:--";
-                            $sb_18.tampil_jam_masak = "--:--:--";
-                            $sb_18.tampil_jam_selesai = "--:--:--";
-                            $sb_18.tampil_durasi_aktual = "--";
-                            $sb_18.durasi_aktual_up = "--";
                             $sb_18.flag_init_start = 1;
                             $sb_18.total_detik_pemanasan = 0;
                             $sb_18.suhu_awal = $sb18.temp;
@@ -4166,7 +4377,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_18.adjust_menit = 0;
                         }
                         
-                        if ($sb18.temp < 1000) { // Heating (< 100 C)
+                        if ($sb18.temp < 1000 && !isSensorError_18) { // Heating (< 100 C)
                             $sb_18.status_pemanasan = true;
                             $sb_18.status_pemasakan = false;
                             $sb_18.status_banner = txtPemanasan; // Tunggu mendidih
@@ -4190,10 +4401,15 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_18.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_18.status_pemanasan = false;
                             $sb_18.status_pemasakan = true;
-                            $sb_18.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_18) {
+                                $sb_18.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_18.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_18.flag_init_masak === 0) {
                                 $sb_18.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -4234,7 +4450,7 @@ if (!$sb18._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_18) {
                 $sb_18.sensor_error = true;
                 if (Number($sb18.run_stop) === 0 && $sb_18.flag_init_start === 1) {
@@ -4280,13 +4496,13 @@ if ($sb_19.reset) {
     $sb_19.suhu_akhir = 0;
     $sb_19.perubahan_waktu = 0;
     
-    $recipe_kode.19 = "";
-    $recipe_nama.19 = "--";
-    $recipe_versi.19 = 0;
-    $recipe_warna.19 = "";
-    $recipe_qty.19 = 0;
-    $recipe_batch.19 = 0;
-    $recipe_trolly.19 = "";
+    Variable.SetValue("recipe_kode.19", "");
+    Variable.SetValue("recipe_nama.19", "--");
+    Variable.SetValue("recipe_versi.19", 0);
+    Variable.SetValue("recipe_warna.19", "");
+    Variable.SetValue("recipe_qty.19", 0);
+    Variable.SetValue("recipe_batch.19", 0);
+    Variable.SetValue("recipe_trolly.19", "");
     
     $sb_19.status_kosong = true;
     $sb_19.status_resep = false;
@@ -4305,7 +4521,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_19.maintenance_mode) {
             var isSensorError_19 = ($sb19.temp >= tempErrorLimit);
             
-            if (Number($sb19.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb19.run_stop) === 1) { // STOPPED
                 $sb_19.status_pemanasan = false;
                 $sb_19.status_pemasakan = false;
                 $sb_19.flag_init_start = 0;
@@ -4315,8 +4531,8 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_19.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_19.mode_preheat && !$sb_19.status_resep && $sb_19.target_menit === 0 && $sb_19.sisa_detik_masak === 0 && !$sb_19.status_selesai && $sb_19.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_19.mode_preheat && !$sb_19.status_resep && !$sb_19.status_selesai && $sb_19.total_detik_pemanasan === 0) {
                     $sb_19.status_kosong = true;
                 }
                 
@@ -4324,23 +4540,29 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_19.status_banner = txtKosong;
                 } else if ($sb_19.status_selesai) {
                     $sb_19.status_banner = txtSelesai;
-                } else if (!$sb_19.status_kosong && !$sb_19.status_selesai && !$sb_19.mode_preheat && !$sb_19.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_19.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_19.tampil_jam_mulai = "--:--:--";
+                    $sb_19.tampil_jam_masak = "--:--:--";
+                    $sb_19.tampil_jam_selesai = "--:--:--";
+                    $sb_19.tampil_durasi_aktual = "--";
+                    $sb_19.durasi_aktual_up = "--";
+                    if ($sb_19.total_detik_pemanasan === 0) {
+                        $sb_19.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_19.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_19.status_resep) {
+                    if ($sb_19.flag_init_masak === 0) {
+                        $sb_19.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_19.status_banner = txtPaused;
+                    }
+                } else if ($sb_19.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_19.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_19.mode_preheat) {
-                        if ($sb_19.total_detik_pemanasan === 0) {
-                            $sb_19.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_19.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_19.status_resep && $sb_19.sisa_detik_masak === 0) {
-                            $sb_19.status_banner = txtStatusResep;
-                        } else {
-                            $sb_19.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_19.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -4357,12 +4579,13 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_19.status_pemasakan = false;
                         $sb_19.status_banner = txtPreheat;
                         
+                        $sb_19.tampil_jam_mulai = "--:--:--";
+                        $sb_19.tampil_jam_masak = "--:--:--";
+                        $sb_19.tampil_jam_selesai = "--:--:--";
+                        $sb_19.tampil_durasi_aktual = "--";
+                        $sb_19.durasi_aktual_up = "--";
+                        
                         if ($sb_19.flag_init_start === 0) {
-                            $sb_19.tampil_jam_mulai = "--:--:--";
-                            $sb_19.tampil_jam_masak = "--:--:--";
-                            $sb_19.tampil_jam_selesai = "--:--:--";
-                            $sb_19.tampil_durasi_aktual = "--";
-                            $sb_19.durasi_aktual_up = "--";
                             $sb_19.flag_init_start = 1;
                             $sb_19.total_detik_pemanasan = 0;
                             $sb_19.suhu_awal = $sb19.temp;
@@ -4399,7 +4622,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_19.adjust_menit = 0;
                         }
                         
-                        if ($sb19.temp < 1000) { // Heating (< 100 C)
+                        if ($sb19.temp < 1000 && !isSensorError_19) { // Heating (< 100 C)
                             $sb_19.status_pemanasan = true;
                             $sb_19.status_pemasakan = false;
                             $sb_19.status_banner = txtPemanasan; // Tunggu mendidih
@@ -4423,10 +4646,15 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_19.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_19.status_pemanasan = false;
                             $sb_19.status_pemasakan = true;
-                            $sb_19.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_19) {
+                                $sb_19.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_19.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_19.flag_init_masak === 0) {
                                 $sb_19.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -4467,7 +4695,7 @@ if (!$sb19._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_19) {
                 $sb_19.sensor_error = true;
                 if (Number($sb19.run_stop) === 0 && $sb_19.flag_init_start === 1) {
@@ -4513,13 +4741,13 @@ if ($sb_20.reset) {
     $sb_20.suhu_akhir = 0;
     $sb_20.perubahan_waktu = 0;
     
-    $recipe_kode.20 = "";
-    $recipe_nama.20 = "--";
-    $recipe_versi.20 = 0;
-    $recipe_warna.20 = "";
-    $recipe_qty.20 = 0;
-    $recipe_batch.20 = 0;
-    $recipe_trolly.20 = "";
+    Variable.SetValue("recipe_kode.20", "");
+    Variable.SetValue("recipe_nama.20", "--");
+    Variable.SetValue("recipe_versi.20", 0);
+    Variable.SetValue("recipe_warna.20", "");
+    Variable.SetValue("recipe_qty.20", 0);
+    Variable.SetValue("recipe_batch.20", 0);
+    Variable.SetValue("recipe_trolly.20", "");
     
     $sb_20.status_kosong = true;
     $sb_20.status_resep = false;
@@ -4538,7 +4766,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_20.maintenance_mode) {
             var isSensorError_20 = ($sb20.temp >= tempErrorLimit);
             
-            if (Number($sb20.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb20.run_stop) === 1) { // STOPPED
                 $sb_20.status_pemanasan = false;
                 $sb_20.status_pemasakan = false;
                 $sb_20.flag_init_start = 0;
@@ -4548,8 +4776,8 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_20.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_20.mode_preheat && !$sb_20.status_resep && $sb_20.target_menit === 0 && $sb_20.sisa_detik_masak === 0 && !$sb_20.status_selesai && $sb_20.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_20.mode_preheat && !$sb_20.status_resep && !$sb_20.status_selesai && $sb_20.total_detik_pemanasan === 0) {
                     $sb_20.status_kosong = true;
                 }
                 
@@ -4557,23 +4785,29 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_20.status_banner = txtKosong;
                 } else if ($sb_20.status_selesai) {
                     $sb_20.status_banner = txtSelesai;
-                } else if (!$sb_20.status_kosong && !$sb_20.status_selesai && !$sb_20.mode_preheat && !$sb_20.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_20.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_20.tampil_jam_mulai = "--:--:--";
+                    $sb_20.tampil_jam_masak = "--:--:--";
+                    $sb_20.tampil_jam_selesai = "--:--:--";
+                    $sb_20.tampil_durasi_aktual = "--";
+                    $sb_20.durasi_aktual_up = "--";
+                    if ($sb_20.total_detik_pemanasan === 0) {
+                        $sb_20.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_20.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_20.status_resep) {
+                    if ($sb_20.flag_init_masak === 0) {
+                        $sb_20.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_20.status_banner = txtPaused;
+                    }
+                } else if ($sb_20.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_20.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_20.mode_preheat) {
-                        if ($sb_20.total_detik_pemanasan === 0) {
-                            $sb_20.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_20.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_20.status_resep && $sb_20.sisa_detik_masak === 0) {
-                            $sb_20.status_banner = txtStatusResep;
-                        } else {
-                            $sb_20.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_20.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -4590,12 +4824,13 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_20.status_pemasakan = false;
                         $sb_20.status_banner = txtPreheat;
                         
+                        $sb_20.tampil_jam_mulai = "--:--:--";
+                        $sb_20.tampil_jam_masak = "--:--:--";
+                        $sb_20.tampil_jam_selesai = "--:--:--";
+                        $sb_20.tampil_durasi_aktual = "--";
+                        $sb_20.durasi_aktual_up = "--";
+                        
                         if ($sb_20.flag_init_start === 0) {
-                            $sb_20.tampil_jam_mulai = "--:--:--";
-                            $sb_20.tampil_jam_masak = "--:--:--";
-                            $sb_20.tampil_jam_selesai = "--:--:--";
-                            $sb_20.tampil_durasi_aktual = "--";
-                            $sb_20.durasi_aktual_up = "--";
                             $sb_20.flag_init_start = 1;
                             $sb_20.total_detik_pemanasan = 0;
                             $sb_20.suhu_awal = $sb20.temp;
@@ -4632,7 +4867,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_20.adjust_menit = 0;
                         }
                         
-                        if ($sb20.temp < 1000) { // Heating (< 100 C)
+                        if ($sb20.temp < 1000 && !isSensorError_20) { // Heating (< 100 C)
                             $sb_20.status_pemanasan = true;
                             $sb_20.status_pemasakan = false;
                             $sb_20.status_banner = txtPemanasan; // Tunggu mendidih
@@ -4656,10 +4891,15 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_20.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_20.status_pemanasan = false;
                             $sb_20.status_pemasakan = true;
-                            $sb_20.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_20) {
+                                $sb_20.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_20.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_20.flag_init_masak === 0) {
                                 $sb_20.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -4700,7 +4940,7 @@ if (!$sb20._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_20) {
                 $sb_20.sensor_error = true;
                 if (Number($sb20.run_stop) === 0 && $sb_20.flag_init_start === 1) {
@@ -4746,13 +4986,13 @@ if ($sb_21.reset) {
     $sb_21.suhu_akhir = 0;
     $sb_21.perubahan_waktu = 0;
     
-    $recipe_kode.21 = "";
-    $recipe_nama.21 = "--";
-    $recipe_versi.21 = 0;
-    $recipe_warna.21 = "";
-    $recipe_qty.21 = 0;
-    $recipe_batch.21 = 0;
-    $recipe_trolly.21 = "";
+    Variable.SetValue("recipe_kode.21", "");
+    Variable.SetValue("recipe_nama.21", "--");
+    Variable.SetValue("recipe_versi.21", 0);
+    Variable.SetValue("recipe_warna.21", "");
+    Variable.SetValue("recipe_qty.21", 0);
+    Variable.SetValue("recipe_batch.21", 0);
+    Variable.SetValue("recipe_trolly.21", "");
     
     $sb_21.status_kosong = true;
     $sb_21.status_resep = false;
@@ -4771,7 +5011,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_21.maintenance_mode) {
             var isSensorError_21 = ($sb21.temp >= tempErrorLimit);
             
-            if (Number($sb21.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb21.run_stop) === 1) { // STOPPED
                 $sb_21.status_pemanasan = false;
                 $sb_21.status_pemasakan = false;
                 $sb_21.flag_init_start = 0;
@@ -4781,8 +5021,8 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_21.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_21.mode_preheat && !$sb_21.status_resep && $sb_21.target_menit === 0 && $sb_21.sisa_detik_masak === 0 && !$sb_21.status_selesai && $sb_21.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_21.mode_preheat && !$sb_21.status_resep && !$sb_21.status_selesai && $sb_21.total_detik_pemanasan === 0) {
                     $sb_21.status_kosong = true;
                 }
                 
@@ -4790,23 +5030,29 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_21.status_banner = txtKosong;
                 } else if ($sb_21.status_selesai) {
                     $sb_21.status_banner = txtSelesai;
-                } else if (!$sb_21.status_kosong && !$sb_21.status_selesai && !$sb_21.mode_preheat && !$sb_21.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_21.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_21.tampil_jam_mulai = "--:--:--";
+                    $sb_21.tampil_jam_masak = "--:--:--";
+                    $sb_21.tampil_jam_selesai = "--:--:--";
+                    $sb_21.tampil_durasi_aktual = "--";
+                    $sb_21.durasi_aktual_up = "--";
+                    if ($sb_21.total_detik_pemanasan === 0) {
+                        $sb_21.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_21.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_21.status_resep) {
+                    if ($sb_21.flag_init_masak === 0) {
+                        $sb_21.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_21.status_banner = txtPaused;
+                    }
+                } else if ($sb_21.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_21.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_21.mode_preheat) {
-                        if ($sb_21.total_detik_pemanasan === 0) {
-                            $sb_21.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_21.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_21.status_resep && $sb_21.sisa_detik_masak === 0) {
-                            $sb_21.status_banner = txtStatusResep;
-                        } else {
-                            $sb_21.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_21.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -4823,12 +5069,13 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_21.status_pemasakan = false;
                         $sb_21.status_banner = txtPreheat;
                         
+                        $sb_21.tampil_jam_mulai = "--:--:--";
+                        $sb_21.tampil_jam_masak = "--:--:--";
+                        $sb_21.tampil_jam_selesai = "--:--:--";
+                        $sb_21.tampil_durasi_aktual = "--";
+                        $sb_21.durasi_aktual_up = "--";
+                        
                         if ($sb_21.flag_init_start === 0) {
-                            $sb_21.tampil_jam_mulai = "--:--:--";
-                            $sb_21.tampil_jam_masak = "--:--:--";
-                            $sb_21.tampil_jam_selesai = "--:--:--";
-                            $sb_21.tampil_durasi_aktual = "--";
-                            $sb_21.durasi_aktual_up = "--";
                             $sb_21.flag_init_start = 1;
                             $sb_21.total_detik_pemanasan = 0;
                             $sb_21.suhu_awal = $sb21.temp;
@@ -4865,7 +5112,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_21.adjust_menit = 0;
                         }
                         
-                        if ($sb21.temp < 1000) { // Heating (< 100 C)
+                        if ($sb21.temp < 1000 && !isSensorError_21) { // Heating (< 100 C)
                             $sb_21.status_pemanasan = true;
                             $sb_21.status_pemasakan = false;
                             $sb_21.status_banner = txtPemanasan; // Tunggu mendidih
@@ -4889,10 +5136,15 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_21.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_21.status_pemanasan = false;
                             $sb_21.status_pemasakan = true;
-                            $sb_21.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_21) {
+                                $sb_21.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_21.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_21.flag_init_masak === 0) {
                                 $sb_21.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -4933,7 +5185,7 @@ if (!$sb21._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_21) {
                 $sb_21.sensor_error = true;
                 if (Number($sb21.run_stop) === 0 && $sb_21.flag_init_start === 1) {
@@ -4979,13 +5231,13 @@ if ($sb_22.reset) {
     $sb_22.suhu_akhir = 0;
     $sb_22.perubahan_waktu = 0;
     
-    $recipe_kode.22 = "";
-    $recipe_nama.22 = "--";
-    $recipe_versi.22 = 0;
-    $recipe_warna.22 = "";
-    $recipe_qty.22 = 0;
-    $recipe_batch.22 = 0;
-    $recipe_trolly.22 = "";
+    Variable.SetValue("recipe_kode.22", "");
+    Variable.SetValue("recipe_nama.22", "--");
+    Variable.SetValue("recipe_versi.22", 0);
+    Variable.SetValue("recipe_warna.22", "");
+    Variable.SetValue("recipe_qty.22", 0);
+    Variable.SetValue("recipe_batch.22", 0);
+    Variable.SetValue("recipe_trolly.22", "");
     
     $sb_22.status_kosong = true;
     $sb_22.status_resep = false;
@@ -5004,7 +5256,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_22.maintenance_mode) {
             var isSensorError_22 = ($sb22.temp >= tempErrorLimit);
             
-            if (Number($sb22.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb22.run_stop) === 1) { // STOPPED
                 $sb_22.status_pemanasan = false;
                 $sb_22.status_pemasakan = false;
                 $sb_22.flag_init_start = 0;
@@ -5014,8 +5266,8 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_22.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_22.mode_preheat && !$sb_22.status_resep && $sb_22.target_menit === 0 && $sb_22.sisa_detik_masak === 0 && !$sb_22.status_selesai && $sb_22.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_22.mode_preheat && !$sb_22.status_resep && !$sb_22.status_selesai && $sb_22.total_detik_pemanasan === 0) {
                     $sb_22.status_kosong = true;
                 }
                 
@@ -5023,23 +5275,29 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_22.status_banner = txtKosong;
                 } else if ($sb_22.status_selesai) {
                     $sb_22.status_banner = txtSelesai;
-                } else if (!$sb_22.status_kosong && !$sb_22.status_selesai && !$sb_22.mode_preheat && !$sb_22.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_22.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_22.tampil_jam_mulai = "--:--:--";
+                    $sb_22.tampil_jam_masak = "--:--:--";
+                    $sb_22.tampil_jam_selesai = "--:--:--";
+                    $sb_22.tampil_durasi_aktual = "--";
+                    $sb_22.durasi_aktual_up = "--";
+                    if ($sb_22.total_detik_pemanasan === 0) {
+                        $sb_22.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_22.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_22.status_resep) {
+                    if ($sb_22.flag_init_masak === 0) {
+                        $sb_22.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_22.status_banner = txtPaused;
+                    }
+                } else if ($sb_22.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_22.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_22.mode_preheat) {
-                        if ($sb_22.total_detik_pemanasan === 0) {
-                            $sb_22.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_22.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_22.status_resep && $sb_22.sisa_detik_masak === 0) {
-                            $sb_22.status_banner = txtStatusResep;
-                        } else {
-                            $sb_22.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_22.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -5056,12 +5314,13 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_22.status_pemasakan = false;
                         $sb_22.status_banner = txtPreheat;
                         
+                        $sb_22.tampil_jam_mulai = "--:--:--";
+                        $sb_22.tampil_jam_masak = "--:--:--";
+                        $sb_22.tampil_jam_selesai = "--:--:--";
+                        $sb_22.tampil_durasi_aktual = "--";
+                        $sb_22.durasi_aktual_up = "--";
+                        
                         if ($sb_22.flag_init_start === 0) {
-                            $sb_22.tampil_jam_mulai = "--:--:--";
-                            $sb_22.tampil_jam_masak = "--:--:--";
-                            $sb_22.tampil_jam_selesai = "--:--:--";
-                            $sb_22.tampil_durasi_aktual = "--";
-                            $sb_22.durasi_aktual_up = "--";
                             $sb_22.flag_init_start = 1;
                             $sb_22.total_detik_pemanasan = 0;
                             $sb_22.suhu_awal = $sb22.temp;
@@ -5098,7 +5357,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_22.adjust_menit = 0;
                         }
                         
-                        if ($sb22.temp < 1000) { // Heating (< 100 C)
+                        if ($sb22.temp < 1000 && !isSensorError_22) { // Heating (< 100 C)
                             $sb_22.status_pemanasan = true;
                             $sb_22.status_pemasakan = false;
                             $sb_22.status_banner = txtPemanasan; // Tunggu mendidih
@@ -5122,10 +5381,15 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_22.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_22.status_pemanasan = false;
                             $sb_22.status_pemasakan = true;
-                            $sb_22.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_22) {
+                                $sb_22.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_22.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_22.flag_init_masak === 0) {
                                 $sb_22.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -5166,7 +5430,7 @@ if (!$sb22._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_22) {
                 $sb_22.sensor_error = true;
                 if (Number($sb22.run_stop) === 0 && $sb_22.flag_init_start === 1) {
@@ -5212,13 +5476,13 @@ if ($sb_23.reset) {
     $sb_23.suhu_akhir = 0;
     $sb_23.perubahan_waktu = 0;
     
-    $recipe_kode.23 = "";
-    $recipe_nama.23 = "--";
-    $recipe_versi.23 = 0;
-    $recipe_warna.23 = "";
-    $recipe_qty.23 = 0;
-    $recipe_batch.23 = 0;
-    $recipe_trolly.23 = "";
+    Variable.SetValue("recipe_kode.23", "");
+    Variable.SetValue("recipe_nama.23", "--");
+    Variable.SetValue("recipe_versi.23", 0);
+    Variable.SetValue("recipe_warna.23", "");
+    Variable.SetValue("recipe_qty.23", 0);
+    Variable.SetValue("recipe_batch.23", 0);
+    Variable.SetValue("recipe_trolly.23", "");
     
     $sb_23.status_kosong = true;
     $sb_23.status_resep = false;
@@ -5237,7 +5501,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_23.maintenance_mode) {
             var isSensorError_23 = ($sb23.temp >= tempErrorLimit);
             
-            if (Number($sb23.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb23.run_stop) === 1) { // STOPPED
                 $sb_23.status_pemanasan = false;
                 $sb_23.status_pemasakan = false;
                 $sb_23.flag_init_start = 0;
@@ -5247,8 +5511,8 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_23.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_23.mode_preheat && !$sb_23.status_resep && $sb_23.target_menit === 0 && $sb_23.sisa_detik_masak === 0 && !$sb_23.status_selesai && $sb_23.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_23.mode_preheat && !$sb_23.status_resep && !$sb_23.status_selesai && $sb_23.total_detik_pemanasan === 0) {
                     $sb_23.status_kosong = true;
                 }
                 
@@ -5256,23 +5520,29 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_23.status_banner = txtKosong;
                 } else if ($sb_23.status_selesai) {
                     $sb_23.status_banner = txtSelesai;
-                } else if (!$sb_23.status_kosong && !$sb_23.status_selesai && !$sb_23.mode_preheat && !$sb_23.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_23.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_23.tampil_jam_mulai = "--:--:--";
+                    $sb_23.tampil_jam_masak = "--:--:--";
+                    $sb_23.tampil_jam_selesai = "--:--:--";
+                    $sb_23.tampil_durasi_aktual = "--";
+                    $sb_23.durasi_aktual_up = "--";
+                    if ($sb_23.total_detik_pemanasan === 0) {
+                        $sb_23.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_23.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_23.status_resep) {
+                    if ($sb_23.flag_init_masak === 0) {
+                        $sb_23.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_23.status_banner = txtPaused;
+                    }
+                } else if ($sb_23.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_23.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_23.mode_preheat) {
-                        if ($sb_23.total_detik_pemanasan === 0) {
-                            $sb_23.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_23.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_23.status_resep && $sb_23.sisa_detik_masak === 0) {
-                            $sb_23.status_banner = txtStatusResep;
-                        } else {
-                            $sb_23.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_23.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -5289,12 +5559,13 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_23.status_pemasakan = false;
                         $sb_23.status_banner = txtPreheat;
                         
+                        $sb_23.tampil_jam_mulai = "--:--:--";
+                        $sb_23.tampil_jam_masak = "--:--:--";
+                        $sb_23.tampil_jam_selesai = "--:--:--";
+                        $sb_23.tampil_durasi_aktual = "--";
+                        $sb_23.durasi_aktual_up = "--";
+                        
                         if ($sb_23.flag_init_start === 0) {
-                            $sb_23.tampil_jam_mulai = "--:--:--";
-                            $sb_23.tampil_jam_masak = "--:--:--";
-                            $sb_23.tampil_jam_selesai = "--:--:--";
-                            $sb_23.tampil_durasi_aktual = "--";
-                            $sb_23.durasi_aktual_up = "--";
                             $sb_23.flag_init_start = 1;
                             $sb_23.total_detik_pemanasan = 0;
                             $sb_23.suhu_awal = $sb23.temp;
@@ -5331,7 +5602,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_23.adjust_menit = 0;
                         }
                         
-                        if ($sb23.temp < 1000) { // Heating (< 100 C)
+                        if ($sb23.temp < 1000 && !isSensorError_23) { // Heating (< 100 C)
                             $sb_23.status_pemanasan = true;
                             $sb_23.status_pemasakan = false;
                             $sb_23.status_banner = txtPemanasan; // Tunggu mendidih
@@ -5355,10 +5626,15 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_23.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_23.status_pemanasan = false;
                             $sb_23.status_pemasakan = true;
-                            $sb_23.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_23) {
+                                $sb_23.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_23.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_23.flag_init_masak === 0) {
                                 $sb_23.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -5399,7 +5675,7 @@ if (!$sb23._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_23) {
                 $sb_23.sensor_error = true;
                 if (Number($sb23.run_stop) === 0 && $sb_23.flag_init_start === 1) {
@@ -5445,13 +5721,13 @@ if ($sb_24.reset) {
     $sb_24.suhu_akhir = 0;
     $sb_24.perubahan_waktu = 0;
     
-    $recipe_kode.24 = "";
-    $recipe_nama.24 = "--";
-    $recipe_versi.24 = 0;
-    $recipe_warna.24 = "";
-    $recipe_qty.24 = 0;
-    $recipe_batch.24 = 0;
-    $recipe_trolly.24 = "";
+    Variable.SetValue("recipe_kode.24", "");
+    Variable.SetValue("recipe_nama.24", "--");
+    Variable.SetValue("recipe_versi.24", 0);
+    Variable.SetValue("recipe_warna.24", "");
+    Variable.SetValue("recipe_qty.24", 0);
+    Variable.SetValue("recipe_batch.24", 0);
+    Variable.SetValue("recipe_trolly.24", "");
     
     $sb_24.status_kosong = true;
     $sb_24.status_resep = false;
@@ -5470,7 +5746,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_24.maintenance_mode) {
             var isSensorError_24 = ($sb24.temp >= tempErrorLimit);
             
-            if (Number($sb24.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb24.run_stop) === 1) { // STOPPED
                 $sb_24.status_pemanasan = false;
                 $sb_24.status_pemasakan = false;
                 $sb_24.flag_init_start = 0;
@@ -5480,8 +5756,8 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_24.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_24.mode_preheat && !$sb_24.status_resep && $sb_24.target_menit === 0 && $sb_24.sisa_detik_masak === 0 && !$sb_24.status_selesai && $sb_24.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_24.mode_preheat && !$sb_24.status_resep && !$sb_24.status_selesai && $sb_24.total_detik_pemanasan === 0) {
                     $sb_24.status_kosong = true;
                 }
                 
@@ -5489,23 +5765,29 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_24.status_banner = txtKosong;
                 } else if ($sb_24.status_selesai) {
                     $sb_24.status_banner = txtSelesai;
-                } else if (!$sb_24.status_kosong && !$sb_24.status_selesai && !$sb_24.mode_preheat && !$sb_24.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_24.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_24.tampil_jam_mulai = "--:--:--";
+                    $sb_24.tampil_jam_masak = "--:--:--";
+                    $sb_24.tampil_jam_selesai = "--:--:--";
+                    $sb_24.tampil_durasi_aktual = "--";
+                    $sb_24.durasi_aktual_up = "--";
+                    if ($sb_24.total_detik_pemanasan === 0) {
+                        $sb_24.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_24.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_24.status_resep) {
+                    if ($sb_24.flag_init_masak === 0) {
+                        $sb_24.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_24.status_banner = txtPaused;
+                    }
+                } else if ($sb_24.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_24.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_24.mode_preheat) {
-                        if ($sb_24.total_detik_pemanasan === 0) {
-                            $sb_24.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_24.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_24.status_resep && $sb_24.sisa_detik_masak === 0) {
-                            $sb_24.status_banner = txtStatusResep;
-                        } else {
-                            $sb_24.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_24.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -5522,12 +5804,13 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_24.status_pemasakan = false;
                         $sb_24.status_banner = txtPreheat;
                         
+                        $sb_24.tampil_jam_mulai = "--:--:--";
+                        $sb_24.tampil_jam_masak = "--:--:--";
+                        $sb_24.tampil_jam_selesai = "--:--:--";
+                        $sb_24.tampil_durasi_aktual = "--";
+                        $sb_24.durasi_aktual_up = "--";
+                        
                         if ($sb_24.flag_init_start === 0) {
-                            $sb_24.tampil_jam_mulai = "--:--:--";
-                            $sb_24.tampil_jam_masak = "--:--:--";
-                            $sb_24.tampil_jam_selesai = "--:--:--";
-                            $sb_24.tampil_durasi_aktual = "--";
-                            $sb_24.durasi_aktual_up = "--";
                             $sb_24.flag_init_start = 1;
                             $sb_24.total_detik_pemanasan = 0;
                             $sb_24.suhu_awal = $sb24.temp;
@@ -5564,7 +5847,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_24.adjust_menit = 0;
                         }
                         
-                        if ($sb24.temp < 1000) { // Heating (< 100 C)
+                        if ($sb24.temp < 1000 && !isSensorError_24) { // Heating (< 100 C)
                             $sb_24.status_pemanasan = true;
                             $sb_24.status_pemasakan = false;
                             $sb_24.status_banner = txtPemanasan; // Tunggu mendidih
@@ -5588,10 +5871,15 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_24.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_24.status_pemanasan = false;
                             $sb_24.status_pemasakan = true;
-                            $sb_24.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_24) {
+                                $sb_24.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_24.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_24.flag_init_masak === 0) {
                                 $sb_24.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -5632,7 +5920,7 @@ if (!$sb24._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_24) {
                 $sb_24.sensor_error = true;
                 if (Number($sb24.run_stop) === 0 && $sb_24.flag_init_start === 1) {
@@ -5678,13 +5966,13 @@ if ($sb_25.reset) {
     $sb_25.suhu_akhir = 0;
     $sb_25.perubahan_waktu = 0;
     
-    $recipe_kode.25 = "";
-    $recipe_nama.25 = "--";
-    $recipe_versi.25 = 0;
-    $recipe_warna.25 = "";
-    $recipe_qty.25 = 0;
-    $recipe_batch.25 = 0;
-    $recipe_trolly.25 = "";
+    Variable.SetValue("recipe_kode.25", "");
+    Variable.SetValue("recipe_nama.25", "--");
+    Variable.SetValue("recipe_versi.25", 0);
+    Variable.SetValue("recipe_warna.25", "");
+    Variable.SetValue("recipe_qty.25", 0);
+    Variable.SetValue("recipe_batch.25", 0);
+    Variable.SetValue("recipe_trolly.25", "");
     
     $sb_25.status_kosong = true;
     $sb_25.status_resep = false;
@@ -5703,7 +5991,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_25.maintenance_mode) {
             var isSensorError_25 = ($sb25.temp >= tempErrorLimit);
             
-            if (Number($sb25.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb25.run_stop) === 1) { // STOPPED
                 $sb_25.status_pemanasan = false;
                 $sb_25.status_pemasakan = false;
                 $sb_25.flag_init_start = 0;
@@ -5713,8 +6001,8 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_25.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_25.mode_preheat && !$sb_25.status_resep && $sb_25.target_menit === 0 && $sb_25.sisa_detik_masak === 0 && !$sb_25.status_selesai && $sb_25.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_25.mode_preheat && !$sb_25.status_resep && !$sb_25.status_selesai && $sb_25.total_detik_pemanasan === 0) {
                     $sb_25.status_kosong = true;
                 }
                 
@@ -5722,23 +6010,29 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_25.status_banner = txtKosong;
                 } else if ($sb_25.status_selesai) {
                     $sb_25.status_banner = txtSelesai;
-                } else if (!$sb_25.status_kosong && !$sb_25.status_selesai && !$sb_25.mode_preheat && !$sb_25.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_25.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_25.tampil_jam_mulai = "--:--:--";
+                    $sb_25.tampil_jam_masak = "--:--:--";
+                    $sb_25.tampil_jam_selesai = "--:--:--";
+                    $sb_25.tampil_durasi_aktual = "--";
+                    $sb_25.durasi_aktual_up = "--";
+                    if ($sb_25.total_detik_pemanasan === 0) {
+                        $sb_25.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_25.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_25.status_resep) {
+                    if ($sb_25.flag_init_masak === 0) {
+                        $sb_25.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_25.status_banner = txtPaused;
+                    }
+                } else if ($sb_25.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_25.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_25.mode_preheat) {
-                        if ($sb_25.total_detik_pemanasan === 0) {
-                            $sb_25.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_25.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_25.status_resep && $sb_25.sisa_detik_masak === 0) {
-                            $sb_25.status_banner = txtStatusResep;
-                        } else {
-                            $sb_25.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_25.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -5755,12 +6049,13 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_25.status_pemasakan = false;
                         $sb_25.status_banner = txtPreheat;
                         
+                        $sb_25.tampil_jam_mulai = "--:--:--";
+                        $sb_25.tampil_jam_masak = "--:--:--";
+                        $sb_25.tampil_jam_selesai = "--:--:--";
+                        $sb_25.tampil_durasi_aktual = "--";
+                        $sb_25.durasi_aktual_up = "--";
+                        
                         if ($sb_25.flag_init_start === 0) {
-                            $sb_25.tampil_jam_mulai = "--:--:--";
-                            $sb_25.tampil_jam_masak = "--:--:--";
-                            $sb_25.tampil_jam_selesai = "--:--:--";
-                            $sb_25.tampil_durasi_aktual = "--";
-                            $sb_25.durasi_aktual_up = "--";
                             $sb_25.flag_init_start = 1;
                             $sb_25.total_detik_pemanasan = 0;
                             $sb_25.suhu_awal = $sb25.temp;
@@ -5797,7 +6092,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_25.adjust_menit = 0;
                         }
                         
-                        if ($sb25.temp < 1000) { // Heating (< 100 C)
+                        if ($sb25.temp < 1000 && !isSensorError_25) { // Heating (< 100 C)
                             $sb_25.status_pemanasan = true;
                             $sb_25.status_pemasakan = false;
                             $sb_25.status_banner = txtPemanasan; // Tunggu mendidih
@@ -5821,10 +6116,15 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_25.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_25.status_pemanasan = false;
                             $sb_25.status_pemasakan = true;
-                            $sb_25.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_25) {
+                                $sb_25.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_25.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_25.flag_init_masak === 0) {
                                 $sb_25.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -5865,7 +6165,7 @@ if (!$sb25._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_25) {
                 $sb_25.sensor_error = true;
                 if (Number($sb25.run_stop) === 0 && $sb_25.flag_init_start === 1) {
@@ -5911,13 +6211,13 @@ if ($sb_26.reset) {
     $sb_26.suhu_akhir = 0;
     $sb_26.perubahan_waktu = 0;
     
-    $recipe_kode.26 = "";
-    $recipe_nama.26 = "--";
-    $recipe_versi.26 = 0;
-    $recipe_warna.26 = "";
-    $recipe_qty.26 = 0;
-    $recipe_batch.26 = 0;
-    $recipe_trolly.26 = "";
+    Variable.SetValue("recipe_kode.26", "");
+    Variable.SetValue("recipe_nama.26", "--");
+    Variable.SetValue("recipe_versi.26", 0);
+    Variable.SetValue("recipe_warna.26", "");
+    Variable.SetValue("recipe_qty.26", 0);
+    Variable.SetValue("recipe_batch.26", 0);
+    Variable.SetValue("recipe_trolly.26", "");
     
     $sb_26.status_kosong = true;
     $sb_26.status_resep = false;
@@ -5936,7 +6236,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_26.maintenance_mode) {
             var isSensorError_26 = ($sb26.temp >= tempErrorLimit);
             
-            if (Number($sb26.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb26.run_stop) === 1) { // STOPPED
                 $sb_26.status_pemanasan = false;
                 $sb_26.status_pemasakan = false;
                 $sb_26.flag_init_start = 0;
@@ -5946,8 +6246,8 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_26.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_26.mode_preheat && !$sb_26.status_resep && $sb_26.target_menit === 0 && $sb_26.sisa_detik_masak === 0 && !$sb_26.status_selesai && $sb_26.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_26.mode_preheat && !$sb_26.status_resep && !$sb_26.status_selesai && $sb_26.total_detik_pemanasan === 0) {
                     $sb_26.status_kosong = true;
                 }
                 
@@ -5955,23 +6255,29 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_26.status_banner = txtKosong;
                 } else if ($sb_26.status_selesai) {
                     $sb_26.status_banner = txtSelesai;
-                } else if (!$sb_26.status_kosong && !$sb_26.status_selesai && !$sb_26.mode_preheat && !$sb_26.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_26.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_26.tampil_jam_mulai = "--:--:--";
+                    $sb_26.tampil_jam_masak = "--:--:--";
+                    $sb_26.tampil_jam_selesai = "--:--:--";
+                    $sb_26.tampil_durasi_aktual = "--";
+                    $sb_26.durasi_aktual_up = "--";
+                    if ($sb_26.total_detik_pemanasan === 0) {
+                        $sb_26.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_26.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_26.status_resep) {
+                    if ($sb_26.flag_init_masak === 0) {
+                        $sb_26.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_26.status_banner = txtPaused;
+                    }
+                } else if ($sb_26.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_26.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_26.mode_preheat) {
-                        if ($sb_26.total_detik_pemanasan === 0) {
-                            $sb_26.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_26.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_26.status_resep && $sb_26.sisa_detik_masak === 0) {
-                            $sb_26.status_banner = txtStatusResep;
-                        } else {
-                            $sb_26.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_26.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -5988,12 +6294,13 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_26.status_pemasakan = false;
                         $sb_26.status_banner = txtPreheat;
                         
+                        $sb_26.tampil_jam_mulai = "--:--:--";
+                        $sb_26.tampil_jam_masak = "--:--:--";
+                        $sb_26.tampil_jam_selesai = "--:--:--";
+                        $sb_26.tampil_durasi_aktual = "--";
+                        $sb_26.durasi_aktual_up = "--";
+                        
                         if ($sb_26.flag_init_start === 0) {
-                            $sb_26.tampil_jam_mulai = "--:--:--";
-                            $sb_26.tampil_jam_masak = "--:--:--";
-                            $sb_26.tampil_jam_selesai = "--:--:--";
-                            $sb_26.tampil_durasi_aktual = "--";
-                            $sb_26.durasi_aktual_up = "--";
                             $sb_26.flag_init_start = 1;
                             $sb_26.total_detik_pemanasan = 0;
                             $sb_26.suhu_awal = $sb26.temp;
@@ -6030,7 +6337,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_26.adjust_menit = 0;
                         }
                         
-                        if ($sb26.temp < 1000) { // Heating (< 100 C)
+                        if ($sb26.temp < 1000 && !isSensorError_26) { // Heating (< 100 C)
                             $sb_26.status_pemanasan = true;
                             $sb_26.status_pemasakan = false;
                             $sb_26.status_banner = txtPemanasan; // Tunggu mendidih
@@ -6054,10 +6361,15 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_26.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_26.status_pemanasan = false;
                             $sb_26.status_pemasakan = true;
-                            $sb_26.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_26) {
+                                $sb_26.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_26.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_26.flag_init_masak === 0) {
                                 $sb_26.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -6098,7 +6410,7 @@ if (!$sb26._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_26) {
                 $sb_26.sensor_error = true;
                 if (Number($sb26.run_stop) === 0 && $sb_26.flag_init_start === 1) {
@@ -6144,13 +6456,13 @@ if ($sb_27.reset) {
     $sb_27.suhu_akhir = 0;
     $sb_27.perubahan_waktu = 0;
     
-    $recipe_kode.27 = "";
-    $recipe_nama.27 = "--";
-    $recipe_versi.27 = 0;
-    $recipe_warna.27 = "";
-    $recipe_qty.27 = 0;
-    $recipe_batch.27 = 0;
-    $recipe_trolly.27 = "";
+    Variable.SetValue("recipe_kode.27", "");
+    Variable.SetValue("recipe_nama.27", "--");
+    Variable.SetValue("recipe_versi.27", 0);
+    Variable.SetValue("recipe_warna.27", "");
+    Variable.SetValue("recipe_qty.27", 0);
+    Variable.SetValue("recipe_batch.27", 0);
+    Variable.SetValue("recipe_trolly.27", "");
     
     $sb_27.status_kosong = true;
     $sb_27.status_resep = false;
@@ -6169,7 +6481,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_27.maintenance_mode) {
             var isSensorError_27 = ($sb27.temp >= tempErrorLimit);
             
-            if (Number($sb27.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb27.run_stop) === 1) { // STOPPED
                 $sb_27.status_pemanasan = false;
                 $sb_27.status_pemasakan = false;
                 $sb_27.flag_init_start = 0;
@@ -6179,8 +6491,8 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_27.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_27.mode_preheat && !$sb_27.status_resep && $sb_27.target_menit === 0 && $sb_27.sisa_detik_masak === 0 && !$sb_27.status_selesai && $sb_27.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_27.mode_preheat && !$sb_27.status_resep && !$sb_27.status_selesai && $sb_27.total_detik_pemanasan === 0) {
                     $sb_27.status_kosong = true;
                 }
                 
@@ -6188,23 +6500,29 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_27.status_banner = txtKosong;
                 } else if ($sb_27.status_selesai) {
                     $sb_27.status_banner = txtSelesai;
-                } else if (!$sb_27.status_kosong && !$sb_27.status_selesai && !$sb_27.mode_preheat && !$sb_27.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_27.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_27.tampil_jam_mulai = "--:--:--";
+                    $sb_27.tampil_jam_masak = "--:--:--";
+                    $sb_27.tampil_jam_selesai = "--:--:--";
+                    $sb_27.tampil_durasi_aktual = "--";
+                    $sb_27.durasi_aktual_up = "--";
+                    if ($sb_27.total_detik_pemanasan === 0) {
+                        $sb_27.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_27.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_27.status_resep) {
+                    if ($sb_27.flag_init_masak === 0) {
+                        $sb_27.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_27.status_banner = txtPaused;
+                    }
+                } else if ($sb_27.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_27.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_27.mode_preheat) {
-                        if ($sb_27.total_detik_pemanasan === 0) {
-                            $sb_27.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_27.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_27.status_resep && $sb_27.sisa_detik_masak === 0) {
-                            $sb_27.status_banner = txtStatusResep;
-                        } else {
-                            $sb_27.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_27.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -6221,12 +6539,13 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_27.status_pemasakan = false;
                         $sb_27.status_banner = txtPreheat;
                         
+                        $sb_27.tampil_jam_mulai = "--:--:--";
+                        $sb_27.tampil_jam_masak = "--:--:--";
+                        $sb_27.tampil_jam_selesai = "--:--:--";
+                        $sb_27.tampil_durasi_aktual = "--";
+                        $sb_27.durasi_aktual_up = "--";
+                        
                         if ($sb_27.flag_init_start === 0) {
-                            $sb_27.tampil_jam_mulai = "--:--:--";
-                            $sb_27.tampil_jam_masak = "--:--:--";
-                            $sb_27.tampil_jam_selesai = "--:--:--";
-                            $sb_27.tampil_durasi_aktual = "--";
-                            $sb_27.durasi_aktual_up = "--";
                             $sb_27.flag_init_start = 1;
                             $sb_27.total_detik_pemanasan = 0;
                             $sb_27.suhu_awal = $sb27.temp;
@@ -6263,7 +6582,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_27.adjust_menit = 0;
                         }
                         
-                        if ($sb27.temp < 1000) { // Heating (< 100 C)
+                        if ($sb27.temp < 1000 && !isSensorError_27) { // Heating (< 100 C)
                             $sb_27.status_pemanasan = true;
                             $sb_27.status_pemasakan = false;
                             $sb_27.status_banner = txtPemanasan; // Tunggu mendidih
@@ -6287,10 +6606,15 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_27.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_27.status_pemanasan = false;
                             $sb_27.status_pemasakan = true;
-                            $sb_27.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_27) {
+                                $sb_27.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_27.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_27.flag_init_masak === 0) {
                                 $sb_27.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -6331,7 +6655,7 @@ if (!$sb27._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_27) {
                 $sb_27.sensor_error = true;
                 if (Number($sb27.run_stop) === 0 && $sb_27.flag_init_start === 1) {
@@ -6377,13 +6701,13 @@ if ($sb_28.reset) {
     $sb_28.suhu_akhir = 0;
     $sb_28.perubahan_waktu = 0;
     
-    $recipe_kode.28 = "";
-    $recipe_nama.28 = "--";
-    $recipe_versi.28 = 0;
-    $recipe_warna.28 = "";
-    $recipe_qty.28 = 0;
-    $recipe_batch.28 = 0;
-    $recipe_trolly.28 = "";
+    Variable.SetValue("recipe_kode.28", "");
+    Variable.SetValue("recipe_nama.28", "--");
+    Variable.SetValue("recipe_versi.28", 0);
+    Variable.SetValue("recipe_warna.28", "");
+    Variable.SetValue("recipe_qty.28", 0);
+    Variable.SetValue("recipe_batch.28", 0);
+    Variable.SetValue("recipe_trolly.28", "");
     
     $sb_28.status_kosong = true;
     $sb_28.status_resep = false;
@@ -6402,7 +6726,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_28.maintenance_mode) {
             var isSensorError_28 = ($sb28.temp >= tempErrorLimit);
             
-            if (Number($sb28.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb28.run_stop) === 1) { // STOPPED
                 $sb_28.status_pemanasan = false;
                 $sb_28.status_pemasakan = false;
                 $sb_28.flag_init_start = 0;
@@ -6412,8 +6736,8 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_28.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_28.mode_preheat && !$sb_28.status_resep && $sb_28.target_menit === 0 && $sb_28.sisa_detik_masak === 0 && !$sb_28.status_selesai && $sb_28.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_28.mode_preheat && !$sb_28.status_resep && !$sb_28.status_selesai && $sb_28.total_detik_pemanasan === 0) {
                     $sb_28.status_kosong = true;
                 }
                 
@@ -6421,23 +6745,29 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_28.status_banner = txtKosong;
                 } else if ($sb_28.status_selesai) {
                     $sb_28.status_banner = txtSelesai;
-                } else if (!$sb_28.status_kosong && !$sb_28.status_selesai && !$sb_28.mode_preheat && !$sb_28.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_28.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_28.tampil_jam_mulai = "--:--:--";
+                    $sb_28.tampil_jam_masak = "--:--:--";
+                    $sb_28.tampil_jam_selesai = "--:--:--";
+                    $sb_28.tampil_durasi_aktual = "--";
+                    $sb_28.durasi_aktual_up = "--";
+                    if ($sb_28.total_detik_pemanasan === 0) {
+                        $sb_28.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_28.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_28.status_resep) {
+                    if ($sb_28.flag_init_masak === 0) {
+                        $sb_28.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_28.status_banner = txtPaused;
+                    }
+                } else if ($sb_28.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_28.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_28.mode_preheat) {
-                        if ($sb_28.total_detik_pemanasan === 0) {
-                            $sb_28.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_28.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_28.status_resep && $sb_28.sisa_detik_masak === 0) {
-                            $sb_28.status_banner = txtStatusResep;
-                        } else {
-                            $sb_28.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_28.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -6454,12 +6784,13 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_28.status_pemasakan = false;
                         $sb_28.status_banner = txtPreheat;
                         
+                        $sb_28.tampil_jam_mulai = "--:--:--";
+                        $sb_28.tampil_jam_masak = "--:--:--";
+                        $sb_28.tampil_jam_selesai = "--:--:--";
+                        $sb_28.tampil_durasi_aktual = "--";
+                        $sb_28.durasi_aktual_up = "--";
+                        
                         if ($sb_28.flag_init_start === 0) {
-                            $sb_28.tampil_jam_mulai = "--:--:--";
-                            $sb_28.tampil_jam_masak = "--:--:--";
-                            $sb_28.tampil_jam_selesai = "--:--:--";
-                            $sb_28.tampil_durasi_aktual = "--";
-                            $sb_28.durasi_aktual_up = "--";
                             $sb_28.flag_init_start = 1;
                             $sb_28.total_detik_pemanasan = 0;
                             $sb_28.suhu_awal = $sb28.temp;
@@ -6496,7 +6827,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_28.adjust_menit = 0;
                         }
                         
-                        if ($sb28.temp < 1000) { // Heating (< 100 C)
+                        if ($sb28.temp < 1000 && !isSensorError_28) { // Heating (< 100 C)
                             $sb_28.status_pemanasan = true;
                             $sb_28.status_pemasakan = false;
                             $sb_28.status_banner = txtPemanasan; // Tunggu mendidih
@@ -6520,10 +6851,15 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_28.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_28.status_pemanasan = false;
                             $sb_28.status_pemasakan = true;
-                            $sb_28.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_28) {
+                                $sb_28.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_28.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_28.flag_init_masak === 0) {
                                 $sb_28.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -6564,7 +6900,7 @@ if (!$sb28._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_28) {
                 $sb_28.sensor_error = true;
                 if (Number($sb28.run_stop) === 0 && $sb_28.flag_init_start === 1) {
@@ -6610,13 +6946,13 @@ if ($sb_29.reset) {
     $sb_29.suhu_akhir = 0;
     $sb_29.perubahan_waktu = 0;
     
-    $recipe_kode.29 = "";
-    $recipe_nama.29 = "--";
-    $recipe_versi.29 = 0;
-    $recipe_warna.29 = "";
-    $recipe_qty.29 = 0;
-    $recipe_batch.29 = 0;
-    $recipe_trolly.29 = "";
+    Variable.SetValue("recipe_kode.29", "");
+    Variable.SetValue("recipe_nama.29", "--");
+    Variable.SetValue("recipe_versi.29", 0);
+    Variable.SetValue("recipe_warna.29", "");
+    Variable.SetValue("recipe_qty.29", 0);
+    Variable.SetValue("recipe_batch.29", 0);
+    Variable.SetValue("recipe_trolly.29", "");
     
     $sb_29.status_kosong = true;
     $sb_29.status_resep = false;
@@ -6635,7 +6971,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_29.maintenance_mode) {
             var isSensorError_29 = ($sb29.temp >= tempErrorLimit);
             
-            if (Number($sb29.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb29.run_stop) === 1) { // STOPPED
                 $sb_29.status_pemanasan = false;
                 $sb_29.status_pemasakan = false;
                 $sb_29.flag_init_start = 0;
@@ -6645,8 +6981,8 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_29.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_29.mode_preheat && !$sb_29.status_resep && $sb_29.target_menit === 0 && $sb_29.sisa_detik_masak === 0 && !$sb_29.status_selesai && $sb_29.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_29.mode_preheat && !$sb_29.status_resep && !$sb_29.status_selesai && $sb_29.total_detik_pemanasan === 0) {
                     $sb_29.status_kosong = true;
                 }
                 
@@ -6654,23 +6990,29 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_29.status_banner = txtKosong;
                 } else if ($sb_29.status_selesai) {
                     $sb_29.status_banner = txtSelesai;
-                } else if (!$sb_29.status_kosong && !$sb_29.status_selesai && !$sb_29.mode_preheat && !$sb_29.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_29.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_29.tampil_jam_mulai = "--:--:--";
+                    $sb_29.tampil_jam_masak = "--:--:--";
+                    $sb_29.tampil_jam_selesai = "--:--:--";
+                    $sb_29.tampil_durasi_aktual = "--";
+                    $sb_29.durasi_aktual_up = "--";
+                    if ($sb_29.total_detik_pemanasan === 0) {
+                        $sb_29.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_29.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_29.status_resep) {
+                    if ($sb_29.flag_init_masak === 0) {
+                        $sb_29.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_29.status_banner = txtPaused;
+                    }
+                } else if ($sb_29.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_29.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_29.mode_preheat) {
-                        if ($sb_29.total_detik_pemanasan === 0) {
-                            $sb_29.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_29.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_29.status_resep && $sb_29.sisa_detik_masak === 0) {
-                            $sb_29.status_banner = txtStatusResep;
-                        } else {
-                            $sb_29.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_29.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -6687,12 +7029,13 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_29.status_pemasakan = false;
                         $sb_29.status_banner = txtPreheat;
                         
+                        $sb_29.tampil_jam_mulai = "--:--:--";
+                        $sb_29.tampil_jam_masak = "--:--:--";
+                        $sb_29.tampil_jam_selesai = "--:--:--";
+                        $sb_29.tampil_durasi_aktual = "--";
+                        $sb_29.durasi_aktual_up = "--";
+                        
                         if ($sb_29.flag_init_start === 0) {
-                            $sb_29.tampil_jam_mulai = "--:--:--";
-                            $sb_29.tampil_jam_masak = "--:--:--";
-                            $sb_29.tampil_jam_selesai = "--:--:--";
-                            $sb_29.tampil_durasi_aktual = "--";
-                            $sb_29.durasi_aktual_up = "--";
                             $sb_29.flag_init_start = 1;
                             $sb_29.total_detik_pemanasan = 0;
                             $sb_29.suhu_awal = $sb29.temp;
@@ -6729,7 +7072,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_29.adjust_menit = 0;
                         }
                         
-                        if ($sb29.temp < 1000) { // Heating (< 100 C)
+                        if ($sb29.temp < 1000 && !isSensorError_29) { // Heating (< 100 C)
                             $sb_29.status_pemanasan = true;
                             $sb_29.status_pemasakan = false;
                             $sb_29.status_banner = txtPemanasan; // Tunggu mendidih
@@ -6753,10 +7096,15 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_29.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_29.status_pemanasan = false;
                             $sb_29.status_pemasakan = true;
-                            $sb_29.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_29) {
+                                $sb_29.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_29.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_29.flag_init_masak === 0) {
                                 $sb_29.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -6797,7 +7145,7 @@ if (!$sb29._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_29) {
                 $sb_29.sensor_error = true;
                 if (Number($sb29.run_stop) === 0 && $sb_29.flag_init_start === 1) {
@@ -6843,13 +7191,13 @@ if ($sb_30.reset) {
     $sb_30.suhu_akhir = 0;
     $sb_30.perubahan_waktu = 0;
     
-    $recipe_kode.30 = "";
-    $recipe_nama.30 = "--";
-    $recipe_versi.30 = 0;
-    $recipe_warna.30 = "";
-    $recipe_qty.30 = 0;
-    $recipe_batch.30 = 0;
-    $recipe_trolly.30 = "";
+    Variable.SetValue("recipe_kode.30", "");
+    Variable.SetValue("recipe_nama.30", "--");
+    Variable.SetValue("recipe_versi.30", 0);
+    Variable.SetValue("recipe_warna.30", "");
+    Variable.SetValue("recipe_qty.30", 0);
+    Variable.SetValue("recipe_batch.30", 0);
+    Variable.SetValue("recipe_trolly.30", "");
     
     $sb_30.status_kosong = true;
     $sb_30.status_resep = false;
@@ -6868,7 +7216,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
         if (!$sb_30.maintenance_mode) {
             var isSensorError_30 = ($sb30.temp >= tempErrorLimit);
             
-            if (Number($sb30.run_stop) === 1) { // STOPPED (Casting HMI Boolean to Number)
+            if (Number($sb30.run_stop) === 1) { // STOPPED
                 $sb_30.status_pemanasan = false;
                 $sb_30.status_pemasakan = false;
                 $sb_30.flag_init_start = 0;
@@ -6878,8 +7226,8 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_30.status_kosong = false;
                 }
                 
-                // Enforce status_kosong jika berada di kondisi standby default (dan preheat belum pernah jalan)
-                if (!$sb_30.mode_preheat && !$sb_30.status_resep && $sb_30.target_menit === 0 && $sb_30.sisa_detik_masak === 0 && !$sb_30.status_selesai && $sb_30.total_detik_pemanasan === 0) {
+                // Enforce status_kosong jika berada di kondisi standby default (dan preheat/resep belum aktif)
+                if (!$sb_30.mode_preheat && !$sb_30.status_resep && !$sb_30.status_selesai && $sb_30.total_detik_pemanasan === 0) {
                     $sb_30.status_kosong = true;
                 }
                 
@@ -6887,23 +7235,29 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                     $sb_30.status_banner = txtKosong;
                 } else if ($sb_30.status_selesai) {
                     $sb_30.status_banner = txtSelesai;
-                } else if (!$sb_30.status_kosong && !$sb_30.status_selesai && !$sb_30.mode_preheat && !$sb_30.status_resep) {
-                    // Kondisi selesai preheating: status_selesai tetap false, mode_preheat sudah dimatikan, status_kosong false, total_detik_pemanasan > 0
+                } else if ($sb_30.mode_preheat) {
+                    // Di mode preheat, kosongkan jam masak & selesai
+                    $sb_30.tampil_jam_mulai = "--:--:--";
+                    $sb_30.tampil_jam_masak = "--:--:--";
+                    $sb_30.tampil_jam_selesai = "--:--:--";
+                    $sb_30.tampil_durasi_aktual = "--";
+                    $sb_30.durasi_aktual_up = "--";
+                    if ($sb_30.total_detik_pemanasan === 0) {
+                        $sb_30.status_banner = txtSiapPreheat;
+                    } else {
+                        $sb_30.status_banner = txtPreheatPaused;
+                    }
+                } else if ($sb_30.status_resep) {
+                    if ($sb_30.flag_init_masak === 0) {
+                        $sb_30.status_banner = txtSiapCooking;
+                    } else {
+                        $sb_30.status_banner = txtPaused;
+                    }
+                } else if ($sb_30.total_detik_pemanasan > 0) {
+                    // Selesai preheat, mode_preheat sudah mati otomatis, status_kosong false, total_detik_pemanasan > 0
                     $sb_30.status_banner = txtSelesaiPreheat;
                 } else {
-                    if ($sb_30.mode_preheat) {
-                        if ($sb_30.total_detik_pemanasan === 0) {
-                            $sb_30.status_banner = txtSiapPreheat;
-                        } else {
-                            $sb_30.status_banner = txtPreheatPaused;
-                        }
-                    } else {
-                        if ($sb_30.status_resep && $sb_30.sisa_detik_masak === 0) {
-                            $sb_30.status_banner = txtStatusResep;
-                        } else {
-                            $sb_30.status_banner = txtPaused;
-                        }
-                    }
+                    $sb_30.status_banner = txtKosong;
                 }
             } else { // RUNNING
                 
@@ -6920,12 +7274,13 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                         $sb_30.status_pemasakan = false;
                         $sb_30.status_banner = txtPreheat;
                         
+                        $sb_30.tampil_jam_mulai = "--:--:--";
+                        $sb_30.tampil_jam_masak = "--:--:--";
+                        $sb_30.tampil_jam_selesai = "--:--:--";
+                        $sb_30.tampil_durasi_aktual = "--";
+                        $sb_30.durasi_aktual_up = "--";
+                        
                         if ($sb_30.flag_init_start === 0) {
-                            $sb_30.tampil_jam_mulai = "--:--:--";
-                            $sb_30.tampil_jam_masak = "--:--:--";
-                            $sb_30.tampil_jam_selesai = "--:--:--";
-                            $sb_30.tampil_durasi_aktual = "--";
-                            $sb_30.durasi_aktual_up = "--";
                             $sb_30.flag_init_start = 1;
                             $sb_30.total_detik_pemanasan = 0;
                             $sb_30.suhu_awal = $sb30.temp;
@@ -6962,7 +7317,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             $sb_30.adjust_menit = 0;
                         }
                         
-                        if ($sb30.temp < 1000) { // Heating (< 100 C)
+                        if ($sb30.temp < 1000 && !isSensorError_30) { // Heating (< 100 C)
                             $sb_30.status_pemanasan = true;
                             $sb_30.status_pemasakan = false;
                             $sb_30.status_banner = txtPemanasan; // Tunggu mendidih
@@ -6986,10 +7341,15 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                             } else {
                                 $sb_30.tampil_jam_selesai = "--:--:--";
                             }
-                        } else { // Boiling (>= 100 C): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
+                        } else { // Boiling (>= 100 C atau Sensor Error): Jam masak & selesai dicatat, durasi aktual mulai hitung mundur
                             $sb_30.status_pemanasan = false;
                             $sb_30.status_pemasakan = true;
-                            $sb_30.status_banner = txtPemasakan;
+                            
+                            if (isSensorError_30) {
+                                $sb_30.status_banner = txtSensorErrorCooking;
+                            } else {
+                                $sb_30.status_banner = txtPemasakan;
+                            }
                             
                             if ($sb_30.flag_init_masak === 0) {
                                 $sb_30.tampil_jam_masak = waktuSekarangString; // Catat jam masak sekali
@@ -7030,7 +7390,7 @@ if (!$sb30._commOperation) { // UNIT TIDAK DIPAKAI (Disabled)
                 }
             }
             
-            // Alarm Sensor Error (Jika terjadi saat proses memasak aktif, ubah banner ke pesan kustom peringatan memasak)
+            // Alarm Sensor Error (Jika terjadi saat preheat atau idle, ubah banner ke pesan kustom peringatan sensor error biasa)
             if (isSensorError_30) {
                 $sb_30.sensor_error = true;
                 if (Number($sb30.run_stop) === 0 && $sb_30.flag_init_start === 1) {
