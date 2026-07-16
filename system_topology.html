@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topologi Jaringan Integrasi SCADA Steambox</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(22, 28, 45, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.4);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.4);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.003) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.003) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            position: relative;
+        }
+
+        /* Topology Diagram Wrapper */
+        .topology-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        /* Connectors (CSS Cables) */
+        .cable-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* SVG Overlay for Connections */
+        .network-grid {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer Cards */
+        .layer {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            transition: border-color 0.3s ease;
+        }
+
+        .layer:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .layer-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .layer-title::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        /* Layer-Specific Layouts */
+        .fields-layer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Autonics Unit Simulation Card */
+        .autonics-group {
+            background: rgba(10, 14, 23, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .autonics-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .autonics-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .protocol-badge {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* Controller Faceplate UI */
+        .controller-faceplate {
+            background: #1e1e1e;
+            border: 3px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .display-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000;
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid #222;
+        }
+
+        .display-label {
+            font-size: 0.75rem;
+            color: #777;
+        }
+
+        .display-value-pv {
+            font-size: 1.4rem;
+            color: #ef4444;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+
+        .display-value-sv {
+            font-size: 1.2rem;
+            color: #10b981;
+            text-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+        }
+
+        /* Gateway Layer */
+        .gateway-layer {
+            display: flex;
+            justify-content: center;
+        }
+
+        .gateway-card {
+            background: linear-gradient(135deg, #1b223c 0%, #111625 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .gateway-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gateway-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .gateway-name svg {
+            fill: var(--primary);
+        }
+
+        .ports-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .port-box {
+            background: rgba(10, 14, 23, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .port-num {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .port-dest {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* SCADA Layer */
+        .scada-layer {
+            display: flex;
+            justify-content: center;
+        }
+
+        .scada-card {
+            background: rgba(16, 185, 129, 0.03);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 550px;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.05);
+        }
+
+        .scada-icon {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+        }
+
+        .scada-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .scada-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .scada-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* IT Services Layer */
+        .it-layer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .it-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .it-icon {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .it-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .it-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        /* SVG Lines and Pulse Animations */
+        .flow-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .flow-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-dasharray: 6 6;
+            animation: dash 15s linear infinite;
+        }
+
+        .flow-line-rtu {
+            stroke: var(--warning);
+        }
+
+        .flow-line-tcp {
+            stroke: var(--primary);
+        }
+
+        .flow-line-api {
+            stroke: var(--success);
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -200;
+            }
+        }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .flow-svg {
+                display: none; /* Hide complex connectors on mobile */
+            }
+            .topology-flow {
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SISTEM TOPOLOGI INTEGRASI STEAMBOX SCADA</h1>
+        <p>Arsitektur Komunikasi 30 Unit Autonics TK4M ke Haiwell Cloud SCADA & IT Web Services</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="topology-flow">
+
+            <!-- SVG Cable Layer -->
+            <svg class="flow-svg" viewBox="0 0 1170 1200" preserveAspectRatio="none">
+                <!-- Bus 1 connection (Unit 1-10 to Gateway) -->
+                <path d="M 200,240 L 200,320 L 480,320 L 480,420" class="flow-line flow-line-rtu" />
+                <!-- Bus 2 connection (Unit 11-20 to Gateway) -->
+                <path d="M 585,240 L 585,420" class="flow-line flow-line-rtu" />
+                <!-- Bus 3 connection (Unit 21-30 to Gateway) -->
+                <path d="M 970,240 L 970,320 L 690,320 L 690,420" class="flow-line flow-line-rtu" />
+
+                <!-- Gateway to SCADA (Modbus TCP) -->
+                <path d="M 585,580 L 585,690" class="flow-line flow-line-tcp" />
+
+                <!-- SCADA to IT Layer (WebAPI/Laravel) -->
+                <path d="M 585,830 L 585,910 L 200,910 L 200,980" class="flow-line flow-line-api" />
+                <path d="M 585,830 L 585,980" class="flow-line flow-line-api" />
+                <path d="M 585,910 L 970,910 L 970,980" class="flow-line flow-line-api" />
+            </svg>
+
+            <!-- 1. FIELD LEVEL LAYER -->
+            <div class="layer">
+                <div class="layer-title" style="--primary: var(--warning)">Field Layer (Industrial Instrumentation)</div>
+                <div class="fields-layer">
+                    
+                    <!-- BUS 1 -->
+                    <div class="autonics-group">
+                        <div class="autonics-group-header">
+                            <span class="autonics-title">Serial Bus RS-485 [1]</span>
+                            <span class="protocol-badge">Unit 1 - 10</span>
+                        </div>
+                        <div class="controller-faceplate">
+                            <div class="display-line">
+                                <span class="display-label">PV</span>
+                                <span class="display-value-pv">100.2</span>
+                            </div>
+                            <div class="display-line">
+                                <span class="display-label">SV</span>
+                                <span class="display-value-sv">100.0</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                            Koneksi Modbus RTU &bull; Baudrate 9600 &bull; ID 1-10
+                        </div>
+                    </div>
+
+                    <!-- BUS 2 -->
+                    <div class="autonics-group">
+                        <div class="autonics-group-header">
+                            <span class="autonics-title">Serial Bus RS-485 [2]</span>
+                            <span class="protocol-badge">Unit 11 - 20</span>
+                        </div>
+                        <div class="controller-faceplate">
+                            <div class="display-line">
+                                <span class="display-label">PV</span>
+                                <span class="display-value-pv">99.8</span>
+                            </div>
+                            <div class="display-line">
+                                <span class="display-label">SV</span>
+                                <span class="display-value-sv">100.0</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                            Koneksi Modbus RTU &bull; Baudrate 9600 &bull; ID 11-20
+                        </div>
+                    </div>
+
+                    <!-- BUS 3 -->
+                    <div class="autonics-group">
+                        <div class="autonics-group-header">
+                            <span class="autonics-title">Serial Bus RS-485 [3]</span>
+                            <span class="protocol-badge">Unit 21 - 30</span>
+                        </div>
+                        <div class="controller-faceplate">
+                            <div class="display-line">
+                                <span class="display-label">PV</span>
+                                <span class="display-value-pv">100.5</span>
+                            </div>
+                            <div class="display-line">
+                                <span class="display-label">SV</span>
+                                <span class="display-value-sv">100.0</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+                            Koneksi Modbus RTU &bull; Baudrate 9600 &bull; ID 21-30
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2. COMMUNICATION LAYER -->
+            <div class="layer gateway-layer">
+                <div class="gateway-card">
+                    <div class="gateway-header">
+                        <span class="gateway-name">
+                            <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 15c-1.1 0-2 .9-2 2H7c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2h10c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2zM5 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm14 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.93c0-.52-.4-1-.92-1.07C9.39 16.48 7.52 14.61 7.14 11.92c-.07-.52-.55-.92-1.07-.92-.59 0-1.07.51-1 .1 0 .48 3.52 4.41 7.15 4.83.52.07.92.55.92 1.07 0 .59.51 1.07 1 1.07 0-.48-1.52-4.41-5.15-4.83-.52-.07-.92-.55-.92-1.07 0-.59-.51-1.07-1-1.07 0 .48 1.52 4.41 5.15 4.83.52.07.92.55.92 1.07z"/></svg>
+                            ICP DAS TGW-735CR Gateway
+                        </span>
+                        <span class="protocol-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--primary); border-color: rgba(59, 130, 246, 0.2)">RS-485 to TCP</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                        Konverter Serial-to-Ethernet Industri. Memetakan 3 bus RS-485 Modbus RTU independen ke dalam port komunikasi Ethernet virtual Modbus TCP/IP yang unik.
+                    </div>
+                    <div class="ports-grid">
+                        <div class="port-box">
+                            <span class="port-num">PORT 502</span>
+                            <span class="port-dest">Unit 1 - 10</span>
+                        </div>
+                        <div class="port-box">
+                            <span class="port-num">PORT 503</span>
+                            <span class="port-dest">Unit 11 - 20</span>
+                        </div>
+                        <div class="port-box">
+                            <span class="port-num">PORT 504</span>
+                            <span class="port-dest">Unit 21 - 30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. AUTOMATION & CONTROL LAYER -->
+            <div class="layer scada-layer">
+                <div class="scada-card">
+                    <div class="scada-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <div class="scada-info">
+                        <span class="scada-title">PC Runtime Haiwell Cloud SCADA</span>
+                        <p class="scada-desc">
+                            Stasiun Kontrol Master. Mengeksekusi skrip kompilasi otomatisasi <b>master_loop_scada.js</b> setiap 1000ms untuk mengelola interaksi 30 unit steambox secara paralel.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. IT LAYER & APPLICATION LEVEL -->
+            <div class="layer">
+                <div class="layer-title" style="--primary: var(--success)">IT & Application Layer</div>
+                <div class="it-layer">
+                    
+                    <!-- WebAPI -->
+                    <div class="it-card">
+                        <div class="it-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        </div>
+                        <div>
+                            <div class="it-name">Haiwell WebAPI</div>
+                            <div class="it-desc">Menyediakan endpoint REST API data realtime tangki SCADA.</div>
+                        </div>
+                    </div>
+
+                    <!-- Node.js -->
+                    <div class="it-card">
+                        <div class="it-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#68a063" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <div>
+                            <div class="it-name">Node.js Middleware</div>
+                            <div class="it-desc">Polling data real-time asinkron dari WebAPI secara konstan.</div>
+                        </div>
+                    </div>
+
+                    <!-- Laravel -->
+                    <div class="it-card">
+                        <div class="it-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff2d20" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div>
+                            <div class="it-name">Laravel & DB Log</div>
+                            <div class="it-desc">Menerima sync data dari Node.js untuk Log Laporan Produksi.</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
