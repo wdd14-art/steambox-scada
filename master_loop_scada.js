@@ -86,13 +86,13 @@ if ($sb_1.reset) {
     $sb_1.suhu_akhir = 0;
     $sb_1.perubahan_waktu = 0;
     
-    $recipe_kode.1 = "";
-    $recipe_nama.1 = "--";
-    $recipe_versi.1 = 0;
-    $recipe_warna.1 = "";
-    $recipe_qty.1 = 0;
-    $recipe_batch.1 = 0;
-    $recipe_trolly.1 = "";
+    Variable.SetValue("recipe_kode.1", "");
+    Variable.SetValue("recipe_nama.1", "--");
+    Variable.SetValue("recipe_versi.1", 0);
+    Variable.SetValue("recipe_warna.1", "");
+    Variable.SetValue("recipe_qty.1", 0);
+    Variable.SetValue("recipe_batch.1", 0);
+    Variable.SetValue("recipe_trolly.1", "");
     
     $sb_1.status_kosong = true;
     $sb_1.status_resep = false;
@@ -317,13 +317,13 @@ if ($sb_2.reset) {
     $sb_2.suhu_akhir = 0;
     $sb_2.perubahan_waktu = 0;
     
-    $recipe_kode.2 = "";
-    $recipe_nama.2 = "--";
-    $recipe_versi.2 = 0;
-    $recipe_warna.2 = "";
-    $recipe_qty.2 = 0;
-    $recipe_batch.2 = 0;
-    $recipe_trolly.2 = "";
+    Variable.SetValue("recipe_kode.2", "");
+    Variable.SetValue("recipe_nama.2", "--");
+    Variable.SetValue("recipe_versi.2", 0);
+    Variable.SetValue("recipe_warna.2", "");
+    Variable.SetValue("recipe_qty.2", 0);
+    Variable.SetValue("recipe_batch.2", 0);
+    Variable.SetValue("recipe_trolly.2", "");
     
     $sb_2.status_kosong = true;
     $sb_2.status_resep = false;
@@ -548,13 +548,13 @@ if ($sb_3.reset) {
     $sb_3.suhu_akhir = 0;
     $sb_3.perubahan_waktu = 0;
     
-    $recipe_kode.3 = "";
-    $recipe_nama.3 = "--";
-    $recipe_versi.3 = 0;
-    $recipe_warna.3 = "";
-    $recipe_qty.3 = 0;
-    $recipe_batch.3 = 0;
-    $recipe_trolly.3 = "";
+    Variable.SetValue("recipe_kode.3", "");
+    Variable.SetValue("recipe_nama.3", "--");
+    Variable.SetValue("recipe_versi.3", 0);
+    Variable.SetValue("recipe_warna.3", "");
+    Variable.SetValue("recipe_qty.3", 0);
+    Variable.SetValue("recipe_batch.3", 0);
+    Variable.SetValue("recipe_trolly.3", "");
     
     $sb_3.status_kosong = true;
     $sb_3.status_resep = false;
@@ -779,13 +779,13 @@ if ($sb_4.reset) {
     $sb_4.suhu_akhir = 0;
     $sb_4.perubahan_waktu = 0;
     
-    $recipe_kode.4 = "";
-    $recipe_nama.4 = "--";
-    $recipe_versi.4 = 0;
-    $recipe_warna.4 = "";
-    $recipe_qty.4 = 0;
-    $recipe_batch.4 = 0;
-    $recipe_trolly.4 = "";
+    Variable.SetValue("recipe_kode.4", "");
+    Variable.SetValue("recipe_nama.4", "--");
+    Variable.SetValue("recipe_versi.4", 0);
+    Variable.SetValue("recipe_warna.4", "");
+    Variable.SetValue("recipe_qty.4", 0);
+    Variable.SetValue("recipe_batch.4", 0);
+    Variable.SetValue("recipe_trolly.4", "");
     
     $sb_4.status_kosong = true;
     $sb_4.status_resep = false;
@@ -1010,13 +1010,13 @@ if ($sb_5.reset) {
     $sb_5.suhu_akhir = 0;
     $sb_5.perubahan_waktu = 0;
     
-    $recipe_kode.5 = "";
-    $recipe_nama.5 = "--";
-    $recipe_versi.5 = 0;
-    $recipe_warna.5 = "";
-    $recipe_qty.5 = 0;
-    $recipe_batch.5 = 0;
-    $recipe_trolly.5 = "";
+    Variable.SetValue("recipe_kode.5", "");
+    Variable.SetValue("recipe_nama.5", "--");
+    Variable.SetValue("recipe_versi.5", 0);
+    Variable.SetValue("recipe_warna.5", "");
+    Variable.SetValue("recipe_qty.5", 0);
+    Variable.SetValue("recipe_batch.5", 0);
+    Variable.SetValue("recipe_trolly.5", "");
     
     $sb_5.status_kosong = true;
     $sb_5.status_resep = false;
@@ -1241,13 +1241,13 @@ if ($sb_6.reset) {
     $sb_6.suhu_akhir = 0;
     $sb_6.perubahan_waktu = 0;
     
-    $recipe_kode.6 = "";
-    $recipe_nama.6 = "--";
-    $recipe_versi.6 = 0;
-    $recipe_warna.6 = "";
-    $recipe_qty.6 = 0;
-    $recipe_batch.6 = 0;
-    $recipe_trolly.6 = "";
+    Variable.SetValue("recipe_kode.6", "");
+    Variable.SetValue("recipe_nama.6", "--");
+    Variable.SetValue("recipe_versi.6", 0);
+    Variable.SetValue("recipe_warna.6", "");
+    Variable.SetValue("recipe_qty.6", 0);
+    Variable.SetValue("recipe_batch.6", 0);
+    Variable.SetValue("recipe_trolly.6", "");
     
     $sb_6.status_kosong = true;
     $sb_6.status_resep = false;
@@ -1472,13 +1472,13 @@ if ($sb_7.reset) {
     $sb_7.suhu_akhir = 0;
     $sb_7.perubahan_waktu = 0;
     
-    $recipe_kode.7 = "";
-    $recipe_nama.7 = "--";
-    $recipe_versi.7 = 0;
-    $recipe_warna.7 = "";
-    $recipe_qty.7 = 0;
-    $recipe_batch.7 = 0;
-    $recipe_trolly.7 = "";
+    Variable.SetValue("recipe_kode.7", "");
+    Variable.SetValue("recipe_nama.7", "--");
+    Variable.SetValue("recipe_versi.7", 0);
+    Variable.SetValue("recipe_warna.7", "");
+    Variable.SetValue("recipe_qty.7", 0);
+    Variable.SetValue("recipe_batch.7", 0);
+    Variable.SetValue("recipe_trolly.7", "");
     
     $sb_7.status_kosong = true;
     $sb_7.status_resep = false;
@@ -1703,13 +1703,13 @@ if ($sb_8.reset) {
     $sb_8.suhu_akhir = 0;
     $sb_8.perubahan_waktu = 0;
     
-    $recipe_kode.8 = "";
-    $recipe_nama.8 = "--";
-    $recipe_versi.8 = 0;
-    $recipe_warna.8 = "";
-    $recipe_qty.8 = 0;
-    $recipe_batch.8 = 0;
-    $recipe_trolly.8 = "";
+    Variable.SetValue("recipe_kode.8", "");
+    Variable.SetValue("recipe_nama.8", "--");
+    Variable.SetValue("recipe_versi.8", 0);
+    Variable.SetValue("recipe_warna.8", "");
+    Variable.SetValue("recipe_qty.8", 0);
+    Variable.SetValue("recipe_batch.8", 0);
+    Variable.SetValue("recipe_trolly.8", "");
     
     $sb_8.status_kosong = true;
     $sb_8.status_resep = false;
@@ -1934,13 +1934,13 @@ if ($sb_9.reset) {
     $sb_9.suhu_akhir = 0;
     $sb_9.perubahan_waktu = 0;
     
-    $recipe_kode.9 = "";
-    $recipe_nama.9 = "--";
-    $recipe_versi.9 = 0;
-    $recipe_warna.9 = "";
-    $recipe_qty.9 = 0;
-    $recipe_batch.9 = 0;
-    $recipe_trolly.9 = "";
+    Variable.SetValue("recipe_kode.9", "");
+    Variable.SetValue("recipe_nama.9", "--");
+    Variable.SetValue("recipe_versi.9", 0);
+    Variable.SetValue("recipe_warna.9", "");
+    Variable.SetValue("recipe_qty.9", 0);
+    Variable.SetValue("recipe_batch.9", 0);
+    Variable.SetValue("recipe_trolly.9", "");
     
     $sb_9.status_kosong = true;
     $sb_9.status_resep = false;
@@ -2165,13 +2165,13 @@ if ($sb_10.reset) {
     $sb_10.suhu_akhir = 0;
     $sb_10.perubahan_waktu = 0;
     
-    $recipe_kode.10 = "";
-    $recipe_nama.10 = "--";
-    $recipe_versi.10 = 0;
-    $recipe_warna.10 = "";
-    $recipe_qty.10 = 0;
-    $recipe_batch.10 = 0;
-    $recipe_trolly.10 = "";
+    Variable.SetValue("recipe_kode.10", "");
+    Variable.SetValue("recipe_nama.10", "--");
+    Variable.SetValue("recipe_versi.10", 0);
+    Variable.SetValue("recipe_warna.10", "");
+    Variable.SetValue("recipe_qty.10", 0);
+    Variable.SetValue("recipe_batch.10", 0);
+    Variable.SetValue("recipe_trolly.10", "");
     
     $sb_10.status_kosong = true;
     $sb_10.status_resep = false;
@@ -2396,13 +2396,13 @@ if ($sb_11.reset) {
     $sb_11.suhu_akhir = 0;
     $sb_11.perubahan_waktu = 0;
     
-    $recipe_kode.11 = "";
-    $recipe_nama.11 = "--";
-    $recipe_versi.11 = 0;
-    $recipe_warna.11 = "";
-    $recipe_qty.11 = 0;
-    $recipe_batch.11 = 0;
-    $recipe_trolly.11 = "";
+    Variable.SetValue("recipe_kode.11", "");
+    Variable.SetValue("recipe_nama.11", "--");
+    Variable.SetValue("recipe_versi.11", 0);
+    Variable.SetValue("recipe_warna.11", "");
+    Variable.SetValue("recipe_qty.11", 0);
+    Variable.SetValue("recipe_batch.11", 0);
+    Variable.SetValue("recipe_trolly.11", "");
     
     $sb_11.status_kosong = true;
     $sb_11.status_resep = false;
@@ -2627,13 +2627,13 @@ if ($sb_12.reset) {
     $sb_12.suhu_akhir = 0;
     $sb_12.perubahan_waktu = 0;
     
-    $recipe_kode.12 = "";
-    $recipe_nama.12 = "--";
-    $recipe_versi.12 = 0;
-    $recipe_warna.12 = "";
-    $recipe_qty.12 = 0;
-    $recipe_batch.12 = 0;
-    $recipe_trolly.12 = "";
+    Variable.SetValue("recipe_kode.12", "");
+    Variable.SetValue("recipe_nama.12", "--");
+    Variable.SetValue("recipe_versi.12", 0);
+    Variable.SetValue("recipe_warna.12", "");
+    Variable.SetValue("recipe_qty.12", 0);
+    Variable.SetValue("recipe_batch.12", 0);
+    Variable.SetValue("recipe_trolly.12", "");
     
     $sb_12.status_kosong = true;
     $sb_12.status_resep = false;
@@ -2858,13 +2858,13 @@ if ($sb_13.reset) {
     $sb_13.suhu_akhir = 0;
     $sb_13.perubahan_waktu = 0;
     
-    $recipe_kode.13 = "";
-    $recipe_nama.13 = "--";
-    $recipe_versi.13 = 0;
-    $recipe_warna.13 = "";
-    $recipe_qty.13 = 0;
-    $recipe_batch.13 = 0;
-    $recipe_trolly.13 = "";
+    Variable.SetValue("recipe_kode.13", "");
+    Variable.SetValue("recipe_nama.13", "--");
+    Variable.SetValue("recipe_versi.13", 0);
+    Variable.SetValue("recipe_warna.13", "");
+    Variable.SetValue("recipe_qty.13", 0);
+    Variable.SetValue("recipe_batch.13", 0);
+    Variable.SetValue("recipe_trolly.13", "");
     
     $sb_13.status_kosong = true;
     $sb_13.status_resep = false;
@@ -3089,13 +3089,13 @@ if ($sb_14.reset) {
     $sb_14.suhu_akhir = 0;
     $sb_14.perubahan_waktu = 0;
     
-    $recipe_kode.14 = "";
-    $recipe_nama.14 = "--";
-    $recipe_versi.14 = 0;
-    $recipe_warna.14 = "";
-    $recipe_qty.14 = 0;
-    $recipe_batch.14 = 0;
-    $recipe_trolly.14 = "";
+    Variable.SetValue("recipe_kode.14", "");
+    Variable.SetValue("recipe_nama.14", "--");
+    Variable.SetValue("recipe_versi.14", 0);
+    Variable.SetValue("recipe_warna.14", "");
+    Variable.SetValue("recipe_qty.14", 0);
+    Variable.SetValue("recipe_batch.14", 0);
+    Variable.SetValue("recipe_trolly.14", "");
     
     $sb_14.status_kosong = true;
     $sb_14.status_resep = false;
@@ -3320,13 +3320,13 @@ if ($sb_15.reset) {
     $sb_15.suhu_akhir = 0;
     $sb_15.perubahan_waktu = 0;
     
-    $recipe_kode.15 = "";
-    $recipe_nama.15 = "--";
-    $recipe_versi.15 = 0;
-    $recipe_warna.15 = "";
-    $recipe_qty.15 = 0;
-    $recipe_batch.15 = 0;
-    $recipe_trolly.15 = "";
+    Variable.SetValue("recipe_kode.15", "");
+    Variable.SetValue("recipe_nama.15", "--");
+    Variable.SetValue("recipe_versi.15", 0);
+    Variable.SetValue("recipe_warna.15", "");
+    Variable.SetValue("recipe_qty.15", 0);
+    Variable.SetValue("recipe_batch.15", 0);
+    Variable.SetValue("recipe_trolly.15", "");
     
     $sb_15.status_kosong = true;
     $sb_15.status_resep = false;
@@ -3551,13 +3551,13 @@ if ($sb_16.reset) {
     $sb_16.suhu_akhir = 0;
     $sb_16.perubahan_waktu = 0;
     
-    $recipe_kode.16 = "";
-    $recipe_nama.16 = "--";
-    $recipe_versi.16 = 0;
-    $recipe_warna.16 = "";
-    $recipe_qty.16 = 0;
-    $recipe_batch.16 = 0;
-    $recipe_trolly.16 = "";
+    Variable.SetValue("recipe_kode.16", "");
+    Variable.SetValue("recipe_nama.16", "--");
+    Variable.SetValue("recipe_versi.16", 0);
+    Variable.SetValue("recipe_warna.16", "");
+    Variable.SetValue("recipe_qty.16", 0);
+    Variable.SetValue("recipe_batch.16", 0);
+    Variable.SetValue("recipe_trolly.16", "");
     
     $sb_16.status_kosong = true;
     $sb_16.status_resep = false;
@@ -3782,13 +3782,13 @@ if ($sb_17.reset) {
     $sb_17.suhu_akhir = 0;
     $sb_17.perubahan_waktu = 0;
     
-    $recipe_kode.17 = "";
-    $recipe_nama.17 = "--";
-    $recipe_versi.17 = 0;
-    $recipe_warna.17 = "";
-    $recipe_qty.17 = 0;
-    $recipe_batch.17 = 0;
-    $recipe_trolly.17 = "";
+    Variable.SetValue("recipe_kode.17", "");
+    Variable.SetValue("recipe_nama.17", "--");
+    Variable.SetValue("recipe_versi.17", 0);
+    Variable.SetValue("recipe_warna.17", "");
+    Variable.SetValue("recipe_qty.17", 0);
+    Variable.SetValue("recipe_batch.17", 0);
+    Variable.SetValue("recipe_trolly.17", "");
     
     $sb_17.status_kosong = true;
     $sb_17.status_resep = false;
@@ -4013,13 +4013,13 @@ if ($sb_18.reset) {
     $sb_18.suhu_akhir = 0;
     $sb_18.perubahan_waktu = 0;
     
-    $recipe_kode.18 = "";
-    $recipe_nama.18 = "--";
-    $recipe_versi.18 = 0;
-    $recipe_warna.18 = "";
-    $recipe_qty.18 = 0;
-    $recipe_batch.18 = 0;
-    $recipe_trolly.18 = "";
+    Variable.SetValue("recipe_kode.18", "");
+    Variable.SetValue("recipe_nama.18", "--");
+    Variable.SetValue("recipe_versi.18", 0);
+    Variable.SetValue("recipe_warna.18", "");
+    Variable.SetValue("recipe_qty.18", 0);
+    Variable.SetValue("recipe_batch.18", 0);
+    Variable.SetValue("recipe_trolly.18", "");
     
     $sb_18.status_kosong = true;
     $sb_18.status_resep = false;
@@ -4244,13 +4244,13 @@ if ($sb_19.reset) {
     $sb_19.suhu_akhir = 0;
     $sb_19.perubahan_waktu = 0;
     
-    $recipe_kode.19 = "";
-    $recipe_nama.19 = "--";
-    $recipe_versi.19 = 0;
-    $recipe_warna.19 = "";
-    $recipe_qty.19 = 0;
-    $recipe_batch.19 = 0;
-    $recipe_trolly.19 = "";
+    Variable.SetValue("recipe_kode.19", "");
+    Variable.SetValue("recipe_nama.19", "--");
+    Variable.SetValue("recipe_versi.19", 0);
+    Variable.SetValue("recipe_warna.19", "");
+    Variable.SetValue("recipe_qty.19", 0);
+    Variable.SetValue("recipe_batch.19", 0);
+    Variable.SetValue("recipe_trolly.19", "");
     
     $sb_19.status_kosong = true;
     $sb_19.status_resep = false;
@@ -4475,13 +4475,13 @@ if ($sb_20.reset) {
     $sb_20.suhu_akhir = 0;
     $sb_20.perubahan_waktu = 0;
     
-    $recipe_kode.20 = "";
-    $recipe_nama.20 = "--";
-    $recipe_versi.20 = 0;
-    $recipe_warna.20 = "";
-    $recipe_qty.20 = 0;
-    $recipe_batch.20 = 0;
-    $recipe_trolly.20 = "";
+    Variable.SetValue("recipe_kode.20", "");
+    Variable.SetValue("recipe_nama.20", "--");
+    Variable.SetValue("recipe_versi.20", 0);
+    Variable.SetValue("recipe_warna.20", "");
+    Variable.SetValue("recipe_qty.20", 0);
+    Variable.SetValue("recipe_batch.20", 0);
+    Variable.SetValue("recipe_trolly.20", "");
     
     $sb_20.status_kosong = true;
     $sb_20.status_resep = false;
@@ -4706,13 +4706,13 @@ if ($sb_21.reset) {
     $sb_21.suhu_akhir = 0;
     $sb_21.perubahan_waktu = 0;
     
-    $recipe_kode.21 = "";
-    $recipe_nama.21 = "--";
-    $recipe_versi.21 = 0;
-    $recipe_warna.21 = "";
-    $recipe_qty.21 = 0;
-    $recipe_batch.21 = 0;
-    $recipe_trolly.21 = "";
+    Variable.SetValue("recipe_kode.21", "");
+    Variable.SetValue("recipe_nama.21", "--");
+    Variable.SetValue("recipe_versi.21", 0);
+    Variable.SetValue("recipe_warna.21", "");
+    Variable.SetValue("recipe_qty.21", 0);
+    Variable.SetValue("recipe_batch.21", 0);
+    Variable.SetValue("recipe_trolly.21", "");
     
     $sb_21.status_kosong = true;
     $sb_21.status_resep = false;
@@ -4937,13 +4937,13 @@ if ($sb_22.reset) {
     $sb_22.suhu_akhir = 0;
     $sb_22.perubahan_waktu = 0;
     
-    $recipe_kode.22 = "";
-    $recipe_nama.22 = "--";
-    $recipe_versi.22 = 0;
-    $recipe_warna.22 = "";
-    $recipe_qty.22 = 0;
-    $recipe_batch.22 = 0;
-    $recipe_trolly.22 = "";
+    Variable.SetValue("recipe_kode.22", "");
+    Variable.SetValue("recipe_nama.22", "--");
+    Variable.SetValue("recipe_versi.22", 0);
+    Variable.SetValue("recipe_warna.22", "");
+    Variable.SetValue("recipe_qty.22", 0);
+    Variable.SetValue("recipe_batch.22", 0);
+    Variable.SetValue("recipe_trolly.22", "");
     
     $sb_22.status_kosong = true;
     $sb_22.status_resep = false;
@@ -5168,13 +5168,13 @@ if ($sb_23.reset) {
     $sb_23.suhu_akhir = 0;
     $sb_23.perubahan_waktu = 0;
     
-    $recipe_kode.23 = "";
-    $recipe_nama.23 = "--";
-    $recipe_versi.23 = 0;
-    $recipe_warna.23 = "";
-    $recipe_qty.23 = 0;
-    $recipe_batch.23 = 0;
-    $recipe_trolly.23 = "";
+    Variable.SetValue("recipe_kode.23", "");
+    Variable.SetValue("recipe_nama.23", "--");
+    Variable.SetValue("recipe_versi.23", 0);
+    Variable.SetValue("recipe_warna.23", "");
+    Variable.SetValue("recipe_qty.23", 0);
+    Variable.SetValue("recipe_batch.23", 0);
+    Variable.SetValue("recipe_trolly.23", "");
     
     $sb_23.status_kosong = true;
     $sb_23.status_resep = false;
@@ -5399,13 +5399,13 @@ if ($sb_24.reset) {
     $sb_24.suhu_akhir = 0;
     $sb_24.perubahan_waktu = 0;
     
-    $recipe_kode.24 = "";
-    $recipe_nama.24 = "--";
-    $recipe_versi.24 = 0;
-    $recipe_warna.24 = "";
-    $recipe_qty.24 = 0;
-    $recipe_batch.24 = 0;
-    $recipe_trolly.24 = "";
+    Variable.SetValue("recipe_kode.24", "");
+    Variable.SetValue("recipe_nama.24", "--");
+    Variable.SetValue("recipe_versi.24", 0);
+    Variable.SetValue("recipe_warna.24", "");
+    Variable.SetValue("recipe_qty.24", 0);
+    Variable.SetValue("recipe_batch.24", 0);
+    Variable.SetValue("recipe_trolly.24", "");
     
     $sb_24.status_kosong = true;
     $sb_24.status_resep = false;
@@ -5630,13 +5630,13 @@ if ($sb_25.reset) {
     $sb_25.suhu_akhir = 0;
     $sb_25.perubahan_waktu = 0;
     
-    $recipe_kode.25 = "";
-    $recipe_nama.25 = "--";
-    $recipe_versi.25 = 0;
-    $recipe_warna.25 = "";
-    $recipe_qty.25 = 0;
-    $recipe_batch.25 = 0;
-    $recipe_trolly.25 = "";
+    Variable.SetValue("recipe_kode.25", "");
+    Variable.SetValue("recipe_nama.25", "--");
+    Variable.SetValue("recipe_versi.25", 0);
+    Variable.SetValue("recipe_warna.25", "");
+    Variable.SetValue("recipe_qty.25", 0);
+    Variable.SetValue("recipe_batch.25", 0);
+    Variable.SetValue("recipe_trolly.25", "");
     
     $sb_25.status_kosong = true;
     $sb_25.status_resep = false;
@@ -5861,13 +5861,13 @@ if ($sb_26.reset) {
     $sb_26.suhu_akhir = 0;
     $sb_26.perubahan_waktu = 0;
     
-    $recipe_kode.26 = "";
-    $recipe_nama.26 = "--";
-    $recipe_versi.26 = 0;
-    $recipe_warna.26 = "";
-    $recipe_qty.26 = 0;
-    $recipe_batch.26 = 0;
-    $recipe_trolly.26 = "";
+    Variable.SetValue("recipe_kode.26", "");
+    Variable.SetValue("recipe_nama.26", "--");
+    Variable.SetValue("recipe_versi.26", 0);
+    Variable.SetValue("recipe_warna.26", "");
+    Variable.SetValue("recipe_qty.26", 0);
+    Variable.SetValue("recipe_batch.26", 0);
+    Variable.SetValue("recipe_trolly.26", "");
     
     $sb_26.status_kosong = true;
     $sb_26.status_resep = false;
@@ -6092,13 +6092,13 @@ if ($sb_27.reset) {
     $sb_27.suhu_akhir = 0;
     $sb_27.perubahan_waktu = 0;
     
-    $recipe_kode.27 = "";
-    $recipe_nama.27 = "--";
-    $recipe_versi.27 = 0;
-    $recipe_warna.27 = "";
-    $recipe_qty.27 = 0;
-    $recipe_batch.27 = 0;
-    $recipe_trolly.27 = "";
+    Variable.SetValue("recipe_kode.27", "");
+    Variable.SetValue("recipe_nama.27", "--");
+    Variable.SetValue("recipe_versi.27", 0);
+    Variable.SetValue("recipe_warna.27", "");
+    Variable.SetValue("recipe_qty.27", 0);
+    Variable.SetValue("recipe_batch.27", 0);
+    Variable.SetValue("recipe_trolly.27", "");
     
     $sb_27.status_kosong = true;
     $sb_27.status_resep = false;
@@ -6323,13 +6323,13 @@ if ($sb_28.reset) {
     $sb_28.suhu_akhir = 0;
     $sb_28.perubahan_waktu = 0;
     
-    $recipe_kode.28 = "";
-    $recipe_nama.28 = "--";
-    $recipe_versi.28 = 0;
-    $recipe_warna.28 = "";
-    $recipe_qty.28 = 0;
-    $recipe_batch.28 = 0;
-    $recipe_trolly.28 = "";
+    Variable.SetValue("recipe_kode.28", "");
+    Variable.SetValue("recipe_nama.28", "--");
+    Variable.SetValue("recipe_versi.28", 0);
+    Variable.SetValue("recipe_warna.28", "");
+    Variable.SetValue("recipe_qty.28", 0);
+    Variable.SetValue("recipe_batch.28", 0);
+    Variable.SetValue("recipe_trolly.28", "");
     
     $sb_28.status_kosong = true;
     $sb_28.status_resep = false;
@@ -6554,13 +6554,13 @@ if ($sb_29.reset) {
     $sb_29.suhu_akhir = 0;
     $sb_29.perubahan_waktu = 0;
     
-    $recipe_kode.29 = "";
-    $recipe_nama.29 = "--";
-    $recipe_versi.29 = 0;
-    $recipe_warna.29 = "";
-    $recipe_qty.29 = 0;
-    $recipe_batch.29 = 0;
-    $recipe_trolly.29 = "";
+    Variable.SetValue("recipe_kode.29", "");
+    Variable.SetValue("recipe_nama.29", "--");
+    Variable.SetValue("recipe_versi.29", 0);
+    Variable.SetValue("recipe_warna.29", "");
+    Variable.SetValue("recipe_qty.29", 0);
+    Variable.SetValue("recipe_batch.29", 0);
+    Variable.SetValue("recipe_trolly.29", "");
     
     $sb_29.status_kosong = true;
     $sb_29.status_resep = false;
@@ -6785,13 +6785,13 @@ if ($sb_30.reset) {
     $sb_30.suhu_akhir = 0;
     $sb_30.perubahan_waktu = 0;
     
-    $recipe_kode.30 = "";
-    $recipe_nama.30 = "--";
-    $recipe_versi.30 = 0;
-    $recipe_warna.30 = "";
-    $recipe_qty.30 = 0;
-    $recipe_batch.30 = 0;
-    $recipe_trolly.30 = "";
+    Variable.SetValue("recipe_kode.30", "");
+    Variable.SetValue("recipe_nama.30", "--");
+    Variable.SetValue("recipe_versi.30", 0);
+    Variable.SetValue("recipe_warna.30", "");
+    Variable.SetValue("recipe_qty.30", 0);
+    Variable.SetValue("recipe_batch.30", 0);
+    Variable.SetValue("recipe_trolly.30", "");
     
     $sb_30.status_kosong = true;
     $sb_30.status_resep = false;
