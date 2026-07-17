@@ -290,6 +290,28 @@
         let currentStart = 1;
         let currentEnd = 5;
         let scadaData = {}; // Stores latest tag values read from Node.js
+        let localTimers = {}; // Stores client-side interpolated values for smooth ticking
+
+        // Helper to convert HH:MM:SS string to seconds
+        function timeToSecs(timeStr) {
+            if (!timeStr || timeStr === '--:--:--' || timeStr === '--') return 0;
+            const parts = timeStr.split(':');
+            if (parts.length === 3) {
+                return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+            } else if (parts.length === 2) {
+                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+            }
+            return parseInt(timeStr, 10) || 0;
+        }
+
+        // Helper to convert seconds to HH:MM:SS format
+        function secsToTime(totalSeconds) {
+            if (totalSeconds <= 0) return "--:--:--";
+            const hrs = Math.floor(totalSeconds / 3600);
+            const mins = Math.floor((totalSeconds % 3600) / 60);
+            const secs = Math.floor(totalSeconds % 60);
+            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
 
         // Switch tab display range
         function switchTab(start, end, element) {
@@ -304,7 +326,6 @@
 
         // Fetch current register values from Node.js
         async function fetchScadaData() {
-            // Generate list of tags to read for the visible range
             const tagsToRead = [];
             for (let i = currentStart; i <= currentEnd; i++) {
                 tagsToRead.push(`sb_${i}.tampil_jam_mulai`);
@@ -325,13 +346,11 @@
                 tagsToRead.push(`sb${i}.temp`);
                 tagsToRead.push(`sb${i}.run_stop`);
                 
-                // Add button enable states (calculated in SCADA Master Loop)
                 tagsToRead.push(`sb_${i}.btn_tugas_enable`);
                 tagsToRead.push(`sb_${i}.btn_start_enable`);
                 tagsToRead.push(`sb_${i}.btn_stop_enable`);
                 tagsToRead.push(`sb_${i}.btn_reset_enable`);
                 
-                // Recipe info
                 tagsToRead.push(`recipe_kode.${i}`);
                 tagsToRead.push(`recipe_nama.${i}`);
                 tagsToRead.push(`recipe_trolly.${i}`);
@@ -354,17 +373,74 @@
                 
                 const result = await response.json();
                 if (result.success && result.scadaResponse && result.scadaResponse.result) {
-                    // Store tag values in a clean key-value map
                     const valArray = result.scadaResponse.result.data || [];
                     valArray.forEach(item => {
                         scadaData[item.name] = item.value;
                     });
                     
+                    // Sync up HMI tag values into local client-side interpolators to prevent drift
+                    for (let i = currentStart; i <= currentEnd; i++) {
+                        const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
+                        const flagInitStart = Number(getTag(`sb_${i}.flag_init_start`));
+                        const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
+                        const isPaused = Number(getTag(`sb${i}.run_stop`)) === 1;
+
+                        if (flagInitStart === 1 && statusSelesai === 0 && !isPaused) {
+                            if (!localTimers[i]) {
+                                localTimers[i] = {
+                                    pemanasan: timeToSecs(getTag(`sb_${i}.tampil_pemanasan`)),
+                                    durasiAktual: timeToSecs(getTag(`sb_${i}.durasi_aktual_up`)),
+                                    sisaMasak: Number(getTag(`sb_${i}.sisa_detik_masak`))
+                                };
+                            } else {
+                                // Correct drift gently
+                                localTimers[i].pemanasan = timeToSecs(getTag(`sb_${i}.tampil_pemanasan`));
+                                localTimers[i].durasiAktual = timeToSecs(getTag(`sb_${i}.durasi_aktual_up`));
+                                localTimers[i].sisaMasak = Number(getTag(`sb_${i}.sisa_detik_masak`));
+                            }
+                        } else {
+                            // If stopped/idle/paused, match SCADA data directly
+                            localTimers[i] = {
+                                pemanasan: timeToSecs(getTag(`sb_${i}.tampil_pemanasan`)),
+                                durasiAktual: timeToSecs(getTag(`sb_${i}.durasi_aktual_up`)),
+                                sisaMasak: Number(getTag(`sb_${i}.sisa_detik_masak`))
+                            };
+                        }
+                    }
+
                     renderDashboard();
                 }
             } catch (err) {
                 console.error("Gagal melakukan polling data SCADA:", err.message);
             }
+        }
+
+        // Local 1-second interval ticking for client-side smooth countdown
+        function clientTick() {
+            for (let i = currentStart; i <= currentEnd; i++) {
+                const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
+                const flagInitStart = Number(getTag(`sb_${i}.flag_init_start`));
+                const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
+                const isPaused = Number(getTag(`sb${i}.run_stop`)) === 1;
+                const tempAktual = getTag(`sb${i}.temp`) !== null ? getTag(`sb${i}.temp`) / 10 : 0.0;
+
+                // Only tick if unit is active and not paused
+                if (flagInitStart === 1 && statusSelesai === 0 && !isPaused) {
+                    if (localTimers[i]) {
+                        if (tempAktual < 100.0) {
+                            // Preheat phase: increment preheat duration
+                            localTimers[i].pemanasan++;
+                        } else {
+                            // Cooking phase: increment active duration, decrement remaining countdown
+                            localTimers[i].durasiAktual++;
+                            if (localTimers[i].sisaMasak > 0) {
+                                localTimers[i].sisaMasak--;
+                            }
+                        }
+                    }
+                }
+            }
+            renderDashboard();
         }
 
         // Render dashboard grid rows
@@ -374,8 +450,9 @@
 
             for (let i = currentStart; i <= currentEnd; i++) {
                 const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
+                const timer = localTimers[i] || { pemanasan: 0, durasiAktual: 0, sisaMasak: 0 };
 
-                // Extract unit values from scadaData map
+                // Temperature and basic states
                 const tempAktual = getTag(`sb${i}.temp`) !== null ? getTag(`sb${i}.temp`) / 10 : 0.0;
                 const statusBanner = getTag(`sb_${i}.status_banner`) || "STEAMBOX KOSONG";
                 
@@ -383,7 +460,6 @@
                 const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
                 const modePreheat = Number(getTag(`sb_${i}.mode_preheat`));
                 
-                // Determine CSS Active state class
                 let activeClass = "";
                 let badgeClass = "status-kosong";
                 let badgeText = "STANDBY";
@@ -412,6 +488,15 @@
                 const isStartEnabled = getTag(`sb_${i}.btn_start_enable`) === true || getTag(`sb_${i}.btn_start_enable`) === 1;
                 const isStopEnabled = getTag(`sb_${i}.btn_stop_enable`) === true || getTag(`sb_${i}.btn_stop_enable`) === 1;
                 const isResetEnabled = getTag(`sb_${i}.btn_reset_enable`) === true || getTag(`sb_${i}.btn_reset_enable`) === 1;
+
+                // Format times dynamically using local timers
+                const showPreheat = flagInitStart === 1 && tempAktual < 100.0 && statusSelesai === 0
+                    ? secsToTime(timer.pemanasan)
+                    : (getTag(`sb_${i}.tampil_pemanasan`) || '--:--:--');
+
+                const showSisa = flagInitStart === 1 && tempAktual >= 100.0 && statusSelesai === 0
+                    ? secsToTime(timer.sisaMasak)
+                    : (getTag(`sb_${i}.tampil_jam_selesai`) || '--:--:--');
 
                 const row = document.createElement("div");
                 row.className = `unit-card ${activeClass}`;
@@ -457,10 +542,10 @@
                         <div class="box-grid">
                             <div class="info-item"><span class="box-lbl">Jam Mulai</span><span class="box-val">${getTag(`sb_${i}.tampil_jam_mulai`) || '--:--:--'}</span></div>
                             <div class="info-item"><span class="box-lbl">Jam Masak</span><span class="box-val">${getTag(`sb_${i}.tampil_jam_masak`) || '--:--:--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Jam Selesai</span><span class="box-val">${getTag(`sb_${i}.tampil_jam_selesai`) || '--:--:--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Preheat</span><span class="box-val">${getTag(`sb_${i}.tampil_pemanasan`) || '--:--:--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Target</span><span class="box-val">${getTag(`sb_${i}.target_menit`) ? getTag(`sb_${i}.target_menit`)+' menit' : '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Adjust</span><span class="box-val">${getTag(`sb_${i}.perubahan_waktu`) || '0'} menit</span></div>
+                            <div class="info-item"><span class="box-lbl">Sisa Masak</span><span class="box-val" style="color: #60a5fa; font-weight: bold;">${showSisa}</span></div>
+                            <div class="info-item"><span class="box-lbl">Preheat</span><span class="box-val">${showPreheat}</span></div>
+                            <div class="info-item"><span class="box-lbl">Target</span><span class="box-val">${getTag(`sb_${i}.target_menit`) ? getTag(`sb_${i}.target_menit`)+' mnt' : '--'}</span></div>
+                            <div class="info-item"><span class="box-lbl">Adjust</span><span class="box-val">${getTag(`sb_${i}.perubahan_waktu`) || '0'} mnt</span></div>
                         </div>
                     </div>
 
@@ -481,7 +566,6 @@
             const tagsToWrite = {};
             
             if (type === 'Tugas') {
-                // Open simple input dialog to simulate loading custom recipe
                 const code = prompt("Masukkan Kode Resep:", "SBM");
                 if (!code) return;
                 const min = prompt("Masukkan Durasi Masak (Menit):", "2");
@@ -490,20 +574,17 @@
                 tagsToWrite[`recipe_kode.${unitId}`] = code;
                 tagsToWrite[`recipe_nama.${unitId}`] = "Custom Product";
                 tagsToWrite[`recipe_trolly.${unitId}`] = "Rapat";
-                tagsToWrite[`sb_${unitId}.target_menit`] = parseInt(min);
+                tagsToWrite[`sb_${unitId}.target_menit`] = parseInt(min, 10);
                 tagsToWrite[`sb_${unitId}.status_resep`] = true;
                 tagsToWrite[`sb_${unitId}.status_kosong`] = false;
             } 
             else if (type === 'Start') {
-                // Write 0 to Autonics run_stop Modbus register to run
                 tagsToWrite[`sb${unitId}.run_stop`] = 0;
             } 
             else if (type === 'Stop') {
-                // Write 1 to Autonics run_stop Modbus register to stop/pause
                 tagsToWrite[`sb${unitId}.run_stop`] = 1;
             } 
             else if (type === 'Reset') {
-                // Trigger SCADA reset variable
                 tagsToWrite[`sb_${unitId}.reset`] = true;
             }
 
@@ -531,6 +612,9 @@
         // Start periodic polling every 2 seconds
         setInterval(fetchScadaData, 2000);
         
+        // Start local client-side ticking every 1 second for butter-smooth countdowns
+        setInterval(clientTick, 1000);
+
         // Initial fetch
         fetchScadaData();
     </script>
