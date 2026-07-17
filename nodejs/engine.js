@@ -159,6 +159,9 @@ function parseScadaResponse(responseData) {
   return responseData;
 }
 
+// Global SCADA online/offline state tracker to prevent console log spamming
+let isScadaOffline = false;
+
 // 4. Relay tags read request to SCADA
 app.post("/api/scada/read", async (req, res) => {
   const { groupTag, tags, timeout } = req.body;
@@ -184,9 +187,6 @@ app.post("/api/scada/read", async (req, res) => {
     const jsonStr = JSON.stringify(params);
     const encryptedPayload = encrypt(jsonStr, config.webapiKey, config.iv);
 
-    console.log(`[${getTimestamp()}] RELAY READ -> Target: ${config.scadaHost}/api/datagroup/getTagsValue`);
-    console.log(`[${getTimestamp()}] Payload:`, JSON.stringify(params));
-
     // 4. Send encrypted payload to SCADA WebAPI
     const scadaRes = await axios.post(
       `${config.scadaHost}/api/datagroup/getTagsValue`,
@@ -199,14 +199,25 @@ app.post("/api/scada/read", async (req, res) => {
 
     // 5. Parse and decrypt the response
     const finalResult = parseScadaResponse(scadaRes.data);
+    
+    // Log transition from Offline -> Online
+    if (isScadaOffline) {
+      isScadaOffline = false;
+      console.log(`[${getTimestamp()}] SCADA PC Runtime is ONLINE / Connected!`);
+    }
+    
     res.json({ success: true, scadaResponse: finalResult });
 
   } catch (err) {
-    console.error(`[${getTimestamp()}] Error during SCADA Read relay:`, err.message);
+    // Log transition from Online -> Offline once to prevent spam
+    if (!isScadaOffline) {
+      isScadaOffline = true;
+      console.error(`[${getTimestamp()}] SCADA PC Runtime is OFFLINE (Connection refused or timed out). Polling silenced...`);
+    }
     res.status(500).json({
       success: false,
       error: "SCADA communication failure",
-      details: err.response ? scadaRes.data : err.message
+      details: err.message
     });
   }
 });
@@ -236,8 +247,8 @@ app.post("/api/scada/write", async (req, res) => {
     const jsonStr = JSON.stringify(params);
     const encryptedPayload = encrypt(jsonStr, config.webapiKey, config.iv);
 
-    console.log(`[${getTimestamp()}] RELAY WRITE -> Target: ${config.scadaHost}/api/datagroup/setTagsValue`);
-    console.log(`[${getTimestamp()}] Payload:`, JSON.stringify(params));
+    // Write actions are critical operational events, so we keep logging them
+    console.log(`[${getTimestamp()}] OPERATOR WRITE ACTION -> Tags:`, JSON.stringify(tags));
 
     // 4. Send encrypted payload to SCADA WebAPI
     const scadaRes = await axios.post(
@@ -254,11 +265,11 @@ app.post("/api/scada/write", async (req, res) => {
     res.json({ success: true, scadaResponse: finalResult });
 
   } catch (err) {
-    console.error(`[${getTimestamp()}] Error during SCADA Write relay:`, err.message);
+    console.error(`[${getTimestamp()}] Error during operator Write command:`, err.message);
     res.status(500).json({
       success: false,
       error: "SCADA communication failure",
-      details: err.response ? scadaRes.data : err.message
+      details: err.message
     });
   }
 });
