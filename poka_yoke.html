@@ -3,289 +3,1176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HMI Steambox Fixed Full Screen - Poka Yoke</title>
+    <meta name="description" content="Simulator Poka-Yoke Sistem Kontrol Steambox SCADA PT SIAP">
+    <title>PT SIAP - Steambox Poka-Yoke SCADA Simulator</title>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-pabrik: #141a24;
-            --panel-gelap: #1c2430;
-            --panel-konten: #253142;
-            --status-run: #2ecc71;
-            --status-error: #e74c3c;
-            --aksen-kuning: #f1c40f;
-            --text-terang: #ffffff;
-            --text-redup: #95a5a6;
+            --bg-base: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #22c55e;
+            --success-glow: rgba(34, 197, 94, 0.2);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.2);
+            --warning: #eab308;
+            --warning-glow: rgba(234, 179, 8, 0.2);
+            --neutral: #64748b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            -webkit-user-select: none;
-            user-select: none;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* PAKSA LOCK SCREEN: Tidak boleh ada scrollbar sama sekali */
         body {
-            background-color: var(--bg-pabrik);
-            color: var(--text-terang);
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        /* HEADER FIXED HEIGHT */
+        /* Container Layout */
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /* Header Bar */
         header {
-            height: 45px;
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #2c3e50;
-            padding: 0 10px;
-            margin-bottom: 10px;
+            box-shadow: var(--shadow);
         }
 
-        header h1 { font-size: 20px; letter-spacing: 1px; }
-        header .sub-title { color: var(--aksen-kuning); font-weight: bold; font-size: 13px; }
-
-        /* MAIN LAYOUT: Membagi Layar Kiri & Kanan secara Horizontal */
-        .main-container {
+        .header-logo {
             display: flex;
+            align-items: center;
             gap: 15px;
-            flex: 1; /* Menghabiskan sisa tinggi layar */
-            height: calc(100vh - 75px);
         }
 
-        /* KULUM KIRI: Matrix Grid Unit Mesin */
-        .left-column {
-            flex: 4; /* Mengambil 40% lebar layar */
-            background-color: var(--panel-gelap);
-            border-radius: 10px;
+        .logo-pt {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            border-left: 2px solid var(--border);
+            padding-left: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header-time {
+            text-align: right;
+        }
+
+        .time-clock {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: monospace;
+            color: #3b82f6;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .time-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Tab Navigation Bar */
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--text-main);
+            background-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        /* main Content Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Steambox List Panel */
+        .steambox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .steambox-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
             padding: 15px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(3, 1fr); /* Siap untuk kelipatan unit */
-            gap: 12px;
+            grid-template-columns: 80px 180px 280px 380px 180px;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .sb-card {
-            background-color: var(--panel-konten);
-            border-radius: 8px;
-            border: 2px solid #34495e;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            cursor: pointer;
+        .steambox-card:hover {
+            border-color: #475569;
+        }
+
+        /* Card Active States */
+        .steambox-card.state-preheat {
+            border-left: 6px solid var(--warning);
+            box-shadow: 0 4px 20px -2px var(--warning-glow);
+        }
+
+        .steambox-card.state-cooking {
+            border-left: 6px solid var(--success);
+            box-shadow: 0 4px 20px -2px var(--success-glow);
+        }
+
+        .steambox-card.state-selesai {
+            border-left: 6px solid var(--primary);
+            box-shadow: 0 4px 20px -2px rgba(59, 130, 246, 0.2);
+            animation: pulse-border 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: var(--primary); }
+            50% { border-color: #60a5fa; }
+            100% { border-color: var(--primary); }
+        }
+
+        /* Column 1: Number Box */
+        .unit-num-box {
             text-align: center;
+            border-right: 1px dashed var(--border);
+            padding-right: 10px;
         }
 
-        .sb-card.active-selection {
-            border-color: var(--aksen-kuning);
-            background-color: #2c3e50;
+        .unit-num-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .sb-card.running {
-            background-color: #1b5e20;
-            border-color: var(--status-run);
+        .unit-num-val {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text-main);
+            margin-top: 5px;
         }
 
-        .sb-number { font-size: 22px; font-weight: bold; }
-        .sb-temp { font-size: 26px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px 0; }
-        .sb-status-text { font-size: 11px; font-weight: bold; color: var(--text-redup); }
-
-        /* KOLOM KANAN: Panel Detail Kontrol Utama */
-        .right-column {
-            flex: 6; /* Mengambil 60% lebar layar */
-            background-color: var(--panel-gelap);
-            border-radius: 10px;
-            padding: 15px;
+        /* Column 2: Temperature Group */
+        .temp-group {
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Menjaga komponen tersebar pas dari atas sampai bawah */
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .temp-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 4px;
+        }
+
+        .temp-label {
+            color: var(--text-muted);
+        }
+
+        .temp-val {
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .temp-val.aktual {
+            color: var(--warning);
+            font-size: 16px;
+        }
+        
+        .steambox-card.state-cooking .temp-val.aktual {
+            color: var(--success);
+            animation: pulse-text 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse-text {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        /* Column 3: Detail Produk Table */
+        .info-panel {
+            background-color: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .info-header {
+            font-weight: 700;
+            color: #60a5fa;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-lbl {
+            color: var(--text-muted);
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .info-val {
+            font-weight: 500;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Column 4: Detail Proses Table */
+        .process-panel {
+            background-color: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .process-header {
+            font-weight: 700;
+            color: var(--warning);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .steambox-card.state-cooking .process-header {
+            color: var(--success);
+        }
+        
+        .steambox-card.state-selesai .process-header {
+            color: var(--primary);
+            animation: pulse-bg 1s infinite alternate;
+        }
+
+        @keyframes pulse-bg {
+            0% { text-shadow: 0 0 2px rgba(59, 130, 246, 0.2); }
+            100% { text-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
+        }
+
+        .process-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 6px;
+        }
+
+        /* Column 5: Perintah (Buttons) */
+        .btn-column {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .act-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        /* Button Colors based on SCADA design */
+        .btn-tugas {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-tugas:hover:not(:disabled) {
+            background-color: #1d4ed8;
+        }
+
+        .btn-start {
+            background-color: #16a34a;
+            color: white;
+        }
+        .btn-start:hover:not(:disabled) {
+            background-color: #15803d;
+        }
+
+        .btn-stop {
+            background-color: #dc2626;
+            color: white;
+        }
+        .btn-stop:hover:not(:disabled) {
+            background-color: #b91c1c;
+        }
+
+        .btn-reset {
+            background-color: #4b5563;
+            color: white;
+        }
+        .btn-reset:hover:not(:disabled) {
+            background-color: #374151;
+        }
+
+        /* Poka-Yoke Locked Button Style */
+        .act-btn:disabled {
+            background-color: #1e293b !important;
+            color: #475569 !important;
+            border: 1px solid #334155 !important;
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        /* Control Sidebar */
+        .control-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
         }
 
         .panel-title {
             font-size: 18px;
-            font-weight: bold;
-            color: var(--aksen-kuning);
-            text-align: center;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 5px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* BLOK 1: DATA MONITORING RAKSASA */
-        .monitor-block {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            background: #0f141d;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .monitor-label { font-size: 11px; color: var(--text-redup); text-transform: uppercase; }
-        .monitor-value { font-size: 40px; font-weight: bold; color: #ffffff; }
-
-        /* BLOK 2: TEMPAT UNTUK NATIVE RECIPE BROWSER HAIWELL */
-        .haiwell-recipe-placeholder {
-            border: 2px dashed var(--aksen-kuning);
-            background: rgba(241, 196, 15, 0.05);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
+        .input-group {
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 120px; /* Ukuran pas untuk komponen browser resep bawaan */
+            gap: 6px;
         }
 
-        .placeholder-text {
+        .input-group label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .input-group select, .input-group input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
             font-size: 14px;
-            font-weight: bold;
-            color: var(--aksen-kuning);
-            margin-bottom: 5px;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        .placeholder-sub {
-            font-size: 11px;
-            color: var(--text-redup);
+        .input-group select:focus, .input-group input:focus {
+            border-color: var(--primary);
         }
 
-        /* BLOK 3: ACTION BUTTONS RAKSASA DI CORNER BAWAH */
-        .action-block {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 18px;
-            font-size: 20px;
-            font-weight: bold;
+        .sidebar-btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
             border: none;
-            border-radius: 8px;
+            padding: 12px;
+            font-weight: 700;
+            border-radius: 6px;
             cursor: pointer;
+            transition: background-color 0.2s;
             text-transform: uppercase;
+            margin-top: 10px;
         }
 
-        .btn-start { background-color: var(--status-run); color: white; }
-        .btn-start:disabled { background-color: #555; color: #888; cursor: not-allowed; }
-        .btn-stop { background-color: var(--status-error); color: white; }
+        .sidebar-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Rule Explanation Display */
+        .poka-yoke-explanation {
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+            border-left: 4px solid var(--primary);
+        }
+
+        .poka-yoke-explanation h4 {
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 8px;
+        }
+
+        /* Log Panel */
+        .log-panel {
+            background-color: #020617;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            color: #38bdf8;
+        }
+
+        .log-line {
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 4px;
+        }
+
+        .log-time {
+            color: #64748b;
+        }
+
+        .log-success {
+            color: #4ade80;
+        }
+
+        .log-warning {
+            color: #facc15;
+        }
+
+        /* Status Banner animations */
+        .status-banner-bar {
+            font-weight: 700;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .steambox-card.state-preheat .status-banner-bar {
+            color: var(--warning);
+            background-color: rgba(234, 179, 8, 0.1);
+        }
+
+        .steambox-card.state-cooking .status-banner-bar {
+            color: var(--success);
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+
+        .steambox-card.state-selesai .status-banner-bar {
+            color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.15);
+            animation: blink-banner 1s infinite alternate;
+        }
+
+        @keyframes blink-banner {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
+<div class="dashboard-container">
+    <!-- Header -->
     <header>
-        <h1>STEAMBOX CONTROL HMI</h1>
-        <div class="sub-title">RESOLUSI TERKUNCI (NO-SCROLL) ● MODE OPERATOR</div>
+        <div class="header-logo">
+            <span class="logo-pt">PT. SIAP</span>
+            <span class="logo-sub">Steambox Poka-Yoke Simulator</span>
+        </div>
+        <div class="header-time">
+            <div class="time-clock" id="live-clock">00:00:00</div>
+            <div class="time-date" id="live-date">Jumat, 17 Juli 2026</div>
+        </div>
     </header>
 
-    <div class="main-container">
-        <!-- KIRI: GRID MESIN -->
-        <div class="left-column">
-            <div class="sb-card active-selection" id="card-1" onclick="pilihSteambox(1)">
-                <span class="sb-number">SB 01</span>
-                <div class="sb-temp" id="grid-temp-1">30.0°C</div>
-                <div class="sb-status-text" id="grid-status-1">STANDBY</div>
-            </div>
-            <div class="sb-card" id="card-2" onclick="pilihSteambox(2)">
-                <span class="sb-number">SB 02</span>
-                <div class="sb-temp" id="grid-temp-2">34.6°C</div>
-                <div class="sb-status-text" id="grid-status-2">STANDBY</div>
-            </div>
-            <!-- Duplikasi kartu kosong untuk gambaran grid SCADA -->
-            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 03</span><div class="sb-temp">0.0°C</div></div>
-            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 04</span><div class="sb-temp">0.0°C</div></div>
-            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 05</span><div class="sb-temp">0.0°C</div></div>
-            <div class="sb-card" style="opacity:0.3; cursor:default;"><span class="sb-number">SB 06</span><div class="sb-temp">0.0°C</div></div>
-        </div>
-
-        <!-- KANAN: PANEL DETAIL KONTROL -->
-        <div class="right-column">
-            <div class="panel-title" id="panel-title">KONTROL UTAMA : STEAMBOX 01</div>
-
-            <!-- BLOK 1: MONITORING RAKSASA -->
-            <div class="monitor-block">
-                <div>
-                    <div class="monitor-label">Suhu Aktual</div>
-                    <div class="monitor-value" id="mon-suhu">30.0°C</div>
-                </div>
-                <div>
-                    <div class="monitor-label">Sisa Waktu Proses</div>
-                    <div class="monitor-value" id="mon-waktu">00:00</div>
-                </div>
-            </div>
-
-            <!-- BLOK 2: RUMAH UNTUK NATIVE RECIPE BROWSER HAIWELL -->
-            <div class="haiwell-recipe-placeholder">
-                <div class="placeholder-text">[ AREA NATIVE RECIPE BROWSER HAIWELL ]</div>
-                <div class="placeholder-sub">Letakkan komponen grid resep bawaan Haiwell tepat di koordinat kotak ini.</div>
-                <div class="placeholder-sub" style="color:#fff; margin-top:5px;">Target Terkunci: <span id="lbl-resep">Silahkan Pilih di Grid Resep Bawaan</span></div>
-            </div>
-
-            <!-- BLOK 3: ACTION BUTTONS (Selalu Terkunci di Paling Bawah Layar) -->
-            <div class="action-block">
-                <button class="btn btn-start" id="btn-start" onclick="mulaiMasak()">MULAI MASAK</button>
-                <button class="btn btn-stop" id="btn-stop" onclick="stopMasak()">STOP</button>
-            </div>
-        </div>
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active">Steambox 1 - 5</button>
+        <button class="tab-btn">Steambox 6 - 10</button>
+        <button class="tab-btn">Steambox 11 - 15</button>
+        <button class="tab-btn">Steambox 16 - 20</button>
+        <button class="tab-btn">Steambox 21 - 25</button>
+        <button class="tab-btn">Steambox 26 - 30</button>
     </div>
 
-    <script>
-        let activeSB = 1;
-        let isRunning = { 1: false, 2: false };
-        let currentTemp = { 1: 30.0, 2: 34.6 };
+    <!-- main Grid -->
+    <div class="main-grid">
+        
+        <!-- Left: List of 5 Steambox Cards -->
+        <div class="steambox-list" id="steambox-container">
+            <!-- Simulated Unit Cards will be generated here -->
+        </div>
 
-        setInterval(() => {
-            for(let i=1; i<=2; i++) {
-                if(isRunning[i]) {
-                    if(currentTemp[i] < 90) currentTemp[i] += 2.1;
-                } else {
-                    if(currentTemp[i] > 30) currentTemp[i] -= 0.4;
-                }
-                document.getElementById(`grid-temp-${i}`).innerText = currentTemp[i].toFixed(1) + "°C";
-            }
-            document.getElementById("mon-suhu").innerText = currentTemp[activeSB].toFixed(1) + "°C";
-        }, 1000);
-
-        function pilihSteambox(num) {
-            // Hapus seleksi aktif lama
-            document.getElementById(`card-${activeSB}`).classList.remove("active-selection");
-            activeSB = num;
-            // Tambah seleksi aktif baru
-            document.getElementById(`card-${num}`).classList.add("active-selection");
-            document.getElementById("panel-title").innerText = `KONTROL UTAMA : STEAMBOX 0${num}`;
+        <!-- Right: Simulator Control Panel -->
+        <div class="control-sidebar">
             
-            if(isRunning[num]) {
-                document.getElementById("btn-start").disabled = true;
-                document.getElementById("btn-start").innerText = "PROSES BERJALAN";
-            } else {
-                document.getElementById("btn-start").disabled = false;
-                document.getElementById("btn-start").innerText = "MULAI MASAK";
+            <!-- Controller Card -->
+            <div class="panel-card">
+                <div class="panel-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Simulation Controls
+                </div>
+
+                <div class="input-group">
+                    <label for="select-unit">Pilih Unit Steambox:</label>
+                    <select id="select-unit" onchange="updateSelectedUnitView()">
+                        <option value="1">Steambox 01</option>
+                        <option value="2">Steambox 02</option>
+                        <option value="3">Steambox 03</option>
+                        <option value="4">Steambox 04</option>
+                        <option value="5">Steambox 05</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="recipe-sku">SKU / Nama Resep:</label>
+                    <select id="recipe-sku">
+                        <option value="surya">Surya (135 Pcs, Trolly Longgar)</option>
+                        <option value="mentor">Mentor (175 Pcs, Trolly Rapat)</option>
+                        <option value="vanguard">Vanguard (150 Pcs, Trolly Rapat)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="recipe-duration">Target Waktu (Menit):</label>
+                    <input type="number" id="recipe-duration" value="2" min="1" max="60">
+                </div>
+
+                <button class="sidebar-btn" onclick="triggerTugasBaru()">1. Load Resep (Tugas Baru)</button>
+                <button class="sidebar-btn" style="background-color: var(--warning); color: black;" onclick="triggerPreheat()">2. Simulasikan Preheat</button>
+                <button class="sidebar-btn" style="background-color: #8b5cf6;" onclick="adjustCookingTime(1)">3. Adjust Waktu (+1 Menit)</button>
+                <button class="sidebar-btn" style="background-color: var(--danger);" onclick="simulateTempDrop()">4. Simulasikan Temp Drop (<100°C)</button>
+            </div>
+
+            <!-- Explanations Box -->
+            <div class="panel-card">
+                <div class="panel-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Poka-Yoke Rule Explanation
+                </div>
+                <div class="poka-yoke-explanation" id="explanation-text">
+                    <h4>Pilih Unit & Tekan tombol kontrol di atas untuk melihat aturan Poka-Yoke.</h4>
+                    <p>Sistem penguncian tombol mencegah penekanan tombol yang salah (seperti mereset mesin di tengah memasak).</p>
+                </div>
+            </div>
+
+            <!-- Log Panel -->
+            <div class="panel-card" style="flex-grow: 1;">
+                <div class="panel-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Event API Push Log (Laravel)
+                </div>
+                <div class="log-panel" id="log-display">
+                    <div class="log-line"><span class="log-time">[09:09:21]</span> Local Server Node.js API Bridge Aktif...</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // System clock simulation
+    let hour = 9, minute = 9, second = 21;
+    setInterval(() => {
+        second++;
+        if (second >= 60) { second = 0; minute++; }
+        if (minute >= 60) { minute = 0; hour++; }
+        if (hour >= 24) { hour = 0; }
+        
+        const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+        document.getElementById('live-clock').innerText = timeStr;
+    }, 1000);
+
+    // Initial Unit data
+    const units = {};
+    for (let i = 1; i <= 5; i++) {
+        units[i] = {
+            id: i,
+            state: 'KOSONG', // KOSONG, RESEP_TERPASANG, PREHEAT, HEATING, BOILING, PAUSED, SELESAI
+            tempAwal: 0,
+            tempAktual: 28.5,
+            tempAkhir: 0,
+            
+            // Detail Produk
+            statusBanner: 'STEAMBOX KOSONG',
+            kode: '--',
+            nama: '--',
+            versi: '--',
+            trolly: '--',
+            batch: '--',
+            warna: '--',
+            qty: '--',
+
+            // Detail Proses
+            jamMulai: '--:--:--',
+            jamMasak: '--:--:--',
+            jamSelesai: '--:--:--',
+            durasiPemanasan: '--:--:--',
+            targetPemasakan: 0,
+            perubahanWaktu: 0,
+
+            // Internal simulation variables
+            preheatSecs: 0,
+            sisaDetik: 0,
+            cookingActive: false,
+            flagInitStart: 0,
+            flagInitMasak: 0,
+            intervalId: null
+        };
+    }
+
+    // Render cards
+    function renderCards() {
+        const container = document.getElementById('steambox-container');
+        container.innerHTML = '';
+
+        for (let i = 1; i <= 5; i++) {
+            const u = units[i];
+            const card = document.createElement('div');
+            card.id = `unit-card-${i}`;
+            card.className = `steambox-card`;
+            if (u.state === 'PREHEAT' || u.state === 'HEATING') card.classList.add('state-preheat');
+            if (u.state === 'BOILING') card.classList.add('state-cooking');
+            if (u.state === 'SELESAI') card.classList.add('state-selesai');
+
+            // Define button states based on Poka-Yoke rules
+            const isTugasDisabled = (u.state === 'PREHEAT' || u.state === 'HEATING' || u.state === 'BOILING' || u.state === 'SELESAI');
+            const isStartDisabled = (u.state === 'KOSONG' || u.state === 'PREHEAT' || u.state === 'HEATING' || u.state === 'BOILING' || u.state === 'SELESAI');
+            const isStopDisabled = (u.state === 'KOSONG' || u.state === 'RESEP_TERPASANG' || u.state === 'SELESAI');
+            const isResetDisabled = (u.state !== 'SELESAI' && !(u.state === 'RESEP_TERPASANG'));
+
+            card.innerHTML = `
+                <!-- Col 1: Number -->
+                <div class="unit-num-box">
+                    <div class="unit-num-label">Steambox</div>
+                    <div class="unit-num-val">${String(u.id).padStart(2, '0')}</div>
+                </div>
+
+                <!-- Col 2: Temperature -->
+                <div class="temp-group">
+                    <div class="temp-row">
+                        <span class="temp-label">Suhu Awal</span>
+                        <span class="temp-val">${u.tempAwal > 0 ? (u.tempAwal / 10).toFixed(1) : '--.-'} °C</span>
+                    </div>
+                    <div class="temp-row">
+                        <span class="temp-label">Suhu Aktual</span>
+                        <span class="temp-val aktual">${u.tempAktual.toFixed(1)} °C</span>
+                    </div>
+                    <div class="temp-row">
+                        <span class="temp-label">Suhu Akhir</span>
+                        <span class="temp-val">${u.tempAkhir > 0 ? (u.tempAkhir / 10).toFixed(1) : '--.-'} °C</span>
+                    </div>
+                </div>
+
+                <!-- Col 3: Detail Produk -->
+                <div class="info-panel">
+                    <div class="info-header">
+                        <span>Detail Produk</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-lbl">Kode</span><span class="info-val">${u.kode}</span></div>
+                        <div class="info-item"><span class="info-lbl">Versi</span><span class="info-val">${u.versi}</span></div>
+                        <div class="info-item"><span class="info-lbl">Trolly</span><span class="info-val">${u.trolly}</span></div>
+                        <div class="info-item"><span class="info-lbl">Batch</span><span class="info-val">${u.batch}</span></div>
+                        <div class="info-item"><span class="info-lbl">Warna</span><span class="info-val">${u.warna}</span></div>
+                        <div class="info-item"><span class="info-lbl">Qty</span><span class="info-val">${u.qty}</span></div>
+                    </div>
+                </div>
+
+                <!-- Col 4: Detail Proses -->
+                <div class="process-panel">
+                    <div class="process-header">
+                        <span class="status-banner-bar" id="banner-${u.id}">${u.statusBanner}</span>
+                    </div>
+                    <div class="process-grid">
+                        <div class="info-item"><span class="info-lbl">Jam Mulai</span><span class="info-val">${u.jamMulai}</span></div>
+                        <div class="info-item"><span class="info-lbl">Jam Masak</span><span class="info-val">${u.jamMasak}</span></div>
+                        <div class="info-item"><span class="info-lbl">Jam Selesai</span><span class="info-val">${u.jamSelesai}</span></div>
+                        <div class="info-item"><span class="info-lbl">Durasi Pemanasan</span><span class="info-val">${u.durasiPemanasan}</span></div>
+                        <div class="info-item"><span class="info-lbl">Target Masak</span><span class="info-val">${u.targetPemasakan > 0 ? formatTime(u.targetPemasakan * 60) : '--'}</span></div>
+                        <div class="info-item"><span class="info-lbl">Adjust</span><span class="info-val">${u.perubahanWaktu} menit</span></div>
+                    </div>
+                </div>
+
+                <!-- Col 5: Perintah (Buttons) -->
+                <div class="btn-column">
+                    <button class="act-btn btn-tugas" ${isTugasDisabled ? 'disabled' : ''} onclick="btnClick('Tugas Baru', ${u.id})">Tugas Baru</button>
+                    <button class="act-btn btn-start" ${isStartDisabled ? 'disabled' : ''} onclick="btnClick('Start', ${u.id})">Start Cooking</button>
+                    <button class="act-btn btn-stop" ${isStopDisabled ? 'disabled' : ''} onclick="btnClick('Stop/Pause', ${u.id})">Stop / Pause</button>
+                    <button class="act-btn btn-reset" ${isResetDisabled ? 'disabled' : ''} onclick="btnClick('Reset', ${u.id})">RESET</button>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // Helper to format seconds to HH:MM:SS
+    function formatTime(totalSeconds) {
+        if (totalSeconds < 0) totalSeconds = 0;
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = Math.floor(totalSeconds % 60);
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // Live clock string helper
+    function getLiveClockString() {
+        return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+    }
+
+    // Handle SCADA action button clicks
+    function btnClick(action, unitId) {
+        const u = units[unitId];
+        const logPanel = document.getElementById('log-display');
+
+        if (action === 'Tugas Baru') {
+            triggerTugasBaru(unitId);
+        } 
+        else if (action === 'Start') {
+            u.state = 'PREHEAT';
+            u.jamMulai = getLiveClockString();
+            u.tempAwal = Math.round(u.tempAktual * 10);
+            u.flagInitStart = 1;
+            u.statusBanner = 'SEDANG PEMANASAN';
+            u.preheatSecs = 0;
+            addLog(`Steambox 0${unitId} PREHEAT MULAI pada ${u.jamMulai}`);
+            startSimulationTimer(unitId);
+        } 
+        else if (action === 'Stop/Pause') {
+            if (u.state === 'BOILING') {
+                u.state = 'PAUSED';
+                u.statusBanner = 'MESIN BERHENTI (PAUSED)';
+                addLog(`Steambox 0${unitId} MEMASAK DIJEDA (PAUSED) pada ${getLiveClockString()}`, 'warning');
+            } else if (u.state === 'PREHEAT' || u.state === 'HEATING') {
+                u.state = 'PAUSED';
+                u.statusBanner = 'PRE-HEAT DIHENTIKAN (PAUSED)';
+                addLog(`Steambox 0${unitId} PREHEAT DIJEDA (PAUSED) pada ${getLiveClockString()}`, 'warning');
+            } else if (u.state === 'PAUSED') {
+                // Resume
+                if (u.tempAktual >= 100) {
+                    u.state = 'BOILING';
+                    u.statusBanner = 'SEDANG MEMASAK (MENDIDIH)';
+                } else {
+                    u.state = 'HEATING';
+                    u.statusBanner = 'MENUNGGU MENDIDIH (< 100 C)';
+                }
+                addLog(`Steambox 0${unitId} DILANJUTKAN KEMBALI pada ${getLiveClockString()}`);
             }
+        } 
+        else if (action === 'Reset') {
+            if (u.state === 'SELESAI') {
+                addLog(`Steambox 0${unitId} BERHASIL DIRESET (Tangki Kosong)`);
+            } else {
+                addLog(`Steambox 0${unitId} Resep Dibatalkan / Reset Manual sebelum Jalan`);
+            }
+            
+            // Clear interval
+            if (u.intervalId) clearInterval(u.intervalId);
+            
+            // Reset to defaults
+            u.state = 'KOSONG';
+            u.tempAwal = 0;
+            u.tempAktual = 28.5;
+            u.tempAkhir = 0;
+            u.statusBanner = 'STEAMBOX KOSONG';
+            u.kode = '--';
+            u.nama = '--';
+            u.versi = '--';
+            u.trolly = '--';
+            u.batch = '--';
+            u.warna = '--';
+            u.qty = '--';
+            u.jamMulai = '--:--:--';
+            u.jamMasak = '--:--:--';
+            u.jamSelesai = '--:--:--';
+            u.durasiPemanasan = '--:--:--';
+            u.targetPemasakan = 0;
+            u.perubahanWaktu = 0;
+            u.flagInitStart = 0;
+            u.flagInitMasak = 0;
         }
 
-        function mulaiMasak() {
-            isRunning[activeSB] = true;
-            document.getElementById(`card-${activeSB}`).classList.add("running");
-            document.getElementById(`grid-status-${activeSB}`).innerText = "RUNNING";
-            document.getElementById("mon-waktu").innerText = "00:30:00";
-            pilihSteambox(activeSB);
+        renderCards();
+        updateExplanation(action, unitId);
+    }
+
+    // Load recipe trigger (Tugas Baru)
+    function triggerTugasBaru(forcedUnitId = null) {
+        const unitId = forcedUnitId || parseInt(document.getElementById('select-unit').value);
+        const skuType = document.getElementById('recipe-sku').value;
+        const duration = parseInt(document.getElementById('recipe-duration').value);
+        const u = units[unitId];
+
+        if (u.state !== 'KOSONG') {
+            alert(`🔒 Poka-Yoke Lock: Unit 0${unitId} sedang tidak kosong! Reset terlebih dahulu.`);
+            return;
         }
 
-        function stopMasak() {
-            isRunning[activeSB] = false;
-            document.getElementById(`card-${activeSB}`).classList.remove("running");
-            document.getElementById(`grid-status-${activeSB}`).innerText = "STANDBY";
-            document.getElementById("mon-waktu").innerText = "00:00:00";
-            pilihSteambox(activeSB);
+        u.state = 'RESEP_TERPASANG';
+        u.targetPemasakan = duration;
+        u.perubahanWaktu = 0;
+        u.statusBanner = 'RESEP TERPASANG - SILAKAN TEKAN START';
+
+        if (skuType === 'surya') {
+            u.kode = 'sbmp';
+            u.nama = 'surya';
+            u.versi = '1';
+            u.trolly = 'longgar';
+            u.batch = '1';
+            u.warna = 'putih';
+            u.qty = '135';
+        } else if (skuType === 'mentor') {
+            u.kode = 'sbmk';
+            u.nama = 'mentor';
+            u.versi = '2';
+            u.trolly = 'rapat';
+            u.batch = '3';
+            u.warna = 'kuning';
+            u.qty = '175';
+        } else {
+            u.kode = 'sbvg';
+            u.nama = 'vanguard';
+            u.versi = '3';
+            u.trolly = 'rapat';
+            u.batch = '2';
+            u.warna = 'merah';
+            u.qty = '150';
         }
-    </script>
+
+        addLog(`Steambox 0${unitId} RESEP DIMUAT: ${u.nama.toUpperCase()} (Target: ${duration} Menit)`);
+        renderCards();
+        updateExplanation('Load Resep', unitId);
+    }
+
+    // Trigger simulation of preheating manually
+    function triggerPreheat() {
+        const unitId = parseInt(document.getElementById('select-unit').value);
+        const u = units[unitId];
+        if (u.state !== 'RESEP_TERPASANG') {
+            alert(`🔒 Poka-Yoke Lock: Load resep terlebih dahulu di unit 0${unitId}!`);
+            return;
+        }
+        btnClick('Start', unitId);
+    }
+
+    // Adjust duration (+/-)
+    function adjustCookingTime(mins) {
+        const unitId = parseInt(document.getElementById('select-unit').value);
+        const u = units[unitId];
+        if (u.state !== 'BOILING' && u.state !== 'HEATING' && u.state !== 'PAUSED') {
+            alert(`🔒 Poka-Yoke Lock: Hanya bisa mengubah waktu ketika unit sedang berjalan/memasak!`);
+            return;
+        }
+
+        u.perubahanWaktu += mins;
+        u.sisaDetik += mins * 60;
+        addLog(`Steambox 0${unitId} WAKTU DI-ADJUST: ${mins > 0 ? '+' : ''}${mins} Menit (Akumulasi: ${u.perubahanWaktu} Menit)`, 'warning');
+        
+        // Recalculate Jam Selesai
+        if (u.state === 'BOILING') {
+            // Jam Selesai = Current Time + Remaining Time
+            u.jamSelesai = formatTime(((hour * 3600) + (minute * 60) + second) + u.sisaDetik);
+        }
+        
+        renderCards();
+    }
+
+    // Simulates a temperature drop below 100 degrees during boiling
+    function simulateTempDrop() {
+        const unitId = parseInt(document.getElementById('select-unit').value);
+        const u = units[unitId];
+        if (u.state !== 'BOILING') {
+            alert(`🔒 Poka-Yoke Lock: Unit 0${unitId} harus dalam keadaan mendidih (Boiling) untuk simulasi temp drop!`);
+            return;
+        }
+
+        u.state = 'HEATING';
+        u.tempAktual = 98.5; // drop temp
+        u.statusBanner = 'MENUNGGU MENDIDIH (< 100 C)';
+        addLog(`⚠️ SUHU STEAMBOX 0${unitId} DROP: ${u.tempAktual.toFixed(1)}°C! Pemasakan DIJEDA (Waktu Berhenti, Estimasi Selesai mundur)`, 'warning');
+        renderCards();
+    }
+
+    // main simulator loop for each unit
+    function startSimulationTimer(unitId) {
+        const u = units[unitId];
+        
+        if (u.intervalId) clearInterval(u.intervalId);
+
+        u.intervalId = setInterval(() => {
+            if (u.state === 'PAUSED') return; // Pause freezing everything
+
+            // 1. PREHEATING/HEATING phase
+            if (u.state === 'PREHEAT' || u.state === 'HEATING') {
+                u.preheatSecs++;
+                u.durasiPemanasan = formatTime(u.preheatSecs);
+                
+                // Simulate temp climb
+                u.tempAktual += 1.5; // climb temp
+
+                // Jam Selesai counts up following system clock because cooking hasn't started yet!
+                const activeSisa = (u.targetPemasakan + u.perubahanWaktu) * 60;
+                u.jamSelesai = formatTime(((hour * 3600) + (minute * 60) + second) + activeSisa);
+
+                if (u.tempAktual >= 100.0) {
+                    u.tempAktual = 102.5; // Keep boil temp
+                    u.state = 'BOILING';
+                    u.statusBanner = 'SEDANG MEMASAK (MENDIDIH)';
+                    u.jamMasak = getLiveClockString();
+                    
+                    if (u.flagInitMasak === 0) {
+                        u.sisaDetik = (u.targetPemasakan + u.perubahanWaktu) * 60;
+                        u.flagInitMasak = 1;
+                    }
+                    addLog(`🔥 Steambox 0${unitId} MENDIDIH (100°C) pada ${u.jamMasak}. Jam Mulai Masak & Selesai terkunci static!`);
+                }
+            } 
+            // 2. BOILING (Cooking countdown) phase
+            else if (u.state === 'BOILING') {
+                if (u.sisaDetik > 0) {
+                    u.sisaDetik--;
+                    
+                    // Since sisaDetik decrements by 1 while current clock increments by 1:
+                    // (Current Time + Remaining Time) is EXACTLY CONSTANT (static completion time!)
+                    u.jamSelesai = formatTime(((hour * 3600) + (minute * 60) + second) + u.sisaDetik);
+                }
+
+                if (u.sisaDetik <= 0) {
+                    u.state = 'SELESAI';
+                    u.tempAkhir = Math.round(u.tempAktual * 10);
+                    u.jamSelesai = getLiveClockString();
+                    u.statusBanner = 'PROSES SELESAI - SILAKAN KOSONGKAN TANGKI';
+                    u.cookingActive = false;
+                    u.flagInitStart = 0;
+                    u.flagInitMasak = 0;
+
+                    clearInterval(u.intervalId);
+
+                    // PUSH JSON TO LARAVEL!
+                    pushJsonData(u);
+                }
+            }
+
+            renderCards();
+        }, 1000);
+    }
+
+    // Simulate sending JSON to Node.js API
+    function pushJsonData(u) {
+        const payload = {
+            "DataArray": [
+                {
+                    "_terminalTime": `2026-07-17 ${getLiveClockString()}.080`,
+                    "_groupTag": "logProduksi",
+                    "no_steambox": String(u.id),
+                    "kode": u.kode,
+                    "nama": u.nama,
+                    "versi": u.versi,
+                    "batch": u.batch,
+                    "warna": u.warna,
+                    "qty": u.qty,
+                    "trolly": u.trolly,
+                    "durasi": String(u.targetPemasakan),
+                    "mulai": u.jamMulai,
+                    "durasi_pemanasan": u.durasiPemanasan,
+                    "jam_masak": u.jamMasak,
+                    "durasi_aktual": formatTime((u.targetPemasakan + u.perubahanWaktu) * 60),
+                    "jam_selesai": u.jamSelesai,
+                    "perubahan_waktu": String(u.perubahanWaktu),
+                    "suhu_awal": String(u.tempAwal),
+                    "suhu_akhir": String(u.tempAkhir),
+                    "status": "SUCCESS"
+                }
+            ],
+            "Count": 1
+        };
+
+        const logPanel = document.getElementById('log-display');
+        addLog(`🚀 [API PUSH SENT] Steambox 0${u.id} Selesai! Data Terkirim ke Laravel:`, 'success');
+        
+        // Print formatted JSON in the log
+        const pre = document.createElement('pre');
+        pre.style.color = '#34d399';
+        pre.style.paddingLeft = '20px';
+        pre.style.marginTop = '5px';
+        pre.style.marginBottom = '10px';
+        pre.style.fontSize = '11px';
+        pre.innerText = JSON.stringify(payload, null, 2);
+        logPanel.appendChild(pre);
+        logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    // Logger
+    function addLog(message, type = 'normal') {
+        const logPanel = document.getElementById('log-display');
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        
+        let classColor = '';
+        if (type === 'success') classColor = 'class="log-success"';
+        if (type === 'warning') classColor = 'class="log-warning"';
+
+        line.innerHTML = `<span class="log-time">[${getLiveClockString()}]</span> <span ${classColor}>${message}</span>`;
+        logPanel.appendChild(line);
+        logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    // Updates explanation side-card based on active simulation steps
+    function updateExplanation(action, unitId) {
+        const exp = document.getElementById('explanation-text');
+        
+        if (action === 'Load Resep') {
+            exp.innerHTML = `
+                <h4>🔒 POKA-YOKE RESEP TERPASANG:</h4>
+                <p><strong>Tombol Aktif:</strong> Tugas Baru, Start Cooking.</p>
+                <p><strong>Tombol Dikunci:</strong> Stop, RESET.</p>
+                <p><strong>Mengapa?</strong> Operator tidak boleh menekan STOP atau RESET saat tangki belum mulai bekerja. Tombol Tugas Baru tetap aktif untuk membolehkan penggantian resep jika salah input sebelum dijalankan.</p>
+            `;
+            exp.style.borderLeftColor = 'var(--primary)';
+        } 
+        else if (action === 'Start') {
+            exp.innerHTML = `
+                <h4>🔒 POKA-YOKE SEDANG PREHEAT:</h4>
+                <p><strong>Tombol Aktif:</strong> Stop/Pause (Jeda).</p>
+                <p><strong>Tombol Dikunci:</strong> Tugas Baru, Start Cooking, RESET.</p>
+                <p><strong>Mengapa?</strong> Mencegah operator merusak data log dengan mereset atau memuat tugas baru di tengah jalan. Satu-satunya interaksi yang diperbolehkan adalah tombol STOP untuk menjeda pemanasan.</p>
+            `;
+            exp.style.borderLeftColor = 'var(--warning)';
+        } 
+        else if (action === 'Stop/Pause') {
+            exp.innerHTML = `
+                <h4>🔒 POKA-YOKE DIJEDA (PAUSED):</h4>
+                <p><strong>Tombol Aktif:</strong> Stop/Pause (Lanjut).</p>
+                <p><strong>Tombol Dikunci:</strong> Tugas Baru, RESET.</p>
+                <p><strong>Mengapa?</strong> Saat proses dijeda, sisa waktu berhenti menghitung mundur, dan Jam Selesai estimasi akan bergeser maju setiap detik. Tombol reset dinonaktifkan agar operator tidak sengaja menghapus log.</p>
+            `;
+            exp.style.borderLeftColor = 'var(--danger)';
+        }
+        else if (action === 'Reset') {
+            exp.innerHTML = `
+                <h4>🔒 POKA-YOKE TANGKI KOSONG (STANDBY):</h4>
+                <p><strong>Tombol Aktif:</strong> Tugas Baru.</p>
+                <p><strong>Tombol Dikunci:</strong> Start, Stop, RESET.</p>
+                <p><strong>Mengapa?</strong> Tangki dalam keadaan kosong total. Tombol Start dikunci mati agar mesin tidak dipanaskan tanpa produk (mencegah heater terbakar/dry boiling).</p>
+            `;
+            exp.style.borderLeftColor = 'var(--neutral)';
+        }
+    }
+
+    // Handle unit selection change
+    function updateSelectedUnitView() {
+        const unitId = parseInt(document.getElementById('select-unit').value);
+        const u = units[unitId];
+        addLog(`Melihat status Detail Steambox 0${unitId}`);
+    }
+
+    // Initialize cards
+    renderCards();
+</script>
 </body>
 </html>
