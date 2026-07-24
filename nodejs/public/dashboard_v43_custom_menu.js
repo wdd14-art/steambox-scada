@@ -77,9 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             socket = io();
             window.activeSocket = socket;
+            window.socket = socket; // Expose window.socket for lib.js compatibility
 
             socket.on('connect', () => {
-                const activeConnId = (window.connId || '1');
+                const activeConnId = (window.connId || 'myLocalId');
                 socket.emit("conn", activeConnId);
                 socket.emit("get all variables");
 
@@ -433,24 +434,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const tagId = findTagIdByName(tagName);
 
         if (tagId !== null && tagId !== undefined) {
-            try {
-                if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetById === 'function') {
-                    window.parent.Variable.SetById(Number(tagId), boolVal);
-                    window.parent.Variable.SetById(Number(tagId), rawVal);
-                }
-            } catch(e) {}
-
-            try {
-                if (window.Variable && typeof window.Variable.SetById === 'function') {
-                    window.Variable.SetById(Number(tagId), boolVal);
-                    window.Variable.SetById(Number(tagId), rawVal);
-                }
-            } catch(e) {}
-
+            // 1. Direct Socket.io Emission (Guaranteed Write to Haiwell www.js)
             try {
                 let sock = window.activeSocket || window.socket || (parent && parent.socket) || (window.parent && window.parent.socket);
                 if (sock && typeof sock.emit === 'function') {
                     sock.emit("SetById", Number(tagId), valStr, "WRITE");
+                }
+            } catch(e) {}
+
+            // 2. Native SCADA Lib helper API (if available)
+            try {
+                if (window.Variable && typeof window.Variable.SetById === 'function') {
+                    window.Variable.SetById(Number(tagId), valStr);
+                }
+            } catch(e) {}
+
+            // 3. Parent C++ Host object (if inside iframe Web Box)
+            try {
+                if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetById === 'function') {
+                    window.parent.Variable.SetById(Number(tagId), boolVal);
                 }
             } catch(e) {}
         }
