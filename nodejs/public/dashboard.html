@@ -3,620 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Dashboard Web Hybrid SCADA 30 Unit Steambox PT SIAP">
-    <title>PT SIAP - Hybrid SCADA Dashboard</title>
-    <!-- Google Fonts: Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-base: #0b0f19;
-            --bg-card: #151f32;
-            --bg-input: #1e293b;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --success: #10b981;
-            --success-glow: rgba(16, 185, 129, 0.15);
-            --danger: #ef4444;
-            --danger-glow: rgba(239, 68, 68, 0.15);
-            --warning: #f59e0b;
-            --warning-glow: rgba(245, 158, 11, 0.15);
-            --neutral: #475569;
-            --text-main: #f8fafc;
-            --text-muted: #64748b;
-            --border: #1e293b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+    <title>PT. SIAP - Monitoring & Kontrol Steambox 1-30 (v33 Exact Tag ID Spec)</title>
+    
+    <!-- HAIWELL SCADA ISWRITE PERMISSION & SESSION DECLARATION -->
+    <script>var isWrite = true; var indexlocal = false; var connId = '1';</script>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-        }
+    <link rel="stylesheet" href="dashboard.css?v=33">
 
-        body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            padding: 10px;
-            overflow-x: hidden;
-        }
-
-        /* Tabs Navigation */
-        .tab-bar {
-            display: flex;
-            gap: 8px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 6px;
-            margin-bottom: 12px;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-main);
-            background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        .tab-btn.active {
-            color: var(--text-main);
-            background-color: var(--primary);
-        }
-
-        /* Status Badge Indicators */
-        .status-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 3px 6px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-block;
-        }
-
-        .status-kosong { background-color: rgba(71, 85, 105, 0.2); color: var(--neutral); }
-        .status-ready { background-color: rgba(59, 130, 246, 0.2); color: var(--primary); }
-        .status-heat { background-color: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        .status-cook { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .status-done { background-color: rgba(59, 130, 246, 0.2); color: var(--primary); animation: blink-done 1s infinite alternate; }
-
-        @keyframes blink-done {
-            0% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        /* Steambox Card Grid */
-        .steambox-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .unit-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 15px;
-            display: grid;
-            grid-template-columns: 60px 150px 250px 300px 180px;
-            align-items: center;
-            gap: 15px;
-            box-shadow: var(--shadow);
-            transition: all 0.2s ease;
-        }
-
-        .unit-card.active-cooking {
-            border-left: 4px solid var(--success);
-            box-shadow: 0 4px 12px var(--success-glow);
-        }
-
-        .unit-card.active-preheat {
-            border-left: 4px solid var(--warning);
-            box-shadow: 0 4px 12px var(--warning-glow);
-        }
-
-        .unit-card.active-done {
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-
-        .unit-id {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--text-main);
-            border-right: 1px dashed var(--border);
-            padding-right: 10px;
-            text-align: center;
-        }
-
-        .temp-section {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            font-size: 12px;
-        }
-
-        .temp-row {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .temp-lbl { color: var(--text-muted); }
-        .temp-val { font-weight: 700; font-family: monospace; }
-        .temp-val.aktual { color: var(--warning); }
-        .unit-card.active-cooking .temp-val.aktual { color: var(--success); }
-
-        /* Detail Panel Box */
-        .box-panel {
-            background-color: rgba(10, 15, 25, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            padding: 8px;
-            font-size: 11px;
-        }
-
-        .box-title {
-            font-weight: 700;
-            color: #60a5fa;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 3px;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 10px;
-        }
-
-        .unit-card.active-cooking .box-title.process { color: var(--success); }
-        .unit-card.active-preheat .box-title.process { color: var(--warning); }
-        .unit-card.active-done .box-title.process { color: var(--primary); }
-
-        .box-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-
-        .box-lbl { color: var(--text-muted); font-size: 9px; text-transform: uppercase; }
-        .box-val { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* Buttons Block */
-        .action-block {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-
-        .btn-act {
-            border: none;
-            padding: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        .btn-act.tugas { background-color: #2563eb; color: white; }
-        .btn-act.start { background-color: #10b981; color: white; }
-        .btn-act.stop { background-color: #ef4444; color: white; }
-        .btn-act.reset { background-color: #4b5563; color: white; }
-
-        .btn-act:disabled {
-            background-color: #1e293b !important;
-            color: #475569 !important;
-            cursor: not-allowed;
-            opacity: 0.3;
-        }
-
-        /* Floating Info Header */
-        .sys-info {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
-
-        .sync-badge {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .sync-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--success);
-            border-radius: 50%;
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.5; }
-        }
-    </style>
+    <!-- HAIWELL SCADA OFFICIAL WEBSERVER CORE ENGINE LIBRARIES (CORRECT PATHS FROM /project/ LOCATION) -->
+    <script src="libs/variable.js?v=33"></script>
+    <script src="../javascripts/lib/socket.io.js"></script>
+    <script src="../javascripts/lib/jquery.min.js"></script>
+    <script src="../javascripts/lib/lib.js"></script>
 </head>
 <body>
 
-    <!-- System Info Bar -->
-    <div class="sys-info">
-        <div><strong>PT. SIAP</strong> - Steambox Hybrid SCADA Monitoring</div>
-        <div class="sync-badge">
-            <div class="sync-dot"></div>
-            Node.js API Terhubung (Real-Time Sync)
+    <!-- HEADER BAR -->
+    <header class="header-bar">
+        <div class="logo-area">
+            <div>
+                <div class="company-logo">PT. SIAP</div>
+                <div class="company-sub">System Control & Monitoring Outdoor</div>
+            </div>
+        </div>
+
+        <div class="header-center">
+            <span>STEAMBOX DASHBOARD</span>
+            <div class="clock-display" id="clockDisplay">2026/07/22 RABU 07:18:22</div>
+        </div>
+
+        <div class="header-right">
+            <div class="user-badge">
+                <div class="user-icon">A</div>
+                <span id="currentUser">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs-container">
+        <div class="nav-tab active" data-group="1">Steambox 1-5</div>
+        <div class="nav-tab" data-group="2">Steambox 6-10</div>
+        <div class="nav-tab" data-group="3">Steambox 11-15</div>
+        <div class="nav-tab" data-group="4">Steambox 16-20</div>
+        <div class="nav-tab" data-group="5">Steambox 21-25</div>
+        <div class="nav-tab" data-group="6">Steambox 26-30</div>
+        <div class="nav-tab" data-group="0">Semua (1-30)</div>
+
+        <div class="auto-rotate-container">
+            <input type="checkbox" id="autoRotateCheck">
+            <label for="autoRotateCheck">Auto Slide (10 Detik)</label>
+        </div>
+    </nav>
+
+    <!-- MAIN UNITS CONTAINER -->
+    <main class="units-container" id="unitsContainer">
+        <!-- Generated Dynamically by JS -->
+    </main>
+
+    <!-- RECIPE SELECTOR & INPUT DIALOG POPUP MODAL -->
+    <div class="recipe-modal-backdrop" id="recipeModal">
+        <div class="recipe-modal-card">
+            <div class="recipe-modal-header">
+                <h3>Resep Browser & Input Tugas Baru - Steambox Unit <span id="modalUnitId">01</span></h3>
+                <button class="btn-close-modal" onclick="closeRecipeModal()">&times;</button>
+            </div>
+            
+            <div class="recipe-modal-body">
+                <!-- MODAL TABS -->
+                <div class="recipe-tab-bar">
+                    <button class="recipe-tab-btn active" id="tabMasterBtn" onclick="switchRecipeTab('master')">Master Database Resep SCADA</button>
+                    <button class="recipe-tab-btn" id="tabCustomBtn" onclick="switchRecipeTab('custom')">+ Tambah Resep Baru ke Unit <span class="unit-id-highlight">01</span></button>
+                </div>
+
+                <!-- TAB 1: MASTER RECIPE LIST -->
+                <div class="recipe-tab-content" id="recipeTabMaster">
+                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #4b5563;">Pilih salah satu resep master di bawah untuk diterapkan ke Unit <span class="unit-id-highlight">01</span>:</p>
+                    <div class="recipe-grid" id="recipeGridOptions">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: ADD CUSTOM RECIPE FORM -->
+                <div class="recipe-tab-content" id="recipeTabCustom" style="display: none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Kode Produk</label>
+                            <input type="text" id="inp_kode" placeholder="sbmk" value="sbmk">
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Produk</label>
+                            <input type="text" id="inp_nama" placeholder="mentor" value="mentor">
+                        </div>
+                        <div class="form-group">
+                            <label>Versi Resep</label>
+                            <input type="text" id="inp_versi" placeholder="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Warna Produk</label>
+                            <input type="text" id="inp_warna" placeholder="kuning" value="kuning">
+                        </div>
+                        <div class="form-group">
+                            <label>Qty (Kg)</label>
+                            <input type="number" id="inp_qty" placeholder="125" value="125">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipe Trolly</label>
+                            <select id="inp_trolly">
+                                <option value="rapat">Rapat</option>
+                                <option value="longgar">Longgar</option>
+                                <option value="standard">Standard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>No. Batch</label>
+                            <input type="number" id="inp_batch" placeholder="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Masak (Menit)</label>
+                            <input type="number" id="inp_durasi" placeholder="1" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="save-master-option">
+                        <input type="checkbox" id="chk_save_master" checked>
+                        <label for="chk_save_master">Simpan resep baru ini ke Database Resep Master (Permanen)</label>
+                    </div>
+
+                    <button class="btn-submit-recipe" onclick="submitCustomRecipe()">Terapkan & Simpan Resep</button>
+                </div>
+            </div>
+
+            <div class="recipe-modal-footer">
+                <button class="btn-cmd btn-stop" onclick="closeRecipeModal()">BATAL</button>
+            </div>
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab(1, 5, this)">Unit 1 - 5</button>
-        <button class="tab-btn" onclick="switchTab(6, 10, this)">Unit 6 - 10</button>
-        <button class="tab-btn" onclick="switchTab(11, 15, this)">Unit 11 - 15</button>
-        <button class="tab-btn" onclick="switchTab(16, 20, this)">Unit 16 - 20</button>
-        <button class="tab-btn" onclick="switchTab(21, 25, this)">Unit 21 - 25</button>
-        <button class="tab-btn" onclick="switchTab(26, 30, this)">Unit 26 - 30</button>
-    </div>
-
-    <!-- Grid Container -->
-    <div class="steambox-grid" id="grid-container">
-        <!-- Rendered unit rows go here -->
-    </div>
-
-    <script>
-        let currentStart = 1;
-        let currentEnd = 5;
-        let scadaData = {}; // Stores latest tag values read from Node.js
-        let localTimers = {}; // Stores client-side interpolated values for smooth ticking
-
-        // Helper to convert HH:MM:SS string to seconds
-        function timeToSecs(timeStr) {
-            if (!timeStr || timeStr === '--:--:--' || timeStr === '--') return 0;
-            const parts = timeStr.split(':');
-            if (parts.length === 3) {
-                return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
-            } else if (parts.length === 2) {
-                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-            }
-            return parseInt(timeStr, 10) || 0;
-        }
-
-        // Helper to convert seconds to HH:MM:SS format
-        function secsToTime(totalSeconds) {
-            if (totalSeconds <= 0) return "--:--:--";
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            const secs = Math.floor(totalSeconds % 60);
-            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        }
-
-        // Switch tab display range
-        function switchTab(start, end, element) {
-            currentStart = start;
-            currentEnd = end;
-            
-            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-            element.classList.add("active");
-            
-            renderDashboard();
-        }
-
-        // Fetch current register values from Node.js
-        async function fetchScadaData() {
-            const tagsToRead = [];
-            for (let i = currentStart; i <= currentEnd; i++) {
-                tagsToRead.push(`sb_${i}.tampil_jam_mulai`);
-                tagsToRead.push(`sb_${i}.tampil_jam_masak`);
-                tagsToRead.push(`sb_${i}.tampil_jam_selesai`);
-                tagsToRead.push(`sb_${i}.tampil_durasi_aktual`);
-                tagsToRead.push(`sb_${i}.durasi_aktual_up`);
-                tagsToRead.push(`sb_${i}.tampil_pemanasan`);
-                tagsToRead.push(`sb_${i}.sisa_detik_masak`);
-                tagsToRead.push(`sb_${i}.target_menit`);
-                tagsToRead.push(`sb_${i}.perubahan_waktu`);
-                tagsToRead.push(`sb_${i}.status_banner`);
-                tagsToRead.push(`sb_${i}.status_selesai`);
-                tagsToRead.push(`sb_${i}.flag_init_start`);
-                tagsToRead.push(`sb_${i}.status_kosong`);
-                tagsToRead.push(`sb_${i}.status_resep`);
-                tagsToRead.push(`sb_${i}.mode_preheat`);
-                tagsToRead.push(`sb${i}.temp`);
-                tagsToRead.push(`sb${i}.run_stop`);
-                
-                tagsToRead.push(`sb_${i}.btn_tugas_enable`);
-                tagsToRead.push(`sb_${i}.btn_start_enable`);
-                tagsToRead.push(`sb_${i}.btn_stop_enable`);
-                tagsToRead.push(`sb_${i}.btn_reset_enable`);
-                
-                tagsToRead.push(`recipe_kode.${i}`);
-                tagsToRead.push(`recipe_nama.${i}`);
-                tagsToRead.push(`recipe_trolly.${i}`);
-                tagsToRead.push(`recipe_batch.${i}`);
-                tagsToRead.push(`recipe_warna.${i}`);
-                tagsToRead.push(`recipe_qty.${i}`);
-                tagsToRead.push(`recipe_versi.${i}`);
-            }
-
-            try {
-                const response = await fetch("/api/scada/read", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        groupTag: "Group_Monitoring",
-                        tags: tagsToRead,
-                        timeout: 5
-                    })
-                });
-                
-                const result = await response.json();
-                if (result.success && result.scadaResponse && result.scadaResponse.result) {
-                    const valArray = result.scadaResponse.result.data || [];
-                    valArray.forEach(item => {
-                        scadaData[item.name] = item.value;
-                    });
-                    
-                    // Sync up HMI tag values into local client-side interpolators to prevent drift
-                    for (let i = currentStart; i <= currentEnd; i++) {
-                        const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
-                        const flagInitStart = Number(getTag(`sb_${i}.flag_init_start`));
-                        const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
-                        const isPaused = Number(getTag(`sb${i}.run_stop`)) === 1;
-
-                        if (flagInitStart === 1 && statusSelesai === 0 && !isPaused) {
-                            if (!localTimers[i]) {
-                                localTimers[i] = {
-                                    pemanasan: timeToSecs(getTag(`sb_${i}.tampil_pemanasan`)),
-                                    durasiAktual: timeToSecs(getTag(`sb_${i}.durasi_aktual_up`)),
-                                    sisaMasak: Number(getTag(`sb_${i}.sisa_detik_masak`))
-                                };
-                            } else {
-                                // Correct drift gently
-                                localTimers[i].pemanasan = timeToSecs(getTag(`sb_${i}.tampil_pemanasan`));
-                                localTimers[i].durasiAktual = timeToSecs(getTag(`sb_${i}.durasi_aktual_up`));
-                                localTimers[i].sisaMasak = Number(getTag(`sb_${i}.sisa_detik_masak`));
-                            }
-                        } else {
-                            // If stopped/idle/paused, match SCADA data directly
-                            localTimers[i] = {
-                                pemanasan: timeToSecs(getTag(`sb_${i}.tampil_pemanasan`)),
-                                durasiAktual: timeToSecs(getTag(`sb_${i}.durasi_aktual_up`)),
-                                sisaMasak: Number(getTag(`sb_${i}.sisa_detik_masak`))
-                            };
-                        }
-                    }
-
-                    renderDashboard();
-                }
-            } catch (err) {
-                console.error("Gagal melakukan polling data SCADA:", err.message);
-            }
-        }
-
-        // Local 1-second interval ticking for client-side smooth countdown
-        function clientTick() {
-            for (let i = currentStart; i <= currentEnd; i++) {
-                const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
-                const flagInitStart = Number(getTag(`sb_${i}.flag_init_start`));
-                const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
-                const isPaused = Number(getTag(`sb${i}.run_stop`)) === 1;
-                const tempAktual = getTag(`sb${i}.temp`) !== null ? getTag(`sb${i}.temp`) / 10 : 0.0;
-
-                // Only tick if unit is active and not paused
-                if (flagInitStart === 1 && statusSelesai === 0 && !isPaused) {
-                    if (localTimers[i]) {
-                        if (tempAktual < 100.0) {
-                            // Preheat phase: increment preheat duration
-                            localTimers[i].pemanasan++;
-                        } else {
-                            // Cooking phase: increment active duration, decrement remaining countdown
-                            localTimers[i].durasiAktual++;
-                            if (localTimers[i].sisaMasak > 0) {
-                                localTimers[i].sisaMasak--;
-                            }
-                        }
-                    }
-                }
-            }
-            renderDashboard();
-        }
-
-        // Render dashboard grid rows
-        function renderDashboard() {
-            const container = document.getElementById("grid-container");
-            container.innerHTML = "";
-
-            for (let i = currentStart; i <= currentEnd; i++) {
-                const getTag = (name) => scadaData[name] !== undefined ? scadaData[name] : null;
-                const timer = localTimers[i] || { pemanasan: 0, durasiAktual: 0, sisaMasak: 0 };
-
-                // Temperature and basic states
-                const tempAktual = getTag(`sb${i}.temp`) !== null ? getTag(`sb${i}.temp`) / 10 : 0.0;
-                const statusBanner = getTag(`sb_${i}.status_banner`) || "STEAMBOX KOSONG";
-                
-                const flagInitStart = Number(getTag(`sb_${i}.flag_init_start`));
-                const statusSelesai = Number(getTag(`sb_${i}.status_selesai`));
-                const modePreheat = Number(getTag(`sb_${i}.mode_preheat`));
-                
-                let activeClass = "";
-                let badgeClass = "status-kosong";
-                let badgeText = "STANDBY";
-
-                if (statusSelesai === 1) {
-                    activeClass = "active-done";
-                    badgeClass = "status-done";
-                    badgeText = "SELESAI";
-                } else if (flagInitStart === 1) {
-                    if (tempAktual >= 100.0) {
-                        activeClass = "active-cooking";
-                        badgeClass = "status-cook";
-                        badgeText = "COOKING";
-                    } else {
-                        activeClass = "active-preheat";
-                        badgeClass = "status-heat";
-                        badgeText = modePreheat === 1 ? "PRE-HEAT" : "HEATING";
-                    }
-                } else if (getTag(`recipe_kode.${i}`)) {
-                    badgeClass = "status-ready";
-                    badgeText = "READY";
-                }
-
-                // Check button enable status
-                const isTugasEnabled = getTag(`sb_${i}.btn_tugas_enable`) === true || getTag(`sb_${i}.btn_tugas_enable`) === 1;
-                const isStartEnabled = getTag(`sb_${i}.btn_start_enable`) === true || getTag(`sb_${i}.btn_start_enable`) === 1;
-                const isStopEnabled = getTag(`sb_${i}.btn_stop_enable`) === true || getTag(`sb_${i}.btn_stop_enable`) === 1;
-                const isResetEnabled = getTag(`sb_${i}.btn_reset_enable`) === true || getTag(`sb_${i}.btn_reset_enable`) === 1;
-
-                // Format times dynamically using local timers
-                const showPreheat = flagInitStart === 1 && tempAktual < 100.0 && statusSelesai === 0
-                    ? secsToTime(timer.pemanasan)
-                    : (getTag(`sb_${i}.tampil_pemanasan`) || '--:--:--');
-
-                const showSisa = flagInitStart === 1 && tempAktual >= 100.0 && statusSelesai === 0
-                    ? secsToTime(timer.sisaMasak)
-                    : (getTag(`sb_${i}.tampil_jam_selesai`) || '--:--:--');
-
-                const row = document.createElement("div");
-                row.className = `unit-card ${activeClass}`;
-                row.innerHTML = `
-                    <!-- Col 1: Unit ID -->
-                    <div class="unit-id">${String(i).padStart(2, '0')}</div>
-
-                    <!-- Col 2: Temperature -->
-                    <div class="temp-section">
-                        <div class="temp-row">
-                            <span class="temp-lbl">Suhu Awal</span>
-                            <span class="temp-val">${getTag(`sb_${i}.suhu_awal`) ? (getTag(`sb_${i}.suhu_awal`)/10).toFixed(1) : '--.-'} °C</span>
-                        </div>
-                        <div class="temp-row">
-                            <span class="temp-lbl">Suhu Aktual</span>
-                            <span class="temp-val aktual">${tempAktual.toFixed(1)} °C</span>
-                        </div>
-                        <div class="temp-row">
-                            <span class="temp-lbl">Suhu Akhir</span>
-                            <span class="temp-val">${getTag(`sb_${i}.suhu_akhir`) ? (getTag(`sb_${i}.suhu_akhir`)/10).toFixed(1) : '--.-'} °C</span>
-                        </div>
-                    </div>
-
-                    <!-- Col 3: Detail Produk -->
-                    <div class="box-panel">
-                        <div class="box-title">
-                            Detail Produk 
-                            <span class="${badgeClass} status-badge" style="float: right;">${badgeText}</span>
-                        </div>
-                        <div class="box-grid">
-                            <div class="info-item"><span class="box-lbl">Kode</span><span class="box-val">${getTag(`recipe_kode.${i}`) || '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Versi</span><span class="box-val">${getTag(`recipe_versi.${i}`) || '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Trolly</span><span class="box-val">${getTag(`recipe_trolly.${i}`) || '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Batch</span><span class="box-val">${getTag(`recipe_batch.${i}`) || '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Warna</span><span class="box-val">${getTag(`recipe_warna.${i}`) || '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Qty</span><span class="box-val">${getTag(`recipe_qty.${i}`) || '--'}</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Col 4: Detail Proses -->
-                    <div class="box-panel">
-                        <div class="box-title process">${statusBanner}</div>
-                        <div class="box-grid">
-                            <div class="info-item"><span class="box-lbl">Jam Mulai</span><span class="box-val">${getTag(`sb_${i}.tampil_jam_mulai`) || '--:--:--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Jam Masak</span><span class="box-val">${getTag(`sb_${i}.tampil_jam_masak`) || '--:--:--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Sisa Masak</span><span class="box-val" style="color: #60a5fa; font-weight: bold;">${showSisa}</span></div>
-                            <div class="info-item"><span class="box-lbl">Preheat</span><span class="box-val">${showPreheat}</span></div>
-                            <div class="info-item"><span class="box-lbl">Target</span><span class="box-val">${getTag(`sb_${i}.target_menit`) ? getTag(`sb_${i}.target_menit`)+' mnt' : '--'}</span></div>
-                            <div class="info-item"><span class="box-lbl">Adjust</span><span class="box-val">${getTag(`sb_${i}.perubahan_waktu`) || '0'} mnt</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Col 5: Actions Buttons -->
-                    <div class="action-block">
-                        <button class="btn-act tugas" ${!isTugasEnabled ? 'disabled' : ''} onclick="btnAction(${i}, 'Tugas')">Resep</button>
-                        <button class="btn-act start" ${!isStartEnabled ? 'disabled' : ''} onclick="btnAction(${i}, 'Start')">Start</button>
-                        <button class="btn-act stop" ${!isStopEnabled ? 'disabled' : ''} onclick="btnAction(${i}, 'Stop')">Stop</button>
-                        <button class="btn-act reset" ${!isResetEnabled ? 'disabled' : ''} onclick="btnAction(${i}, 'Reset')">Reset</button>
-                    </div>
-                `;
-                container.appendChild(row);
-            }
-        }
-
-        // Trigger action to HMI SCADA registers
-        async function btnAction(unitId, type) {
-            const tagsToWrite = {};
-            
-            if (type === 'Tugas') {
-                const code = prompt("Masukkan Kode Resep:", "SBM");
-                if (!code) return;
-                const min = prompt("Masukkan Durasi Masak (Menit):", "2");
-                if (!min) return;
-
-                tagsToWrite[`recipe_kode.${unitId}`] = code;
-                tagsToWrite[`recipe_nama.${unitId}`] = "Custom Product";
-                tagsToWrite[`recipe_trolly.${unitId}`] = "Rapat";
-                tagsToWrite[`sb_${unitId}.target_menit`] = parseInt(min, 10);
-                tagsToWrite[`sb_${unitId}.status_resep`] = true;
-                tagsToWrite[`sb_${unitId}.status_kosong`] = false;
-            } 
-            else if (type === 'Start') {
-                tagsToWrite[`sb${unitId}.run_stop`] = 0;
-            } 
-            else if (type === 'Stop') {
-                tagsToWrite[`sb${unitId}.run_stop`] = 1;
-            } 
-            else if (type === 'Reset') {
-                tagsToWrite[`sb_${unitId}.reset`] = true;
-            }
-
-            try {
-                const response = await fetch("/api/scada/write", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        groupTag: "Group_Monitoring",
-                        tags: tagsToWrite,
-                        timeout: 5
-                    })
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                    console.log(`Action ${type} pada Unit ${unitId} sukses dikirim ke SCADA!`);
-                    fetchScadaData(); // Re-fetch immediately
-                }
-            } catch (err) {
-                console.error("Gagal mengirim aksi ke SCADA:", err.message);
-            }
-        }
-
-        // Start periodic polling every 2 seconds
-        setInterval(fetchScadaData, 2000);
-        
-        // Start local client-side ticking every 1 second for butter-smooth countdowns
-        setInterval(clientTick, 1000);
-
-        // Initial fetch
-        fetchScadaData();
-    </script>
+    <script src="dashboard.js"></script>
 </body>
 </html>
