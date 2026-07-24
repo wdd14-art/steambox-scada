@@ -431,9 +431,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const rawVal = (valStr === "1" ? 1 : (valStr === "0" ? 0 : value));
         const boolVal = (valStr === "1");
 
+        const varsMap = getScadaVarsMap();
         const tagId = findTagIdByName(tagName);
 
         if (tagId !== null && tagId !== undefined) {
+            const strId = String(tagId);
+            if (varsMap && varsMap[strId]) {
+                varsMap[strId].Value = rawVal;
+            }
+
             // 1. Direct Socket.io Emission (Guaranteed Write to Haiwell www.js)
             try {
                 let sock = window.activeSocket || window.socket || (parent && parent.socket) || (window.parent && window.parent.socket);
@@ -541,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(`sb_${id}_suhu_akhir`).innerText = suhuAkhirFmt;
 
             function formatRecipeVal(val, defaultVal = '--') {
-                if (val === undefined || val === null || val === '' || val === 0 || val === '0' || val === '0.0') {
+                if (val === undefined || val === null || val === '' || val === 0 || val === '0' || val === '0.0' || val === false || val === 'false') {
                     return defaultVal;
                 }
                 return String(val);
@@ -745,7 +751,11 @@ document.addEventListener('DOMContentLoaded', () => {
             setTagValue(`sb${id}.target_menit`, recipe.durasi);
         }
 
-        // 4. Trigger momentary recipe transfer pulse to SCADA PLC
+        // 4. Set status_resep flag for SCADA master loop state machine
+        setTagValue(`sb_${id}.status_resep`, 1);
+        setTagValue(`sb${id}.status_resep`, 1);
+
+        // 5. Trigger momentary recipe transfer pulse to SCADA PLC
         setTagValue(`sb_${id}.trf_resep`, 1);
         setTagValue(`sb_${id}_trf_resep`, 1);
         setTagValue(`sb${id}.trf_resep`, 1);
