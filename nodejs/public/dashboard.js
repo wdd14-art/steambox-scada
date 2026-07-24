@@ -540,21 +540,28 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(`sb_${id}_temp`).innerText = tempFormatted;
             document.getElementById(`sb_${id}_suhu_akhir`).innerText = suhuAkhirFmt;
 
-            const recNama = getTagValue(scadaMap, [`recipe_nama.${id}`, `recipe.${id}.nama`], 'RESEP KOSONG');
-            const recKode = getTagValue(scadaMap, [`recipe_kode.${id}`, `recipe.${id}.kode`], '--');
-            const recVersi = getTagValue(scadaMap, [`recipe_versi.${id}`, `recipe.${id}.versi`], '--');
-            const recTrolly = getTagValue(scadaMap, [`recipe_trolly.${id}`, `recipe.${id}.trolly`], '--');
-            const recBatch = getTagValue(scadaMap, [`recipe_batch.${id}`, `recipe.${id}.batch`], '--');
-            const recWarna = getTagValue(scadaMap, [`recipe_warna.${id}`, `recipe.${id}.warna`], '--');
-            const recQty = getTagValue(scadaMap, [`recipe_qty.${id}`, `recipe.${id}.qty`], '--');
+            function formatRecipeVal(val, defaultVal = '--') {
+                if (val === undefined || val === null || val === '' || val === 0 || val === '0' || val === '0.0') {
+                    return defaultVal;
+                }
+                return String(val);
+            }
 
-            document.getElementById(`recipe_${id}_nama`).innerText = recNama || 'RESEP KOSONG';
-            document.getElementById(`recipe_${id}_kode`).innerText = recKode || '--';
-            document.getElementById(`recipe_${id}_versi`).innerText = recVersi || '--';
-            document.getElementById(`recipe_${id}_trolly`).innerText = recTrolly || '--';
-            document.getElementById(`recipe_${id}_batch`).innerText = recBatch || '--';
-            document.getElementById(`recipe_${id}_warna`).innerText = recWarna || '--';
-            document.getElementById(`recipe_${id}_qty`).innerText = recQty || '--';
+            const recNama = formatRecipeVal(getTagValue(scadaMap, [`recipe_nama.${id}`, `recipe.${id}.nama`, `recipe.nama`], ''), 'RESEP KOSONG');
+            const recKode = formatRecipeVal(getTagValue(scadaMap, [`recipe_kode.${id}`, `recipe.${id}.kode`, `recipe.kode`], ''), '--');
+            const recVersi = formatRecipeVal(getTagValue(scadaMap, [`recipe_versi.${id}`, `recipe.${id}.versi`, `recipe.versi`], ''), '--');
+            const recTrolly = formatRecipeVal(getTagValue(scadaMap, [`recipe_trolly.${id}`, `recipe.${id}.trolly`, `recipe.trolly`], ''), '--');
+            const recBatch = formatRecipeVal(getTagValue(scadaMap, [`recipe_batch.${id}`, `recipe.${id}.batch`, `recipe.batch`], ''), '--');
+            const recWarna = formatRecipeVal(getTagValue(scadaMap, [`recipe_warna.${id}`, `recipe.${id}.warna`, `recipe.warna`], ''), '--');
+            const recQty = formatRecipeVal(getTagValue(scadaMap, [`recipe_qty.${id}`, `recipe.${id}.qty`, `recipe.qty`], ''), '--');
+
+            document.getElementById(`recipe_${id}_nama`).innerText = recNama;
+            document.getElementById(`recipe_${id}_kode`).innerText = recKode;
+            document.getElementById(`recipe_${id}_versi`).innerText = recVersi;
+            document.getElementById(`recipe_${id}_trolly`).innerText = recTrolly;
+            document.getElementById(`recipe_${id}_batch`).innerText = recBatch;
+            document.getElementById(`recipe_${id}_warna`).innerText = recWarna;
+            document.getElementById(`recipe_${id}_qty`).innerText = recQty;
 
             const bannerTxt = computeUnitStatusBanner(id, scadaMap);
             const bannerEl = document.getElementById(`sb_${id}_banner`);
@@ -708,10 +715,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function selectRecipeForUnit(recipe) {
         const id = targetUnitForRecipe;
+        if (!id) return;
         
+        // 1. Select active steambox for native SCADA recipe system
         setTagValue(`recipe.pilih_steambox`, id);
         setTagValue(`recipe_pilih_steambox`, id);
 
+        // 2. Set global recipe variables for native SCADA recipe engine
+        setTagValue(`recipe.kode`, recipe.kode);
+        setTagValue(`recipe.nama`, recipe.nama);
+        setTagValue(`recipe.versi`, recipe.versi);
+        setTagValue(`recipe.warna`, recipe.warna);
+        setTagValue(`recipe.qty`, recipe.qty);
+        setTagValue(`recipe.durasi`, recipe.durasi);
+        setTagValue(`recipe.trolly`, recipe.trolly);
+        setTagValue(`recipe.batch`, recipe.batch);
+
+        // 3. Set per-unit array recipe variables
         setTagValue(`recipe_kode.${id}`, recipe.kode);
         setTagValue(`recipe_nama.${id}`, recipe.nama);
         setTagValue(`recipe_versi.${id}`, recipe.versi);
@@ -722,13 +742,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (recipe.durasi) {
             setTagValue(`sb_${id}.target_menit`, recipe.durasi);
+            setTagValue(`sb${id}.target_menit`, recipe.durasi);
         }
 
+        // 4. Trigger momentary recipe transfer pulse to SCADA PLC
         setTagValue(`sb_${id}.trf_resep`, 1);
         setTagValue(`sb_${id}_trf_resep`, 1);
+        setTagValue(`sb${id}.trf_resep`, 1);
 
         closeRecipeModal();
-        alert(`SUKSES! Resep [${recipe.kode}] ${recipe.nama} BERHASIL DITERAPKAN ke Steambox Unit ${id}!`);
+        alert(`SUKSES! Resep [${recipe.kode.toUpperCase()}] ${(recipe.nama || recipe.kode).toUpperCase()} BERHASIL DITERAPKAN ke Steambox Unit ${id}!`);
     }
 
     window.submitCustomRecipe = function() {

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PT. SIAP - Monitoring & Kontrol Steambox 1-30 (v33 Exact Tag ID Spec)</title>
+    <title>PT. SIAP - Monitoring & Kontrol Steambox 1-30 (v33 Web Box Display Ready)</title>
     
     <!-- HAIWELL SCADA ISWRITE PERMISSION & SESSION DECLARATION -->
     <script>var isWrite = true; var indexlocal = false; var connId = 'myLocalId';</script>
 
-    <link rel="stylesheet" href="dashboard.css?v=33">
+    <link rel="stylesheet" href="dashboard.css?v=999">
 
-    <!-- HAIWELL SCADA OFFICIAL WEBSERVER CORE ENGINE LIBRARIES (CORRECT PATHS FROM /project/ LOCATION) -->
+    <!-- HAIWELL SCADA OFFICIAL WEBSERVER CORE ENGINE LIBRARIES -->
     <script src="libs/variable.js?v=33"></script>
     <script src="../javascripts/lib/socket.io.js"></script>
     <script src="../javascripts/lib/jquery.min.js"></script>
@@ -29,7 +29,7 @@
 
         <div class="header-center">
             <span>STEAMBOX DASHBOARD</span>
-            <div class="clock-display" id="clockDisplay">2026/07/22 RABU 07:18:22</div>
+            <div class="clock-display" id="clockDisplay">2026/07/22 RABU 12:00:00</div>
         </div>
 
         <div class="header-right">
@@ -40,25 +40,53 @@
         </div>
     </header>
 
-    <!-- NAVIGATION TABS -->
-    <nav class="nav-tabs-container">
-        <div class="nav-tab active" data-group="1">Steambox 1-5</div>
-        <div class="nav-tab" data-group="2">Steambox 6-10</div>
-        <div class="nav-tab" data-group="3">Steambox 11-15</div>
-        <div class="nav-tab" data-group="4">Steambox 16-20</div>
-        <div class="nav-tab" data-group="5">Steambox 21-25</div>
-        <div class="nav-tab" data-group="6">Steambox 26-30</div>
-        <div class="nav-tab" data-group="0">Semua (1-30)</div>
+    <!-- TOP MENU BAR -->
+    <nav class="top-menu-bar">
+        <div class="menu-left">
+            <label for="groupSelect" class="menu-label">Pilih Steambox:</label>
+            <select id="groupSelect" class="styled-select">
+                <option value="1">Steambox 1-5</option>
+                <option value="2">Steambox 6-10</option>
+                <option value="3">Steambox 11-15</option>
+                <option value="4">Steambox 16-20</option>
+                <option value="5">Steambox 21-25</option>
+                <option value="6">Steambox 26-30</option>
+                <option value="0">Semua (1-30)</option>
+            </select>
+        </div>
 
-        <div class="auto-rotate-container">
-            <input type="checkbox" id="autoRotateCheck">
-            <label for="autoRotateCheck">Auto Slide (10 Detik)</label>
+        <div class="menu-center">
+            <div class="auto-rotate-container">
+                <input type="checkbox" id="autoRotateCheck">
+                <label for="autoRotateCheck">Auto Slide</label>
+            </div>
+        </div>
+
+        <div class="menu-right">
+            <button class="btn-switch-view active" id="btnViewDetail" onclick="switchViewMode('detail')">Grid Lengkap</button>
+            <button class="btn-switch-view" id="btnViewMonitor" onclick="switchViewMode('monitor')">Monitor Ruang</button>
         </div>
     </nav>
 
-    <!-- MAIN UNITS CONTAINER -->
+    <!-- MAIN UNITS CONTAINER (GRID LENGKAP) -->
     <main class="units-container" id="unitsContainer">
         <!-- Generated Dynamically by JS -->
+    </main>
+
+    <!-- MONITOR RUANG CONTAINER (RINGKAS) -->
+    <main class="monitor-ruang-container" id="monitorRuangContainer" style="display: none;">
+        <table class="monitor-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">No. SB</th>
+                    <th style="width: 40%;">Jam Selesai</th>
+                    <th style="width: 40%;">Sisa Waktu</th>
+                </tr>
+            </thead>
+            <tbody id="monitorRuangTbody">
+                <!-- Generated Dynamically by JS -->
+            </tbody>
+        </table>
     </main>
 
     <!-- RECIPE SELECTOR & INPUT DIALOG POPUP MODAL -->
@@ -108,12 +136,8 @@
                             <input type="number" id="inp_qty" placeholder="125" value="125">
                         </div>
                         <div class="form-group">
-                            <label>Tipe Trolly</label>
-                            <select id="inp_trolly">
-                                <option value="rapat">Rapat</option>
-                                <option value="longgar">Longgar</option>
-                                <option value="standard">Standard</option>
-                            </select>
+                            <label>Tipe Trolly (Teks)</label>
+                            <input type="text" id="inp_trolly" placeholder="misal: rapat / longgar / 1" value="rapat">
                         </div>
                         <div class="form-group">
                             <label>No. Batch</label>
@@ -140,6 +164,6 @@
         </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <script src="dashboard.js?v=1002"></script>
 </body>
 </html>

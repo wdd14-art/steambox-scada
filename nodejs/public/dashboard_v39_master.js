@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             socket = io();
             window.activeSocket = socket;
-            window.socket = socket; // Expose to window.socket so lib.js findParent().socket works cleanly
+            window.socket = socket; // Expose window.socket for lib.js compatibility
 
             socket.on('connect', () => {
                 const activeConnId = (window.connId || 'myLocalId');
@@ -91,7 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             socket.on('return all var to browser', (data) => updateVarsFromPayload(data));
             socket.on('return var to browser',     (data) => updateVarsFromPayload(data));
-            socket.on('varChange',                 (data) => updateVarsFromPayload(data));
+            socket.on('varChange', (id, value) => {
+                if (id !== undefined && value !== undefined) {
+                    const dataObj = {};
+                    dataObj[String(id)] = value;
+                    updateVarsFromPayload(dataObj);
+                }
+            });
             socket.on('var to browser',            (data) => updateVarsFromPayload(data));
         } catch(e) {}
     }
@@ -117,13 +123,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Build 30 Unit UI Rows
     function buildUnitsHTML() {
         unitsContainer.innerHTML = '';
+        const monitorTbody = document.getElementById('monitorRuangTbody');
+        if (monitorTbody) monitorTbody.innerHTML = '';
+
         for (let id = 1; id <= 30; id++) {
             const padId = String(id).padStart(2, '0');
+            const isVisible = (id >= 1 && id <= 5);
+
+            // 1. Build Grid Card
             const unitCard = document.createElement('div');
             unitCard.className = 'unit-row';
             unitCard.id = `unitRow_${id}`;
             unitCard.dataset.unitId = id;
-            unitCard.style.display = (id >= 1 && id <= 5) ? 'grid' : 'none';
+            unitCard.style.display = isVisible ? 'grid' : 'none';
+
+            // 2. Build Monitor Row
+            if (monitorTbody) {
+                const tr = document.createElement('tr');
+                tr.id = `monitorRow_${id}`;
+                tr.style.display = isVisible ? 'table-row' : 'none';
+                tr.innerHTML = `
+                    <td>${padId}</td>
+                    <td id="monitor_sb_${id}_selesai">--:--:--</td>
+                    <td id="monitor_sb_${id}_sisa">--:--:--</td>
+                `;
+                monitorTbody.appendChild(tr);
+            }
 
             unitCard.innerHTML = `
                 <!-- COL 1: NO STEAMBOX & SUHU -->
@@ -204,6 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="item-val" id="sb_${id}_target_menit">0 menit</span>
                         </div>
                         <div class="grid-item">
+                            <span class="item-label">Durasi Aktual (UP)</span>
+                            <span class="item-val" id="sb_${id}_durasi_aktual">--:--:--</span>
+                        </div>
+                        <div class="grid-item">
                             <span class="item-label">Perubahan Waktu</span>
                             <span class="item-val" id="sb_${id}_perubahan_waktu">0 menit</span>
                         </div>
@@ -226,28 +255,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     buildUnitsHTML();
 
-    // Tab Navigation Logic
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
-            const group = parseInt(e.target.dataset.group, 10);
-            setTabGroup(group);
+    // Navigation & View Logic
+    let currentViewMode = 'detail'; // 'detail' or 'monitor'
+
+    window.switchViewMode = function(mode) {
+        currentViewMode = mode;
+        const btnDetail = document.getElementById('btnViewDetail');
+        const btnMonitor = document.getElementById('btnViewMonitor');
+        const contDetail = document.getElementById('unitsContainer');
+        const contMonitor = document.getElementById('monitorRuangContainer');
+
+        if (mode === 'detail') {
+            if (btnDetail) btnDetail.classList.add('active');
+            if (btnMonitor) btnMonitor.classList.remove('active');
+            if (contDetail) contDetail.style.display = 'flex';
+            if (contMonitor) contMonitor.style.display = 'none';
+        } else {
+            if (btnMonitor) btnMonitor.classList.add('active');
+            if (btnDetail) btnDetail.classList.remove('active');
+            if (contDetail) contDetail.style.display = 'none';
+            if (contMonitor) contMonitor.style.display = 'block';
+        }
+    };
+
+    const groupSelect = document.getElementById('groupSelect');
+    if (groupSelect) {
+        groupSelect.addEventListener('change', (e) => {
+            setTabGroup(parseInt(e.target.value, 10));
         });
-    });
+    }
 
     function setTabGroup(group) {
         currentTabGroup = group;
+        if (groupSelect && groupSelect.value !== String(group)) {
+            groupSelect.value = String(group);
+        }
         for (let id = 1; id <= 30; id++) {
             const card = document.getElementById(`unitRow_${id}`);
-            if (!card) continue;
+            const monitorRow = document.getElementById(`monitorRow_${id}`);
+            
+            let isVisible = false;
             if (group === 0) {
-                card.style.display = 'grid';
+                isVisible = true;
             } else {
                 const start = (group - 1) * 5 + 1;
                 const end = group * 5;
-                card.style.display = (id >= start && id <= end) ? 'grid' : 'none';
+                isVisible = (id >= start && id <= end);
             }
+            
+            if (card) card.style.display = isVisible ? 'grid' : 'none';
+            if (monitorRow) monitorRow.style.display = isVisible ? 'table-row' : 'none';
         }
     }
 
@@ -265,13 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!autoRotateActive) return;
             let nextGroup = currentTabGroup + 1;
             if (nextGroup > 6) nextGroup = 1;
-            
-            const activeTabBtn = document.querySelector(`.nav-tab[data-group="${nextGroup}"]`);
-            if (activeTabBtn) {
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                activeTabBtn.classList.add('active');
-                setTabGroup(nextGroup);
-            }
+            setTabGroup(nextGroup);
         }, 10000);
     }
 
@@ -489,21 +540,28 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(`sb_${id}_temp`).innerText = tempFormatted;
             document.getElementById(`sb_${id}_suhu_akhir`).innerText = suhuAkhirFmt;
 
-            const recNama = getTagValue(scadaMap, [`recipe_nama.${id}`, `recipe.${id}.nama`], 'RESEP KOSONG');
-            const recKode = getTagValue(scadaMap, [`recipe_kode.${id}`, `recipe.${id}.kode`], '--');
-            const recVersi = getTagValue(scadaMap, [`recipe_versi.${id}`, `recipe.${id}.versi`], '--');
-            const recTrolly = getTagValue(scadaMap, [`recipe_trolly.${id}`, `recipe.${id}.trolly`], '--');
-            const recBatch = getTagValue(scadaMap, [`recipe_batch.${id}`, `recipe.${id}.batch`], '--');
-            const recWarna = getTagValue(scadaMap, [`recipe_warna.${id}`, `recipe.${id}.warna`], '--');
-            const recQty = getTagValue(scadaMap, [`recipe_qty.${id}`, `recipe.${id}.qty`], '--');
+            function formatRecipeVal(val, defaultVal = '--') {
+                if (val === undefined || val === null || val === '' || val === 0 || val === '0' || val === '0.0') {
+                    return defaultVal;
+                }
+                return String(val);
+            }
 
-            document.getElementById(`recipe_${id}_nama`).innerText = recNama || 'RESEP KOSONG';
-            document.getElementById(`recipe_${id}_kode`).innerText = recKode || '--';
-            document.getElementById(`recipe_${id}_versi`).innerText = recVersi || '--';
-            document.getElementById(`recipe_${id}_trolly`).innerText = recTrolly || '--';
-            document.getElementById(`recipe_${id}_batch`).innerText = recBatch || '--';
-            document.getElementById(`recipe_${id}_warna`).innerText = recWarna || '--';
-            document.getElementById(`recipe_${id}_qty`).innerText = recQty || '--';
+            const recNama = formatRecipeVal(getTagValue(scadaMap, [`recipe_nama.${id}`, `recipe.${id}.nama`, `recipe.nama`], ''), 'RESEP KOSONG');
+            const recKode = formatRecipeVal(getTagValue(scadaMap, [`recipe_kode.${id}`, `recipe.${id}.kode`, `recipe.kode`], ''), '--');
+            const recVersi = formatRecipeVal(getTagValue(scadaMap, [`recipe_versi.${id}`, `recipe.${id}.versi`, `recipe.versi`], ''), '--');
+            const recTrolly = formatRecipeVal(getTagValue(scadaMap, [`recipe_trolly.${id}`, `recipe.${id}.trolly`, `recipe.trolly`], ''), '--');
+            const recBatch = formatRecipeVal(getTagValue(scadaMap, [`recipe_batch.${id}`, `recipe.${id}.batch`, `recipe.batch`], ''), '--');
+            const recWarna = formatRecipeVal(getTagValue(scadaMap, [`recipe_warna.${id}`, `recipe.${id}.warna`, `recipe.warna`], ''), '--');
+            const recQty = formatRecipeVal(getTagValue(scadaMap, [`recipe_qty.${id}`, `recipe.${id}.qty`, `recipe.qty`], ''), '--');
+
+            document.getElementById(`recipe_${id}_nama`).innerText = recNama;
+            document.getElementById(`recipe_${id}_kode`).innerText = recKode;
+            document.getElementById(`recipe_${id}_versi`).innerText = recVersi;
+            document.getElementById(`recipe_${id}_trolly`).innerText = recTrolly;
+            document.getElementById(`recipe_${id}_batch`).innerText = recBatch;
+            document.getElementById(`recipe_${id}_warna`).innerText = recWarna;
+            document.getElementById(`recipe_${id}_qty`).innerText = recQty;
 
             const bannerTxt = computeUnitStatusBanner(id, scadaMap);
             const bannerEl = document.getElementById(`sb_${id}_banner`);
@@ -536,6 +594,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const adjMin = getTagValue(scadaMap, [`sb_${id}.perubahan_waktu`, `sb${id}.perubahan_waktu`], 0);
             document.getElementById(`sb_${id}_target_menit`).innerText = `${targetMin} menit`;
             document.getElementById(`sb_${id}_perubahan_waktu`).innerText = `${adjMin} menit`;
+
+            const durasiAktual = getTagValue(scadaMap, [`sb_${id}.tampil_durasi_aktual`, `sb${id}.tampil_durasi_aktual`, `sb_${id}.durasi_aktual_up`, `sb${id}.durasi_aktual_up`], '--:--:--');
+            const elDurasiGrid = document.getElementById(`sb_${id}_durasi_aktual`);
+            if (elDurasiGrid) elDurasiGrid.innerText = durasiAktual;
+            
+            const jamSelesai = getTagValue(scadaMap, [`sb_${id}.tampil_jam_selesai`, `sb${id}.tampil_jam_selesai`], '--:--:--');
+            
+            const monSelesai = document.getElementById(`monitor_sb_${id}_selesai`);
+            const monSisa = document.getElementById(`monitor_sb_${id}_sisa`);
+            if (monSelesai) monSelesai.innerText = jamSelesai;
+            if (monSisa) monSisa.innerText = durasiAktual;
 
             const modeVal = getTagValue(scadaMap, [`sb_${id}_mode_preheat`, `sb_${id}.mode_preheat`, `sb${id}.mode_preheat`], 0);
             const btnMode = document.getElementById(`btn_mode_${id}`);
@@ -646,10 +715,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function selectRecipeForUnit(recipe) {
         const id = targetUnitForRecipe;
+        if (!id) return;
         
+        // 1. Select active steambox for native SCADA recipe system
         setTagValue(`recipe.pilih_steambox`, id);
         setTagValue(`recipe_pilih_steambox`, id);
 
+        // 2. Set global recipe variables for native SCADA recipe engine
+        setTagValue(`recipe.kode`, recipe.kode);
+        setTagValue(`recipe.nama`, recipe.nama);
+        setTagValue(`recipe.versi`, recipe.versi);
+        setTagValue(`recipe.warna`, recipe.warna);
+        setTagValue(`recipe.qty`, recipe.qty);
+        setTagValue(`recipe.durasi`, recipe.durasi);
+        setTagValue(`recipe.trolly`, recipe.trolly);
+        setTagValue(`recipe.batch`, recipe.batch);
+
+        // 3. Set per-unit array recipe variables
         setTagValue(`recipe_kode.${id}`, recipe.kode);
         setTagValue(`recipe_nama.${id}`, recipe.nama);
         setTagValue(`recipe_versi.${id}`, recipe.versi);
@@ -660,13 +742,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (recipe.durasi) {
             setTagValue(`sb_${id}.target_menit`, recipe.durasi);
+            setTagValue(`sb${id}.target_menit`, recipe.durasi);
         }
 
+        // 4. Trigger momentary recipe transfer pulse to SCADA PLC
         setTagValue(`sb_${id}.trf_resep`, 1);
         setTagValue(`sb_${id}_trf_resep`, 1);
+        setTagValue(`sb${id}.trf_resep`, 1);
 
         closeRecipeModal();
-        alert(`SUKSES! Resep [${recipe.kode}] ${recipe.nama} BERHASIL DITERAPKAN ke Steambox Unit ${id}!`);
+        alert(`SUKSES! Resep [${recipe.kode.toUpperCase()}] ${(recipe.nama || recipe.kode).toUpperCase()} BERHASIL DITERAPKAN ke Steambox Unit ${id}!`);
     }
 
     window.submitCustomRecipe = function() {
@@ -727,7 +812,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setTagValue(`sb${unitId}.runstop`, newRunStop);
             setTagValue(`sb${unitId}.run_stop`, newRunStop);
-            setTagValue(`sb_${unitId}.run_stop`, newRunStop);
         } else if (commandType === 'reset') {
             setTagValue(`sb_${unitId}.reset`, 1);
             setTagValue(`sb_${unitId}_reset`, 1);
