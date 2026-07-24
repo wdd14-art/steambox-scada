@@ -723,11 +723,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = targetUnitForRecipe;
         if (!id) return;
         
-        // 1. Select active steambox for native SCADA recipe system
+        // 1. Target steambox selection
         setTagValue(`recipe.pilih_steambox`, id);
         setTagValue(`recipe_pilih_steambox`, id);
 
-        // 2. Set global recipe variables for native SCADA recipe engine
+        // 2. Set active global recipe parameters
         setTagValue(`recipe.kode`, recipe.kode);
         setTagValue(`recipe.nama`, recipe.nama);
         setTagValue(`recipe.versi`, recipe.versi);
@@ -737,28 +737,33 @@ document.addEventListener('DOMContentLoaded', () => {
         setTagValue(`recipe.trolly`, recipe.trolly);
         setTagValue(`recipe.batch`, recipe.batch);
 
-        // 3. Set per-unit array recipe variables
+        // 3. Set Unit Specific SCADA State Machine Flags (Match Native Transfer Script EXACTLY)
+        setTagValue(`sb_${id}.target_menit`, recipe.durasi);
+        setTagValue(`sb${id}.target_menit`, recipe.durasi);
+
+        setTagValue(`sb_${id}.mode_preheat`, 0);
+        setTagValue(`sb${id}.mode_preheat`, 0);
+
+        setTagValue(`sb_${id}.status_kosong`, 0);
+        setTagValue(`sb${id}.status_kosong`, 0);
+
+        setTagValue(`sb_${id}.status_selesai`, 0);
+        setTagValue(`sb${id}.status_selesai`, 0);
+
+        setTagValue(`sb_${id}.status_resep`, 1);
+        setTagValue(`sb${id}.status_resep`, 1);
+
+        setTagValue(`sb_${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+        setTagValue(`sb${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+
+        // 4. Set per-unit recipe array variables
         setTagValue(`recipe_kode.${id}`, recipe.kode);
         setTagValue(`recipe_nama.${id}`, recipe.nama);
         setTagValue(`recipe_versi.${id}`, recipe.versi);
         setTagValue(`recipe_warna.${id}`, recipe.warna);
         setTagValue(`recipe_qty.${id}`, recipe.qty);
-        setTagValue(`recipe_trolly.${id}`, recipe.trolly);
         setTagValue(`recipe_batch.${id}`, recipe.batch);
-
-        if (recipe.durasi) {
-            setTagValue(`sb_${id}.target_menit`, recipe.durasi);
-            setTagValue(`sb${id}.target_menit`, recipe.durasi);
-        }
-
-        // 4. Set status_resep flag for SCADA master loop state machine
-        setTagValue(`sb_${id}.status_resep`, 1);
-        setTagValue(`sb${id}.status_resep`, 1);
-
-        // 5. Trigger momentary recipe transfer pulse to SCADA PLC
-        setTagValue(`sb_${id}.trf_resep`, 1);
-        setTagValue(`sb_${id}_trf_resep`, 1);
-        setTagValue(`sb${id}.trf_resep`, 1);
+        setTagValue(`recipe_trolly.${id}`, recipe.trolly);
 
         closeRecipeModal();
         alert(`SUKSES! Resep [${recipe.kode.toUpperCase()}] ${(recipe.nama || recipe.kode).toUpperCase()} BERHASIL DITERAPKAN ke Steambox Unit ${id}!`);
