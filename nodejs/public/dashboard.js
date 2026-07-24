@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.socket = socket; // Expose to window.socket so lib.js findParent().socket works cleanly
 
             socket.on('connect', () => {
-                const activeConnId = (window.connId || '1');
+                const activeConnId = (window.connId || 'myLocalId');
                 socket.emit("conn", activeConnId);
                 socket.emit("get all variables");
 
