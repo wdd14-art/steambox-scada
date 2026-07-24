@@ -1,0 +1,7 @@
+ID,Variable name ,Register type,Register number,Register address,Bit address,Address length,Data type,Character set,String length ,The mode of reading and writing,Collect frequency,Specified acquisition frequency(ms),Variable description,Initial value,Minimum value,Maximum value,Decimal digits,Engineering quantity conversion,Original minimum,Origianl maximum,Random generation of simulation,Enabling broadcasting,Collection always,Variable Grouping,Variable Categorie,Offset variable,Slave Station,Slave register type,Slave address,Read write mode of slave station
+625,temp,3X,,1001,,1,SHORT,,0,r,,0,,,,,,0,,,0,0,0,,,,0,,,,
+626,temp_set,4X,,1,,1,SHORT,,0,rw,,0,,,,,,,,,0,0,0,,,,0,,,,
+627,run_stop,0X,,1,,1,BOOL,,0,rw,,0,,,,,,0,,,0,0,0,,,,0,,,,
+628,nozzle1,1X,,4,,1,BOOL,,0,r,,0,,,,,,,,,0,0,0,,,,0,,,,
+629,nozzle2,1X,,10,,1,BOOL,,0,r,,0,,,,,,,,,0,0,0,,,,0,,,,
+2505,In_b,4X,,159,,1,SHORT,,0,rw,,0,,,,,,0,,,0,0,0,,,,0,,,,

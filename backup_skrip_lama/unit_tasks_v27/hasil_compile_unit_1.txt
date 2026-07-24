@@ -1,0 +1,282 @@
+// ============================================================================
+// STEAMBOX UNIT 1 - TASK SCRIPT
+// Versi  : v27 - MODULAR TASK
+// Dipanggil oleh: master_loop via Task.Run('steambox_unit_1')
+// Trigger: Mengikuti interval master_loop (1 detik)
+// Tag    : Semua referensi tag statis - binding fisik terjamin
+// ============================================================================
+
+// Ambil teks status dari Sys_Control (sudah diinisialisasi di master_loop)
+var txtKosong             = Variable.GetById(827) || "STEAMBOX KOSONG";
+var txtPreheat            = Variable.GetById(828) || "SEDANG PEMANASAN";
+var txtPemanasan          = Variable.GetById(829) || "SEDANG PEMANASAN";
+var txtPemasakan          = Variable.GetById(830) || "SEDANG MEMASAK (MENDIDIH)";
+var txtSelesai            = Variable.GetById(831) || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
+var txtSelesaiPreheat     = Variable.GetById(2348) || "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN";
+var txtSiapPreheat        = Variable.GetById(2349) || "SIAP PEMANASAN - SILAKAN TEKAN START";
+var txtSiapCooking        = Variable.GetById(2350) || "RESEP TERPASANG - SILAKAN TEKAN START";
+var txtStatusResep        = Variable.GetById(2353) || "RESEP TERPASANG - SILAKAN TEKAN START";
+var txtPreheatPaused      = Variable.GetById(2351) || "PREHEAT PAUSED";
+var txtPaused             = Variable.GetById(2352) || "PAUSED";
+var txtMaintenance        = Variable.GetById(832) || "MAINTENANCE MODE";
+var txtOffline            = Variable.GetById(833) || "COMMUNICATION OFFLINE";
+var txtDisable            = Variable.GetById(834) || "UNIT DISABLED";
+var txtSensorError        = Variable.GetById(835) || "SENSOR ERROR";
+var txtSensorErrorCooking = Variable.GetById(2384) || "SENSOR ERROR COOKING";
+var tempErrorLimit        = Variable.GetById(2296) || 30000;
+var waktuSekarangString   = ("0" + (Variable.GetById(10) || 0)).slice(-2) + ":" + ("0" + (Variable.GetById(11) || 0)).slice(-2) + ":" + ("0" + (Variable.GetById(12) || 0)).slice(-2);
+var totalDetikSekarang    = ((Variable.GetById(10) || 0) * 3600) + ((Variable.GetById(11) || 0) * 60) + (Variable.GetById(12) || 0);
+
+function formatTime(totalSeconds) {
+    var h = Math.floor(totalSeconds / 3600);
+    var m = Math.floor((totalSeconds % 3600) / 60);
+    var s = totalSeconds % 60;
+    return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+}
+function getEstimasiSelesai(totalDetikSekarang, sisa) {
+    var est = (totalDetikSekarang + sisa) % 86400;
+    var he = Math.floor(est / 3600);
+    var me = Math.floor((est % 3600) / 60);
+    var se = est % 60;
+    return ("0" + he).slice(-2) + ":" + ("0" + me).slice(-2) + ":" + ("0" + se).slice(-2);
+}
+
+// ============================================================
+// BLOK RESET (Tugas Baru / Reset oleh Operator)
+// ============================================================
+if (Variable.GetById(1196)) {
+    Variable.SetById(1209, false);
+    Variable.SetById(1205, 0);
+    Variable.SetById(1202, 0);
+    Variable.SetById(1201, 0);
+    Variable.SetById(1199, 0);
+    Variable.SetById(1200, 0);
+    Variable.SetById(1214, "--:--:--");
+    Variable.SetById(1215, "--:--:--");
+    Variable.SetById(1216, "--:--:--");
+    Variable.SetById(1218, "--");
+    Variable.SetById(2385, "--");
+    Variable.SetById(1217, "--:--:--");
+    Variable.SetById(2509, 0.0);
+    Variable.SetById(2510, 0.0);
+    Variable.SetById(1213, 0);
+    Variable.SetById(1206, true);
+    Variable.SetById(2354, false);
+    Variable.SetById(1207, false);
+    Variable.SetById(1208, false);
+    Variable.SetById(1198, false);
+    Variable.SetById(1204, 0);
+    Variable.SetById(1210, txtKosong);
+    Variable.SetById(986, "");
+    Variable.SetById(1016, "--");
+    Variable.SetById(1046, 0);
+    Variable.SetById(1136, "");
+    Variable.SetById(1166, 0);
+    Variable.SetById(1106, 0);
+    Variable.SetById(1076, "");
+    Variable.SetById(1196, false);
+} else {
+    // Adjust waktu oleh operator
+    var scale_up_1   = 0;
+    var activeSisa_1 = Variable.GetById(1201) || 0;
+    var activePerubahan_1 = Variable.GetById(1213) || 0;
+
+    if (Variable.GetById(1200) !== 0) {
+        if (Number(Variable.GetById(1209)) === 0) {
+            var adjustSecs_1 = Variable.GetById(1200) * 60;
+            activeSisa_1 = activeSisa_1 + adjustSecs_1;
+            if (activeSisa_1 < 0) { activeSisa_1 = 0; }
+            Variable.SetById(1201, activeSisa_1);
+            activePerubahan_1 = activePerubahan_1 + Variable.GetById(1200);
+            Variable.SetById(1213, activePerubahan_1);
+        }
+        Variable.SetById(1200, 0);
+    }
+
+    if (Number(Variable.GetById(616)) === 0) {
+        Variable.SetById(1210, txtDisable);
+        Variable.SetById(2314, false);
+    } else if (Number(Variable.GetById(615)) === 0) {
+        Variable.SetById(1210, txtOffline);
+        Variable.SetById(2314, false);
+    } else if (Variable.GetById(1197)) {
+        Variable.SetById(1210, txtMaintenance);
+        Variable.SetById(2314, false);
+    } else {
+        var isSensorError_1 = (Variable.GetById(625) >= tempErrorLimit);
+        if (isSensorError_1) {
+            Variable.SetById(2314, true);
+            if (Number(Variable.GetById(627)) === 0 && Variable.GetById(1204) === 1) {
+                Variable.SetById(1210, txtSensorErrorCooking);
+            } else {
+                Variable.SetById(1210, txtSensorError);
+            }
+        } else {
+            Variable.SetById(2314, false);
+
+            // Decision 5 & 6: LATCH STATUS_SELESAI & FREEZE DISPLAY
+            if (Number(Variable.GetById(1209)) === 1) {
+                Variable.SetById(1210, txtSelesai);
+            } else if (Variable.GetById(1198)) {
+                // ============================================================
+                // PREHEAT STATE MACHINE (Independen dari Cooking Booleans)
+                // ============================================================
+                if (Number(Variable.GetById(627)) === 0) {
+                    // Running Preheat
+                    if (Variable.GetById(1204) === 0) {
+                        Variable.SetById(1214, "--:--:--");
+                        Variable.SetById(1215, "--:--:--");
+                        Variable.SetById(1216, "--:--:--");
+                        Variable.SetById(1218, "--");
+                        Variable.SetById(2385, "--");
+                        Variable.SetById(1204, 1);
+                        activePerubahan_1          = 0;
+                        Variable.SetById(1213, 0);
+                    }
+                    Variable.SetById(1202, Variable.GetById(1202) + 1);
+                    Variable.SetById(1217, formatTime(Variable.GetById(1202)));
+                    Variable.SetById(1210, txtPreheat);
+
+                    if (Variable.GetById(625) > 1000) {
+                        Variable.SetById(627, 1);
+                        Variable.SetById(2510, Number(((Variable.GetById(625) || 0) / 10).toFixed(1)));
+                        Variable.SetById(1204, 0);
+                        Variable.SetById(1198, false);
+                    }
+                } else {
+                    // Paused / Ready Preheat
+                    if (Variable.GetById(1202) === 0) {
+                        Variable.SetById(1210, txtSiapPreheat);
+                    } else {
+                        Variable.SetById(1210, txtPreheatPaused);
+                    }
+                }
+            } else {
+                // ============================================================
+                // COOKING STATE MACHINE (Production Mode)
+                // ============================================================
+                if (Number(Variable.GetById(627)) === 1) {
+                    // Stopped / Paused Cooking
+                    Variable.SetById(1207, false);
+                    Variable.SetById(1208, false);
+
+                    if (Variable.GetById(2354)) {
+                        Variable.SetById(1206, false);
+                        if (activeSisa_1 === 0 && Variable.GetById(1204) === 0) {
+                            Variable.SetById(1210, txtSiapCooking);
+                        } else {
+                            Variable.SetById(1210, txtPaused);
+                        }
+                    } else {
+                        if (Variable.GetById(1202) > 0) {
+                            Variable.SetById(1210, txtSelesaiPreheat);
+                        } else {
+                            Variable.SetById(1206, true);
+                            Variable.SetById(1210, txtKosong);
+                        }
+                    }
+
+                    if (Variable.GetById(1204) === 1 && Number(Variable.GetById(1209)) === 0) {
+                        Variable.SetById(1218, formatTime(activeSisa_1));
+                        var paused_up_1 = (scale_up_1 = (((Variable.GetById(1199) || 0) + activePerubahan_1) * 60) - activeSisa_1) < 0 ? 0 : scale_up_1;
+                        Variable.SetById(2385, formatTime(paused_up_1));
+                    }
+                } else {
+                    // Running Cooking (run_stop === 0)
+                    Variable.SetById(1206, false);
+
+                    if (Variable.GetById(1204) === 0) {
+                        Variable.SetById(1209, false);
+                        Variable.SetById(1214, waktuSekarangString);
+                        Variable.SetById(1215, "--:--:--");
+                        Variable.SetById(1216, "--:--:--");
+                        Variable.SetById(1204, 1);
+                        activeSisa_1                = (Variable.GetById(1199) || 0) * 60;
+                        Variable.SetById(1201, activeSisa_1);
+                        Variable.SetById(1202, 0);
+                        Variable.SetById(1205, 0);
+                        Variable.SetById(2509, Number(((Variable.GetById(625) || 0) / 10).toFixed(1)));
+                        activePerubahan_1           = 0;
+                        Variable.SetById(1213, 0);
+                    }
+
+                    if (Variable.GetById(625) < 1000) {
+                        // Pemanasan (Heat-up before boil)
+                        Variable.SetById(1207, true);
+                        Variable.SetById(1208, false);
+                        Variable.SetById(1210, txtPemanasan);
+                        Variable.SetById(1202, Variable.GetById(1202) + 1);
+                        Variable.SetById(1217, formatTime(Variable.GetById(1202)));
+                        Variable.SetById(1218, formatTime(activeSisa_1));
+                        var detik_up_heat_1 = (scale_up_1 = (((Variable.GetById(1199) || 0) + activePerubahan_1) * 60) - activeSisa_1) < 0 ? 0 : scale_up_1;
+                        Variable.SetById(2385, formatTime(detik_up_heat_1));
+
+                        if (Variable.GetById(1205) === 1) {
+                            Variable.SetById(1216, getEstimasiSelesai(totalDetikSekarang, activeSisa_1));
+                        } else {
+                            Variable.SetById(1216, "--:--:--");
+                        }
+                    } else {
+                        // Pemasakan (Boiling)
+                        Variable.SetById(1207, false);
+                        Variable.SetById(1208, true);
+                        Variable.SetById(1210, txtPemasakan);
+
+                        if (Variable.GetById(1205) === 0) {
+                            Variable.SetById(1215, waktuSekarangString);
+                            Variable.SetById(1205, 1);
+                        }
+
+                        if (activeSisa_1 > 0) {
+                            activeSisa_1 = activeSisa_1 - 1;
+                            Variable.SetById(1201, activeSisa_1);
+                        }
+                        Variable.SetById(1218, formatTime(activeSisa_1));
+                        var detik_up_boil_1 = (scale_up_1 = (((Variable.GetById(1199) || 0) + activePerubahan_1) * 60) - activeSisa_1) < 0 ? 0 : scale_up_1;
+                        Variable.SetById(2385, formatTime(detik_up_boil_1));
+
+                        if (activeSisa_1 <= 0) {
+                            activeSisa_1 = 0;
+                            Variable.SetById(1201, 0);
+                            Variable.SetById(1218, formatTime(0));
+                            var finalDurasiUpStr_1 = formatTime(((Variable.GetById(1199) || 0) + activePerubahan_1) * 60);
+                            var finalJamSelesai_1  = getEstimasiSelesai(totalDetikSekarang, 0);
+                            var finalSuhuAkhir_1   = Number(((Variable.GetById(625) || 0) / 10).toFixed(1));
+                            Variable.SetById(2385, finalDurasiUpStr_1);
+                            Variable.SetById(1216, finalJamSelesai_1);
+                            Variable.SetById(2510, finalSuhuAkhir_1);
+                            Variable.SetById(627, 1);
+                            Variable.SetById(1208, false);
+                            Variable.SetById(1207, false);
+                            Variable.SetById(1204, 0);
+                            Variable.SetById(1205, 0);
+                            Variable.SetById(2297, 1);
+                            Variable.SetById(2298, Variable.GetById(986));
+                            Variable.SetById(2299, Variable.GetById(1016));
+                            Variable.SetById(2300, Variable.GetById(1046));
+                            Variable.SetById(2301, Variable.GetById(1106));
+                            Variable.SetById(2302, Variable.GetById(1136));
+                            Variable.SetById(2303, Variable.GetById(1166));
+                            Variable.SetById(2493, Variable.GetById(1076));
+                            Variable.SetById(2494, Variable.GetById(1199));
+                            Variable.SetById(2495, Variable.GetById(1214));
+                            Variable.SetById(2496, Variable.GetById(1217));
+                            Variable.SetById(2497, Variable.GetById(1215));
+                            Variable.SetById(2498, finalDurasiUpStr_1);
+                            Variable.SetById(2499, finalJamSelesai_1);
+                            Variable.SetById(2500, activePerubahan_1);
+                            Variable.SetById(2501, Variable.GetById(2509));
+                            Variable.SetById(2502, finalSuhuAkhir_1);
+                            Variable.SetById(2503, "SUCCESS");
+                            Variable.SetById(2504, true);
+                            Variable.SetById(1209, true);
+                            Variable.SetById(1210, txtSelesai);
+                        } else {
+                            Variable.SetById(1216, getEstimasiSelesai(totalDetikSekarang, activeSisa_1));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

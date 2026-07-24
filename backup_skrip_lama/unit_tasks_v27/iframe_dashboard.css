@@ -1,0 +1,134 @@
+/* ============================================================================
+   STEAMBOX 30 UNIT IFRAME DASHBOARD CONTAINER - VERSION v34
+   Embedding Native Haiwell SCADA Engine Page 5 for 100% Sync & Full Control
+   ============================================================================ */
+
+:root {
+  --primary-bg: #0f172a;
+  --header-bg: #1e293b;
+  --text-color: #f8fafc;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --border-color: #334155;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+}
+
+.iframe-container-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* HEADER BAR */
+.iframe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #60a5fa;
+  letter-spacing: 0.5px;
+}
+
+.brand-sub {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.header-center-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.page-title-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.clock-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-action {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background: #1d4ed8;
+}
+
+.btn-reload {
+  background: #059669;
+}
+
+.btn-reload:hover {
+  background: #047857;
+}
+
+/* MAIN IFRAME AREA */
+.iframe-wrapper {
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 50px);
+  position: relative;
+  background: #000000;
+}
+
+iframe.scada-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+}

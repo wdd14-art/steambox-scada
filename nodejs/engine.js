@@ -8,8 +8,6 @@ const app = express();
 app.use(express.json());
 app.use(express.text()); // To handle raw encrypted text bodies if sent
 
-// Serve static HTML/JS files from public folder (e.g. custom Recipe Browser)
-app.use(express.static(path.join(__dirname, "public")));
 
 // Load Configuration
 const configPath = path.join(__dirname, "config.json");

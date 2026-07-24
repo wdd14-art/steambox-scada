@@ -1,0 +1,481 @@
+// ============================================================================
+// SYSTEM KONTROL MASTER STEAMBOX & MONITOR OUTDOOR (30 UNIT)
+// Versi  : v25 - WHILE LOOP REFACTOR
+// Trigger: Timer 1 Detik (1000ms)
+// Metode : Variable.GetValue / Variable.SetValue untuk akses tag dinamis
+//          di dalam while loop - menggantikan 8000+ baris repetitif v16/v17
+// ============================================================================
+
+// ============================================================================
+// BAGIAN 1: INISIALISASI WAKTU & STATUS TEXT
+// ============================================================================
+var waktuSekarangString = ("0" + ($Hour || 0)).slice(-2) + ":" + ("0" + ($Minute || 0)).slice(-2) + ":" + ("0" + ($Second || 0)).slice(-2);
+var totalDetikSekarang = (($Hour || 0) * 3600) + (($Minute || 0) * 60) + ($Second || 0);
+
+// Auto-Inisialisasi teks status HMI (dapat diedit dari layar SCADA)
+$Sys_Control.txt_status_kosong       = $Sys_Control.txt_status_kosong       || "STEAMBOX KOSONG";
+$Sys_Control.txt_status_preheat      = $Sys_Control.txt_status_preheat      || "SEDANG PEMANASAN";
+$Sys_Control.txt_status_pemanasan    = $Sys_Control.txt_status_pemanasan    || "MENUNGGU MENDIDIH (< 100 C)";
+$Sys_Control.txt_status_pemasakan    = $Sys_Control.txt_status_pemasakan    || "SEDANG MEMASAK (MENDIDIH)";
+$Sys_Control.txt_status_selesai      = $Sys_Control.txt_status_selesai      || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
+$Sys_Control.txt_selesai_preheat     = $Sys_Control.txt_selesai_preheat     || "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN";
+$Sys_Control.txt_siap_preheat        = $Sys_Control.txt_siap_preheat        || "SIAP PEMANASAN - SILAKAN TEKAN START";
+$Sys_Control.txt_siap_cooking        = $Sys_Control.txt_siap_cooking        || "RESEP TERPASANG - SILAKAN TEKAN START";
+$Sys_Control.txt_status_resep        = $Sys_Control.txt_status_resep        || "RESEP TERPASANG - SILAKAN TEKAN START";
+$Sys_Control.txt_preheat_paused      = $Sys_Control.txt_preheat_paused      || "PRE-HEAT DIHENTIKAN (PAUSED)";
+$Sys_Control.txt_status_paused       = $Sys_Control.txt_status_paused       || "MESIN BERHENTI (PAUSED)";
+$Sys_Control.txt_status_maintenance  = $Sys_Control.txt_status_maintenance  || "MODE MAINTENANCE (KONTROL MANUAL)";
+$Sys_Control.txt_status_offline      = $Sys_Control.txt_status_offline      || "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
+$Sys_Control.txt_status_disable      = $Sys_Control.txt_status_disable      || "UNIT TIDAK DIPAKAI";
+$Sys_Control.txt_status_sensor_error = $Sys_Control.txt_status_sensor_error || "ERROR SENSOR (OPENLOOP/HHHH)";
+$Sys_Control.txt_sensor_error        = $Sys_Control.txt_sensor_error        || "proses memasak, tetapi sensor error, cek segera !";
+
+// Variabel lokal teks status (dibaca sekali, dipakai di loop)
+var txtKosong             = $Sys_Control.txt_status_kosong;
+var txtPreheat            = $Sys_Control.txt_status_preheat;
+var txtPemanasan          = $Sys_Control.txt_status_pemanasan;
+var txtPemasakan          = $Sys_Control.txt_status_pemasakan;
+var txtSelesai            = $Sys_Control.txt_status_selesai;
+var txtSelesaiPreheat     = $Sys_Control.txt_selesai_preheat;
+var txtSiapPreheat        = $Sys_Control.txt_siap_preheat;
+var txtSiapCooking        = $Sys_Control.txt_siap_cooking;
+var txtStatusResep        = $Sys_Control.txt_status_resep;
+var txtPreheatPaused      = $Sys_Control.txt_preheat_paused;
+var txtPaused             = $Sys_Control.txt_status_paused;
+var txtMaintenance        = $Sys_Control.txt_status_maintenance;
+var txtOffline            = $Sys_Control.txt_status_offline;
+var txtDisable            = $Sys_Control.txt_status_disable;
+var txtSensorError        = $Sys_Control.txt_status_sensor_error;
+var txtSensorErrorCooking = $Sys_Control.txt_sensor_error;
+var tempErrorLimit        = $Sys_Control.temp_error_limit || 30000;
+
+// Reset trigger log global
+if ($Sys_Control.trigger_log) {
+    $Sys_Control.trigger_log = false;
+}
+
+// ============================================================================
+// BAGIAN 2: HELPER FUNCTIONS
+// ============================================================================
+function formatTime(totalSeconds) {
+    var h = Math.floor(totalSeconds / 3600);
+    var m = Math.floor((totalSeconds % 3600) / 60);
+    var s = totalSeconds % 60;
+    return ("0" + h).slice(-2) + ":" + ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2);
+}
+
+function getEstimasiSelesai(totalDetikSekarang, sisa) {
+    var est = (totalDetikSekarang + sisa) % 86400;
+    var he = Math.floor(est / 3600);
+    var me = Math.floor((est % 3600) / 60);
+    var se = est % 60;
+    return ("0" + he).slice(-2) + ":" + ("0" + me).slice(-2) + ":" + ("0" + se).slice(-2);
+}
+
+// ============================================================================
+// BAGIAN 3: MONITOR LUAR - Array untuk TOP 5 unit sisa waktu terpendek
+// ============================================================================
+var runningRooms = [];
+
+// ============================================================================
+// BAGIAN 4: WHILE LOOP UTAMA - PROSES SEMUA UNIT SB1 s.d. SB30
+// ============================================================================
+// CATATAN PENTING FORMAT TAG:
+// - Variable.GetValue("sb_N.field")    -> baca data group tag  (prefix sb_N. dengan underscore)
+// - Variable.GetValue("sbN.field")     -> baca device tag      (prefix sbN. tanpa underscore)
+// - Variable.SetValue("sb_N.field", v) -> tulis data group tag
+// - JANGAN gunakan simbol dollar di komentar -- preprocessor Haiwell memindai seluruh file
+// ============================================================================
+
+var unitIndex = 1;
+while (unitIndex <= 30) {
+    var n   = unitIndex;
+    var pfx = "sb_" + n + ".";   // prefix data group : sb_1.status_banner
+    var dev = "sb" + n + ".";    // prefix device tag  : sb1.run_stop, sb1.temp
+
+    // ============================================================
+    // BACA SEMUA TAG UNIT N
+    // ============================================================
+    var t_reset          = Variable.GetValue(pfx + "reset");
+    var t_run_stop       = Variable.GetValue(dev + "run_stop");
+    var t_commStatus     = Variable.GetValue(dev + "_commStatus");
+    var t_commOperation  = Variable.GetValue(dev + "_commOperation");
+    var t_temp           = Variable.GetValue(dev + "temp");
+    var t_maintenance    = Variable.GetValue(pfx + "maintenance_mode");
+    var t_mode_preheat   = Variable.GetValue(pfx + "mode_preheat");
+    var t_status_resep   = Variable.GetValue(pfx + "status_resep");
+    var t_status_kosong  = Variable.GetValue(pfx + "status_kosong");
+    var t_status_selesai = Variable.GetValue(pfx + "status_selesai");
+    var t_target_menit   = Variable.GetValue(pfx + "target_menit")        || 0;
+    var t_adjust_menit   = Variable.GetValue(pfx + "adjust_menit")        || 0;
+    var t_sisa_detik     = Variable.GetValue(pfx + "sisa_detik_masak")    || 0;
+    var t_perubahan      = Variable.GetValue(pfx + "perubahan_waktu")     || 0;
+    var t_flag_start     = Variable.GetValue(pfx + "flag_init_start")     || 0;
+    var t_flag_masak     = Variable.GetValue(pfx + "flag_init_masak")     || 0;
+    var t_detik_panas    = Variable.GetValue(pfx + "total_detik_pemanasan") || 0;
+
+    // ============================================================
+    // BLOK RESET (Tugas Baru / Reset oleh Operator)
+    // ============================================================
+    if (t_reset) {
+        Variable.SetValue(pfx + "status_selesai",        false);
+        Variable.SetValue(pfx + "flag_init_masak",       0);
+        Variable.SetValue(pfx + "total_detik_pemanasan", 0);
+        Variable.SetValue(pfx + "sisa_detik_masak",      0);
+        Variable.SetValue(pfx + "target_menit",          0);
+        Variable.SetValue(pfx + "adjust_menit",          0);
+        Variable.SetValue(pfx + "tampil_jam_mulai",      "--:--:--");
+        Variable.SetValue(pfx + "tampil_jam_masak",      "--:--:--");
+        Variable.SetValue(pfx + "tampil_jam_selesai",    "--:--:--");
+        Variable.SetValue(pfx + "tampil_durasi_aktual",  "--");
+        Variable.SetValue(pfx + "durasi_aktual_up",      "--");
+        Variable.SetValue(pfx + "tampil_pemanasan",      "--:--:--");
+        Variable.SetValue(pfx + "suhu_awal",             0);
+        Variable.SetValue(pfx + "suhu_akhir",            0);
+        Variable.SetValue(pfx + "perubahan_waktu",       0);
+        Variable.SetValue(pfx + "status_kosong",         true);
+        Variable.SetValue(pfx + "status_resep",          false);
+        Variable.SetValue(pfx + "mode_preheat",          false);
+        Variable.SetValue(pfx + "flag_init_start",       0);
+        Variable.SetValue(pfx + "status_banner",         txtKosong);
+        Variable.SetValue("recipe_kode."   + n,          "");
+        Variable.SetValue("recipe_nama."   + n,          "--");
+        Variable.SetValue("recipe_versi."  + n,          0);
+        Variable.SetValue("recipe_warna."  + n,          "");
+        Variable.SetValue("recipe_qty."    + n,          0);
+        Variable.SetValue("recipe_batch."  + n,          0);
+        Variable.SetValue("recipe_trolly." + n,          "");
+        Variable.SetValue(pfx + "reset",                 false);
+
+    } else {
+        // ============================================================
+        // BLOK ADJUST WAKTU (adjust_menit dari operator HMI)
+        // ============================================================
+        var activeSisa      = t_sisa_detik;
+        var activePerubahan = t_perubahan;
+
+        if (t_adjust_menit !== 0) {
+            var adjustSecs = t_adjust_menit * 60;
+            activeSisa = activeSisa + adjustSecs;
+            if (activeSisa < 0) { activeSisa = 0; }
+            Variable.SetValue(pfx + "sisa_detik_masak", activeSisa);
+            activePerubahan = activePerubahan + t_adjust_menit;
+            Variable.SetValue(pfx + "perubahan_waktu",  activePerubahan);
+            Variable.SetValue(pfx + "adjust_menit",     0);
+        }
+
+        // ============================================================
+        // CEK STATUS KONEKSI & MODE UNIT
+        // ============================================================
+        if (!t_commOperation) {
+            // UNIT TIDAK DIPAKAI (Disabled)
+            Variable.SetValue(pfx + "status_banner",    txtDisable);
+            Variable.SetValue(pfx + "status_pemanasan", false);
+            Variable.SetValue(pfx + "status_pemasakan", false);
+            Variable.SetValue(pfx + "status_selesai",   false);
+            Variable.SetValue(pfx + "sensor_error",     false);
+
+        } else if (!t_commStatus) {
+            // DEVICE OFFLINE
+            Variable.SetValue(pfx + "status_banner",    txtOffline);
+            Variable.SetValue(pfx + "status_pemanasan", false);
+            Variable.SetValue(pfx + "status_pemasakan", false);
+            Variable.SetValue(pfx + "status_selesai",   false);
+            Variable.SetValue(pfx + "sensor_error",     false);
+
+        } else if (t_maintenance) {
+            // MODE MAINTENANCE
+            Variable.SetValue(pfx + "status_banner", txtMaintenance);
+            Variable.SetValue(pfx + "sensor_error",  false);
+
+        } else {
+            // UNIT AKTIF & TERHUBUNG
+            var isSensorError = (t_temp >= tempErrorLimit);
+
+            if (Number(t_run_stop) === 1) {
+                // ---- MESIN BERHENTI / PAUSED ----
+                Variable.SetValue(pfx + "status_pemanasan", false);
+                Variable.SetValue(pfx + "status_pemasakan", false);
+
+                if (t_mode_preheat || t_status_resep) {
+                    Variable.SetValue(pfx + "status_kosong", false);
+                    t_status_kosong = false;
+                }
+                if (!t_mode_preheat && !t_status_resep && t_target_menit === 0 && activeSisa === 0 && !t_status_selesai && t_detik_panas === 0) {
+                    Variable.SetValue(pfx + "status_kosong", true);
+                    t_status_kosong = true;
+                }
+
+                if (t_status_kosong) {
+                    Variable.SetValue(pfx + "status_banner", txtKosong);
+                } else if (t_status_selesai) {
+                    Variable.SetValue(pfx + "status_banner", txtSelesai);
+                } else if (!t_status_kosong && !t_status_selesai && !t_mode_preheat && !t_status_resep) {
+                    Variable.SetValue(pfx + "status_banner", txtSelesaiPreheat);
+                } else {
+                    if (t_mode_preheat) {
+                        if (t_detik_panas === 0) {
+                            Variable.SetValue(pfx + "status_banner", txtSiapPreheat);
+                        } else {
+                            Variable.SetValue(pfx + "status_banner", txtPreheatPaused);
+                        }
+                    } else {
+                        if (t_status_resep && activeSisa === 0) {
+                            Variable.SetValue(pfx + "status_banner", txtStatusResep);
+                        } else {
+                            Variable.SetValue(pfx + "status_banner", txtPaused);
+                        }
+                    }
+                }
+
+                // [v17 FIX] Guard: kurangi sisa saat berhenti jika flag_init_start masih ON & belum selesai
+                if (t_flag_start === 1 && Number(t_status_selesai) === 0) {
+                    var guardSisa = activeSisa;
+                    if (guardSisa > 0) {
+                        guardSisa = guardSisa - 1;
+                        Variable.SetValue(pfx + "sisa_detik_masak",     guardSisa);
+                        Variable.SetValue(pfx + "tampil_durasi_aktual", formatTime(guardSisa));
+                    }
+                }
+
+            } else {
+                // ---- MESIN BERJALAN (run_stop === 0) ----
+                Variable.SetValue(pfx + "status_kosong", false);
+
+                if (t_mode_preheat) {
+                    // ===== MODE PRE-HEAT =====
+                    Variable.SetValue(pfx + "status_pemasakan", false);
+                    Variable.SetValue(pfx + "status_banner",    txtPreheat);
+
+                    if (t_flag_start === 0) {
+                        Variable.SetValue(pfx + "tampil_jam_mulai",     "--:--:--");
+                        Variable.SetValue(pfx + "tampil_jam_masak",     "--:--:--");
+                        Variable.SetValue(pfx + "tampil_jam_selesai",   "--:--:--");
+                        Variable.SetValue(pfx + "tampil_durasi_aktual", "--");
+                        Variable.SetValue(pfx + "durasi_aktual_up",     "--");
+                        Variable.SetValue(pfx + "flag_init_start",      1);
+                        t_flag_start    = 1;
+                        activePerubahan = 0;
+                        Variable.SetValue(pfx + "perubahan_waktu",      0);
+                    }
+
+                    var newDetikPanas = t_detik_panas + 1;
+                    Variable.SetValue(pfx + "total_detik_pemanasan", newDetikPanas);
+                    Variable.SetValue(pfx + "tampil_pemanasan",      formatTime(newDetikPanas));
+                    Variable.SetValue(pfx + "status_pemanasan",      true);
+
+                    if (t_temp > 1000) {
+                        // Preheat selesai (>100 C) - STOP otomatis
+                        Variable.SetValue(dev + "run_stop",         1);
+                        Variable.SetValue(pfx + "status_pemanasan", false);
+                        Variable.SetValue(pfx + "suhu_akhir",       t_temp);
+                        Variable.SetValue(pfx + "flag_init_start",  0);
+                        Variable.SetValue(pfx + "mode_preheat",     false);
+                    }
+
+                } else {
+                    // ===== MODE COOKING =====
+                    if (t_flag_start === 0) {
+                        Variable.SetValue(pfx + "status_selesai",        false);
+                        Variable.SetValue(pfx + "tampil_jam_mulai",      waktuSekarangString);
+                        Variable.SetValue(pfx + "tampil_jam_masak",      "--:--:--");
+                        Variable.SetValue(pfx + "tampil_jam_selesai",    "--:--:--");
+                        Variable.SetValue(pfx + "flag_init_start",       1);
+                        t_flag_start    = 1;
+                        activeSisa      = t_target_menit * 60;
+                        Variable.SetValue(pfx + "sisa_detik_masak",      activeSisa);
+                        Variable.SetValue(pfx + "total_detik_pemanasan", 0);
+                        Variable.SetValue(pfx + "flag_init_masak",       0);
+                        t_flag_masak    = 0;
+                        Variable.SetValue(pfx + "suhu_awal",             t_temp);
+                        activePerubahan = 0;
+                        Variable.SetValue(pfx + "perubahan_waktu",       0);
+                    }
+
+                    if (t_temp < 1000) {
+                        // --- HEATING PHASE (< 100 C) ---
+                        Variable.SetValue(pfx + "status_pemanasan", true);
+                        Variable.SetValue(pfx + "status_pemasakan", false);
+                        Variable.SetValue(pfx + "status_banner",    txtPemanasan);
+
+                        var newHeatSecs = t_detik_panas + 1;
+                        Variable.SetValue(pfx + "total_detik_pemanasan", newHeatSecs);
+                        Variable.SetValue(pfx + "tampil_pemanasan",      formatTime(newHeatSecs));
+                        Variable.SetValue(pfx + "tampil_durasi_aktual",  formatTime(activeSisa));
+
+                        var rawUpHeat   = ((t_target_menit + activePerubahan) * 60) - activeSisa;
+                        var detikUpHeat = rawUpHeat < 0 ? 0 : rawUpHeat;
+                        Variable.SetValue(pfx + "durasi_aktual_up", formatTime(detikUpHeat));
+
+                        if (t_flag_masak === 1) {
+                            var estSelesaiHeat = getEstimasiSelesai(totalDetikSekarang, activeSisa);
+                            Variable.SetValue(pfx + "tampil_jam_selesai", estSelesaiHeat);
+                            runningRooms.push({
+                                name:          n,
+                                sisa:          activeSisa,
+                                tampilSisa:    formatTime(activeSisa),
+                                tampilSelesai: estSelesaiHeat
+                            });
+                        } else {
+                            Variable.SetValue(pfx + "tampil_jam_selesai", "--:--:--");
+                        }
+
+                    } else {
+                        // --- BOILING PHASE (>= 100 C) ---
+                        Variable.SetValue(pfx + "status_pemanasan", false);
+                        Variable.SetValue(pfx + "status_pemasakan", true);
+                        Variable.SetValue(pfx + "status_banner",    txtPemasakan);
+
+                        if (t_flag_masak === 0) {
+                            Variable.SetValue(pfx + "tampil_jam_masak", waktuSekarangString);
+                            Variable.SetValue(pfx + "flag_init_masak",  1);
+                            t_flag_masak = 1;
+                        }
+
+                        if (activeSisa > 0) {
+                            activeSisa = activeSisa - 1;
+                            Variable.SetValue(pfx + "sisa_detik_masak", activeSisa);
+                        }
+
+                        Variable.SetValue(pfx + "tampil_durasi_aktual", formatTime(activeSisa));
+                        var rawUpBoil   = ((t_target_menit + activePerubahan) * 60) - activeSisa;
+                        var detikUpBoil = rawUpBoil < 0 ? 0 : rawUpBoil;
+                        Variable.SetValue(pfx + "durasi_aktual_up", formatTime(detikUpBoil));
+
+                        if (activeSisa <= 0) {
+                            // ===== SELESAI MEMASAK =====
+                            activeSisa = 0;
+                            Variable.SetValue(pfx + "sisa_detik_masak",     0);
+                            Variable.SetValue(pfx + "tampil_durasi_aktual", formatTime(0));
+
+                            var finalDurasiUpStr   = formatTime((t_target_menit + activePerubahan) * 60);
+                            var finalJamSelesaiStr = getEstimasiSelesai(totalDetikSekarang, 0);
+                            var finalSuhuAkhir     = t_temp;
+
+                            Variable.SetValue(pfx + "durasi_aktual_up",  finalDurasiUpStr);
+                            Variable.SetValue(pfx + "tampil_jam_selesai",finalJamSelesaiStr);
+                            Variable.SetValue(pfx + "suhu_akhir",        finalSuhuAkhir);
+                            Variable.SetValue(dev + "run_stop",          1);
+                            Variable.SetValue(pfx + "status_pemasakan",  false);
+                            Variable.SetValue(pfx + "flag_init_start",   0);
+                            Variable.SetValue(pfx + "flag_init_masak",   0);
+
+                            // === TRANSFER DATA KE data_group_master ===
+                            $data_group_master.no_steambox      = n;
+                            $data_group_master.kode             = Variable.GetValue("recipe_kode."   + n);
+                            $data_group_master.nama             = Variable.GetValue("recipe_nama."   + n);
+                            $data_group_master.versi            = Variable.GetValue("recipe_versi."  + n);
+                            $data_group_master.batch            = Variable.GetValue("recipe_batch."  + n);
+                            $data_group_master.warna            = Variable.GetValue("recipe_warna."  + n);
+                            $data_group_master.qty              = Variable.GetValue("recipe_qty."    + n);
+                            $data_group_master.trolly           = Variable.GetValue("recipe_trolly." + n);
+                            $data_group_master.durasi           = t_target_menit;
+                            $data_group_master.jam_mulai        = Variable.GetValue(pfx + "tampil_jam_mulai");
+                            $data_group_master.durasi_pemanasan = Variable.GetValue(pfx + "tampil_pemanasan");
+                            $data_group_master.jam_masak        = Variable.GetValue(pfx + "tampil_jam_masak");
+                            $data_group_master.durasi_aktual    = finalDurasiUpStr;
+                            $data_group_master.jam_selesai      = finalJamSelesaiStr;
+                            $data_group_master.perubahan_waktu  = activePerubahan;
+                            $data_group_master.suhu_awal        = Variable.GetValue(pfx + "suhu_awal");
+                            $data_group_master.suhu_akhir       = finalSuhuAkhir;
+                            $data_group_master.status           = "SUCCESS";
+                            $Sys_Control.trigger_log            = true;
+
+                            Variable.SetValue(pfx + "status_selesai", true);
+
+                        } else {
+                            var estSelesaiBoil = getEstimasiSelesai(totalDetikSekarang, activeSisa);
+                            Variable.SetValue(pfx + "tampil_jam_selesai", estSelesaiBoil);
+                            runningRooms.push({
+                                name:          n,
+                                sisa:          activeSisa,
+                                tampilSisa:    formatTime(activeSisa),
+                                tampilSelesai: estSelesaiBoil
+                            });
+                        }
+                    }
+                }
+
+                // Alarm Sensor Error
+                if (isSensorError) {
+                    Variable.SetValue(pfx + "sensor_error", true);
+                    if (Number(t_run_stop) === 0 && t_flag_start === 1) {
+                        Variable.SetValue(pfx + "status_banner", txtSensorErrorCooking);
+                    } else {
+                        Variable.SetValue(pfx + "status_banner", txtSensorError);
+                    }
+                } else {
+                    Variable.SetValue(pfx + "sensor_error", false);
+                }
+            }
+        }
+    }
+
+    unitIndex = unitIndex + 1; // Lanjut unit berikutnya (bukan i++, sesuai aturan Haiwell)
+}
+// ============================================================================
+// END WHILE LOOP
+// ============================================================================
+
+
+// ============================================================================
+// BAGIAN 5: SORTING MONITOR LUAR (TOP 5 unit sisa waktu terpendek)
+// ============================================================================
+runningRooms.sort(function(a, b) {
+    return a.sisa - b.sisa;
+});
+
+// Slot 1
+if (runningRooms.length >= 1) {
+    $Sys_Control.monitor_room_1    = runningRooms[0].name;
+    $Sys_Control.monitor_sisa_1    = runningRooms[0].tampilSisa;
+    $Sys_Control.monitor_selesai_1 = runningRooms[0].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_1    = "--";
+    $Sys_Control.monitor_sisa_1    = "--";
+    $Sys_Control.monitor_selesai_1 = "--";
+}
+
+// Slot 2
+if (runningRooms.length >= 2) {
+    $Sys_Control.monitor_room_2    = runningRooms[1].name;
+    $Sys_Control.monitor_sisa_2    = runningRooms[1].tampilSisa;
+    $Sys_Control.monitor_selesai_2 = runningRooms[1].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_2    = "--";
+    $Sys_Control.monitor_sisa_2    = "--";
+    $Sys_Control.monitor_selesai_2 = "--";
+}
+
+// Slot 3
+if (runningRooms.length >= 3) {
+    $Sys_Control.monitor_room_3    = runningRooms[2].name;
+    $Sys_Control.monitor_sisa_3    = runningRooms[2].tampilSisa;
+    $Sys_Control.monitor_selesai_3 = runningRooms[2].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_3    = "--";
+    $Sys_Control.monitor_sisa_3    = "--";
+    $Sys_Control.monitor_selesai_3 = "--";
+}
+
+// Slot 4
+if (runningRooms.length >= 4) {
+    $Sys_Control.monitor_room_4    = runningRooms[3].name;
+    $Sys_Control.monitor_sisa_4    = runningRooms[3].tampilSisa;
+    $Sys_Control.monitor_selesai_4 = runningRooms[3].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_4    = "--";
+    $Sys_Control.monitor_sisa_4    = "--";
+    $Sys_Control.monitor_selesai_4 = "--";
+}
+
+// Slot 5
+if (runningRooms.length >= 5) {
+    $Sys_Control.monitor_room_5    = runningRooms[4].name;
+    $Sys_Control.monitor_sisa_5    = runningRooms[4].tampilSisa;
+    $Sys_Control.monitor_selesai_5 = runningRooms[4].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_5    = "--";
+    $Sys_Control.monitor_sisa_5    = "--";
+    $Sys_Control.monitor_selesai_5 = "--";
+}

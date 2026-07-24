@@ -1,0 +1,146 @@
+**--type boolean:
+status_kosong -> cooking mode
+status_pemanasan -> cooking mode
+status_pemasakan -> cooking mode
+status_selesai -> cooking mode
+--**
+**--type string:
+txt_status_preheat -> preheat mode
+txt_status_kosong -> cooking mode
+txt_status_pemanasan -> cooking mode
+txt_status_pemasakan -> cooking mode
+txt_status_selesai -> cooking mode
+txt_status_maintenance -> maintenance_mode
+txt_status_disable -> commOperation 
+txt_status_offline -> commStatus
+txt_status_sensor_error -> sensor_error
+txt_status_selesai_preheat
+txt_status_siap_preheat
+txt_status_siap_cooking
+txt_status_preheat_paused
+txt_status_paused
+--**
+
+-mode pre heat/pemanasan
+-mode cooking/memasak
+-mode maintenance, jika aktif maka bypas skrip
+
+1. saat start up commOperation = false
+kemudian saya aktifkan, kenapa status banner tidak berubah, masih muncul device offline mcb trip/device rusak ?
+2. mode pre heat itu hanya durasi pemanasan saja yg jalan, kenapa jam mulai jam selesai ikut muncul ?
+jam mulai, jam masak, jam selesai itu hanya untuk mode cooking.
+3. sebaiknya reset ini di pisah, bukan ambil dr status_kosong. Akan sy buatkan tag baru khusus reset.
+
+**workflow proses produksi steambox : 
+1. saat commOperatin=0 status banner txt_status_disable = unit tidak dipakai, kemudian ketika commOperatin=1 maka periksalah commStatus, 	
+	- jika commStatus=1/connected maka status banner "Unit online, Steambox kosong/ready" sekaligus perintah ke status_kosong = 1 status banner txt_status_kosong = "Unit online, Steambox kosong/ready".
+	- jika commStatus=0/disconnected maka status banner "Unit offline, Periksa Unit".
+2. jam 6.45 operator tekan tombol pre heat, status banner txt_status_siap_preheat = "siap pemanasan silakan tekan start".
+ingat ini "hanya durasi pamanasan yang hitung maju". Jam mulai, jam masak, jam selesai tetap "--:--:--".
+3. setelah suhu >100 otomatis perintah stop. status banner txt_selesai_preheat = pemanasan selesai,siap untuk memasak.
+4. operator masukkan produk ke steambox
+5. operator tekan tombol tugas baru (di skrip sekaligus perintah preheat=0 dan reset untuk semua parameter termasuk detail produk dari recipe dan detail proses jam mulai,jam masak,jam selesai, durasi pemanasan, durasi aktual,perubahan waktu).
+6. operator pilih resep kemudian tekan transfer resep 
+( d skrip transfer resep, kamu ikutkan status banner = txt_siap_cooking = "resep sudah siap, silakan tekan start" )
+7. tepat setelah operator tekan start baru mulai catat jam mulai ( hanya sekali )
+8. cek temp 	- jika <1000 maka status_pemanasan=true dan txt_status_pemanasan = tunggu mendidih sampai 100 derajat celcius. 
+		- jika >1000 maka status_pemasakan=true dan txt_status_pemasakan = "proses memasak sedang berlangsung" -> catat jam masak dan jam selesai
+		durasi aktual mulai hitung mundur sesuai target menit.
+9. jika operator ada perubahan waktu maka jam selesai otomatis mengikuti
+8. setelah durasi aktual(hitung mundur) = pemasakan/target menit maka perintah stop, status banner txt_status_selesai=proses selesai, tekan tugas baru untuk bacth selanjutnya
+
+
+
+
+**Bug Logika : 
+1. Saya minta tombol reset ini berdiri sendiri di luar skrip logika proses, nanti saya buat safetey sendiri di scadanya.
+	untuk reset ini km baru detail proses saja yg kamu reset, sementara detail produk kok belum ikut ter reset ?
+2. tombol $sb_3.maintenance_mode terkunci true/maintenance tidak bisa saya set ke false/normal
+3. pada monitor room, saya mau nomor steambok saja misal 1,2,3 dst, jangan dalam bentuk string, km bisa ambil dari $recipe.pilih_steambox sesuai dengan steambox yang aktif memasak.
+4. saat saya tekan preheat=1/true status banner tetap menampilkan steambox kosong, harusnya status banner txt_status_siap_preheat = "siap pemanasan silakan tekan start".
+	oiya saat pemanasan sudah selesai status banner -> txt_status_selesai_preheat="pemanasan selesai,siap untuk memasak", 
+	-> otomatis perintah balik mode_preheat=0.-> status banner txt_status_siap_cooking= siap memasak. 
+	( perlu tambah 2 tag lagi untuk status resep sudah d transfer, status_resep boolean dan txt_status_resep string )
+5. untuk perubahan waktu, ketika sy ada perubahan pertama oke sudah sesuai, tapi ketika ada perubahan kedua, maka otomatis akan menambah, misal pertama saya -1, kedua saya -1 lagi, eh ternyata lngsung di baca -2.
+6. Jam selesai itu berdasarkan dari jam masak, bukan dari jam mulai.
+7. ketika proses sudah selesai, otomatis perintah stop, suhu turun, nah ini status malah balik lagi ke pemanasan, harusnya d kunci di status selesai=1.
+	setelah itu operator tekan reset untuk mulai tugas baru lagi.
+** bug logika :
+1. saat selesai pemanasan status banner harusnya tetap txt_selesai_preheat bukan status_kosong atau km ambil dari mode_preheat=0 dengan status banner "pemanasan selesai,siap untuk memasak".
+2.ketika sudah proses memasak kemudian ada penurunan suhu di bawah, km sudah benar durasi pemanasan bertambah diikuti jam selesai juga bertambah.
+	- jam selesai berhenti count up ketika suhu sdh di atas 1000 lagi ini sdh benar.
+	- saat terjadi penurunan suhu, tampilan di monitor room hilang, harusnya tetap muncul karena proses cooking sudah di mulai,
+	  mungkin kamu bisa pakai logika status_pemasakan=1 untuk mengunci tampilan di monitor tetap tampil meskipun trjadi penurunan suhu
+	  tinggal sesuaikan lagi dengan filter mana yg lbh cepat selesai di antara steambok yang status_pemasakan=1.
+
+**Perbaikan logika :
+1. Pernyataan kamu tentang ini -> Ini menjamin bahwa begitu proses memasak dimulai (mendidih pertama kali), 
+ruang tersebut tidak akan pernah hilang dari monitor luar walaupun suhunya turun mendingin kembali. 
+Jam perkiraan selesai juga otomatis bertambah (mundur) seiring lamanya durasi pemanasan ulang. Ini berlaku juga ketika sensor_error, 
+karena proses memasak tetap berjalan sesuai dengan target waktu yang d tentukan.
+2. Untuk durasi aktual sepertinya perlu 1 internal tag lagi untuk hitung maju, ini sebagai buffer ketika ada perubahan waktu +/-.
+	dan juga untuk saya buat laporan data log produksinya. Jadi ada 2, hitung maju dan hitung mundur. hitung maju ini yang akan di gunakan utk data log produksi.
+3. bagaimana cara kamu mengatasi di perubahan waktu jika ada lebih dari 1x adjust_menit ?
+
+
+**Perbaikan logika skrip :
+1. Implementasi: Karena nilai suhu sensor error (temp >= 30000) jauh di atas batas mendidih (>= 1000), 
+skrip secara otomatis mengklasifikasikan kondisi ini sebagai fase Boiling (memasak). 
+Jam masak dan jam selesai tetap tercatat, durasi aktual hitung mundur tetap berjalan, 
+dan nama ruang Steambox tetap tampil konsisten di monitor luar ruangan tanpa terputus. -> ini nanti di status banner kamu bisa tambah logika sensor_error=true, 
+kemudian saya tambah lagi internal tag txt_sensor_error dengan pesan "proses memasak, tetapi sensor error, cek segera !".
+2. Perlakukan durasi_aktual (Format hh:mm:ss) dan durasi_aktual_up (Format hh:mm:ss) sama persis menyesuaikan adjust menit.
+3. Sudah benar, tepat sekali.
+
+
+semua txt_ harus kamu buat default d skrip, nanti tinggal saya baca di hmi, 
+kemudian jika perlu nanti bisa di ubah/custom. saya sudah buatkan tampilan khusus untuk edit semua txt_. 
+Sekarang kamu fokus lengkapi dokumen proyek. dan saya minta tolong kamu buatkan gambar topology sistem seperti di bawah ini :
+30 unit autonics tk4m modbus rs485 -> TGW-735CR ( port 502 unit 1-10, port 503 unit 11-20, port 504 unit 21-30 ) -> modbus TCP/IP Haiwell Cloud Scada -> WebAPi -> Node.js -> laravel
+
+
+
+
+1. jam selesai sudah sesuai dengan target_menit, tetapi juga harus mengikuti perubahan waktu dan jeda saat pause jika ada.
+2. tampil_durasi_aktual dan durasi_aktual_up jika tidak ada perubahan maka sesuai dengan target_waktu, 
+tetapi jika ada perubahan maka harus mengikuti perubahan waktu baik itu +/-.
+
+
+"Saat Pemanasan (Heating): sisa_detik_masak bernilai penuh sesuai target (plus/minus adj). 
+Seiring waktu pemanasan bertambah (waktu sekarang bertambah), 
+Jam Selesai akan ikut bergeser maju secara dinamis.
+Saat Memasak (Boiling): Waktu sekarang bertambah 1 detik, 
+tetapi sisa_detik_masak berkurang 1 detik, 
+sehingga Jam Selesai terkunci konstan dan stabil.
+Saat Pause/Jeda: Waktu sekarang bertambah (karena jam sistem terus berjalan), 
+tetapi sisa_detik_masak berhenti menghitung mundur, 
+sehingga Jam Selesai otomatis bergeser maju mengikuti durasi jeda/pause Anda.
+Saat Input +/-: sisa_detik_masak dan perubahan_waktu langsung berubah seketika, 
+sehingga Jam Selesai langsung ter-update di layar secara instan baik saat mesin berjalan maupun saat pause." 
+Perlu saya konfirmasi apakah kamu sudah bedakan durasi pemanasan saat mode preHeat dan mode cooking ? 
+karena mode preHeat itu hanya di lakukan 1 kali saja setiap pagi sebelum proses produksi masal dimulai, 
+tujuannya adalah untuk menstrerilkan steambox agar siap untuk masuk produk, produknya adalah makanan jadi harus steril. 
+Dan status_kosong, status_pemansan, status_pemasakan, status_selesai bertype boolean adalah khusus untuk mode cooking. paham kamu ?
+
+machine code 	  5751428633031624442
+webAPI PrivateKey 1705119a5c2ec5e3
+
+kamu psti terkecoh dengan AAAA 50 karakter ini salah saya belum binding ke register $sb_2.status_banner
+kamu fokus ini saja "masih ada error bug di jam selesai untuk sb2. km cek video test_4_bug_jam_selesai"
+
+
+jadi ada 2 mode, pre heat dan cooking, pre heat hanya di lakukan 1 kali saja setiap pagi sebelum proses massal dimulai. 
+saat mode pre heat hanya durasi pemanasan saja yg count up, kemudian saat masuk mode cooking maka ketika start, 
+catat jam mulai, jika temp < 100°C maka masuk step pemanasan status_pemanasan=1 count up tampil_durasi_pemanasan dari 0. 
+Jika temp > 100°C maka masuk step pemasakan status_pemasakan=1, catat jam_masak dan jam_selesai, 
+count up durasi_aktual_up dan count down tampil-durasi_aktual sesuai target. 
+jika adjust_menit ( +/_ ) catat di perubahan_waktu ( dinamis bisa dilakukan di step pemanasan/pemasakan sesuai operator ), 
+maka tampil_durasi_aktual, durasi_aktual_up, jam_selesai menyesuaikan perubahan itu. 
+jika di tengah step pemanasan/pemasakan di stop/paused maka hanya jam_selesai yang menyesuaikan count up selama jeda paused itu, 
+kemudian setelah start lagi maka akumulasi dari jeda waktu di tambahkan ke tampil_durasi_aktual dan durasi_aktual_up yang tetap berjalan normal count up, 
+sehingga didapatkan durasi aktual yang riil ketika ada perubahan waktu/jeda paused.
+
+
+sebenarnya perbedaan kamu (chatGPT) dan anti gravity+gemini agent cuma 1. kamu (chatGPT) cuma tidak punya akses langsung ke laptop/pc.
+
+

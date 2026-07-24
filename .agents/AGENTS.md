@@ -4,6 +4,11 @@ Dokumen ini adalah acuan utama dan aturan ketat (*behavioral rules*) untuk penge
 
 ---
 
+## 0. Panduan & Riwayat Proyek Steambox (30 Unit)
+*   **DOKUMEN RIWAYAT TERBARU:** Untuk ringkasan status proyek terbaru (v27), pemetaan register fisik SCADA, pemisahan Preheat & Cooking, tampilan countdown `tampil_durasi_aktual` vs count-up `durasi_aktual_up`, serta konversi suhu float, **baca dokumen [RIWAYAT_DAN_PANDUAN_PROYEK_STEAMBOX.md](file:///d:/Project/PTSIAP/Haiwell/Runtime/Demo2_hp_SB16/RIWAYAT_DAN_PANDUAN_PROYEK_STEAMBOX.md)**.
+
+---
+
 ## 1. Aturan Emas: Penulisan Tag Langsung (Direct Tag Writing)
 
 *   **ATURAN UTAMA:** **Selalu gunakan penulisan tag langsung menggunakan simbol `$`** (misalnya `$sb_1.target_menit`, `$Sys_Control.txt_status_kosong`) untuk semua interaksi baca/tulis variabel.
@@ -30,7 +35,6 @@ Dokumen ini adalah acuan utama dan aturan ketat (*behavioral rules*) untuk penge
 *   **LARANGAN:** Jangan menggunakan fungsi `Variable.SetValue("recipe_kode.1", ...)` karena tidak terikat (unbound) secara fisik dan menyebabkan kegagalan transfer data resep.
 *   **ALASAN:** Preprosesor Haiwell SCADA memproses simbol `$` dan seluruh nama tag (termasuk titik dan nomor unit seperti `$recipe_kode.1`) sebelum kode JavaScript dikompilasi oleh parser standar. Oleh karena itu, notasi dot langsung ini 100% didukung, berhasil dikompilasi, dan terbukti sukses melakukan transfer data resep secara fisik.
 
-
 ---
 
 ## 4. Filosofi Poka-Yoke & Integrasi Status Banner
@@ -50,7 +54,7 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 ## 5. Perbandingan Ketat Tipe Data HMI (`===`)
 
 *   **ATURAN UTAMA:** Untuk semua variabel HMI tipe Boolean (`BOOL` seperti `run_stop` atau `_commStatus`) yang dibandingkan secara strict (`===`) dengan `1` atau `0`, **wajib di-cast menggunakan fungsi `Number()`** (misalnya `Number($sb1.run_stop) === 1`).
-*   **LARANGAN PENGGUNAAN `==`:** Compiler/linter SCADA melarang keras operator perbandingan longgar `==` untuk nilai `0` atau `1`. Perbandingan seperti `run_stop == 0` akan menghasilkan error `Use '===' to compare with '0'`.
+*   **LARANGAN PENGGUNAAN `==`:** Compiler/linter SCADA melarang keras operator perbandingan longgar `==` untuk nilai `0` or `1`. Perbandingan seperti `run_stop == 0` akan menghasilkan error `Use '===' to compare with '0'`.
 *   **ALASAN:** Nilai boolean HMI dibaca sebagai `true`/`false` di JavaScript. Membandingkannya secara langsung menggunakan `$tag === 1` atau `$tag === 0` akan selalu menghasilkan `false` karena perbedaan tipe data (Boolean vs Number).
 *   **CONTOH PENULISAN YANG BENAR:**
     *   *Salah:* `if ($sb1.run_stop === 1)`
@@ -81,6 +85,3 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 
 *   **ATURAN UTAMA:** AI Agent hanya diperbolehkan membuat berkas baru dalam format teks mentah (**`.txt`** atau **`.js`**). **Dilarang keras membuat atau memperbarui berkas berkekstensi `.hwExport`.**
 *   **ALASAN:** Proses impor berkas `.hwExport` yang berisi naskah sangat panjang (seperti master loop yang mencapai ~7000 baris) membutuhkan waktu pemrosesan yang sangat lama di editor SCADA Haiwell. Menggunakan format `.txt` atau `.js` memungkinkan operator melakukan salin-tempel (*copy-paste*) kode secara instan dan cepat.
-
-
-

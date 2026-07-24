@@ -1,0 +1,10 @@
+ID,Variable name ,Register type,Register address,Address length,Data type,Character set,String length ,The mode of reading and writing,Variable description,Initial value,Minimum value,Maximum value,Decimal digits,Engineering quantity conversion,Original minimum,Origianl maximum,Random generation of simulation,Power-off protection,Variable Grouping,Variable Categorie,Slave Station,Slave register type,Slave address,Read write mode of slave station
+528,pilih_steambox,W,300,1,SHORT,,0,rw,,,,,,0,,,0,0,,,0,,,,
+529,kode,W,301,5,STRING,DEFAULT,10,rw,,,,,,0,,,0,0,,,0,,,,
+530,nama,W,306,25,STRING,DEFAULT,50,rw,,,,,,0,,,0,0,,,0,,,,
+531,warna,W,331,5,STRING,DEFAULT,10,rw,,,,,,0,,,0,0,,,0,,,,
+532,versi,W,336,1,SHORT,,0,rw,,,,,,0,,,0,0,,,0,,,,
+533,qty,W,337,1,SHORT,,0,rw,,,,,,,,,0,0,,,0,,,,
+534,durasi,W,338,1,SHORT,,0,rw,,,,,,,,,0,0,,,0,,,,
+824,batch,W,339,1,SHORT,,0,rw,,,,,,,,,0,0,,,0,,,,
+825,trolly,W,340,5,STRING,DEFAULT,10,rw,,,,,,0,,,0,0,,,0,,,,

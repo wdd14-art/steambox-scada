@@ -1,0 +1,217 @@
+// ============================================================================
+// SYSTEM KONTROL MASTER STEAMBOX - MONITOR OUTDOOR (30 UNIT)
+// Versi  : v27 - BUGFIX: Tag naming $sb_N → $sbN di BAGIAN 3 sorting monitor
+// Trigger: Timer 1 Detik (1000ms)
+// Skema  : Master loop memanggil Task.Run('steambox_unit_N') per unit
+//          Setiap unit task menggunakan tag statis sendiri -> binding fisik OK
+// ============================================================================
+
+// ============================================================================
+// BAGIAN 1: INISIALISASI WAKTU & STATUS TEXT
+// ============================================================================
+var waktuSekarangString = ("0" + ($Hour || 0)).slice(-2) + ":" + ("0" + ($Minute || 0)).slice(-2) + ":" + ("0" + ($Second || 0)).slice(-2);
+var totalDetikSekarang = (($Hour || 0) * 3600) + (($Minute || 0) * 60) + ($Second || 0);
+
+$Sys_Control.txt_status_kosong       = $Sys_Control.txt_status_kosong       || "STEAMBOX KOSONG";
+$Sys_Control.txt_status_preheat      = $Sys_Control.txt_status_preheat      || "SEDANG PEMANASAN";
+$Sys_Control.txt_status_pemanasan    = $Sys_Control.txt_status_pemanasan    || "MENUNGGU MENDIDIH (< 100 C)";
+$Sys_Control.txt_status_pemasakan    = $Sys_Control.txt_status_pemasakan    || "SEDANG MEMASAK (MENDIDIH)";
+$Sys_Control.txt_status_selesai      = $Sys_Control.txt_status_selesai      || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
+$Sys_Control.txt_selesai_preheat     = $Sys_Control.txt_selesai_preheat     || "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN";
+$Sys_Control.txt_siap_preheat        = $Sys_Control.txt_siap_preheat        || "SIAP PEMANASAN - SILAKAN TEKAN START";
+$Sys_Control.txt_siap_cooking        = $Sys_Control.txt_siap_cooking        || "RESEP TERPASANG - SILAKAN TEKAN START";
+$Sys_Control.txt_status_resep        = $Sys_Control.txt_status_resep        || "RESEP TERPASANG - SILAKAN TEKAN START";
+$Sys_Control.txt_preheat_paused      = $Sys_Control.txt_preheat_paused      || "PRE-HEAT DIHENTIKAN (PAUSED)";
+$Sys_Control.txt_status_paused       = $Sys_Control.txt_status_paused       || "MESIN BERHENTI (PAUSED)";
+$Sys_Control.txt_status_maintenance  = $Sys_Control.txt_status_maintenance  || "MODE MAINTENANCE (KONTROL MANUAL)";
+$Sys_Control.txt_status_offline      = $Sys_Control.txt_status_offline      || "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
+$Sys_Control.txt_status_disable      = $Sys_Control.txt_status_disable      || "UNIT TIDAK DIPAKAI";
+$Sys_Control.txt_status_sensor_error = $Sys_Control.txt_status_sensor_error || "ERROR SENSOR (OPENLOOP/HHHH)";
+$Sys_Control.txt_sensor_error        = $Sys_Control.txt_sensor_error        || "proses memasak, tetapi sensor error, cek segera !";
+
+// Reset trigger log global
+if ($Sys_Control.trigger_log) {
+    $Sys_Control.trigger_log = false;
+}
+
+// ============================================================================
+// BAGIAN 2: EKSEKUSI TASK PER UNIT (30 UNIT)
+// Guard: hanya eksekusi jika _commOperation aktif (unit dipakai)
+// Unit yang di-disable tidak mengkonsumsi resource eksekusi sama sekali
+// ============================================================================
+if (Number($sb1._commOperation) === 1)  { Task.Run('steambox_unit_1');  }
+if (Number($sb2._commOperation) === 1)  { Task.Run('steambox_unit_2');  }
+if (Number($sb3._commOperation) === 1)  { Task.Run('steambox_unit_3');  }
+if (Number($sb4._commOperation) === 1)  { Task.Run('steambox_unit_4');  }
+if (Number($sb5._commOperation) === 1)  { Task.Run('steambox_unit_5');  }
+if (Number($sb6._commOperation) === 1)  { Task.Run('steambox_unit_6');  }
+if (Number($sb7._commOperation) === 1)  { Task.Run('steambox_unit_7');  }
+if (Number($sb8._commOperation) === 1)  { Task.Run('steambox_unit_8');  }
+if (Number($sb9._commOperation) === 1)  { Task.Run('steambox_unit_9');  }
+if (Number($sb10._commOperation) === 1) { Task.Run('steambox_unit_10'); }
+if (Number($sb11._commOperation) === 1) { Task.Run('steambox_unit_11'); }
+if (Number($sb12._commOperation) === 1) { Task.Run('steambox_unit_12'); }
+if (Number($sb13._commOperation) === 1) { Task.Run('steambox_unit_13'); }
+if (Number($sb14._commOperation) === 1) { Task.Run('steambox_unit_14'); }
+if (Number($sb15._commOperation) === 1) { Task.Run('steambox_unit_15'); }
+if (Number($sb16._commOperation) === 1) { Task.Run('steambox_unit_16'); }
+if (Number($sb17._commOperation) === 1) { Task.Run('steambox_unit_17'); }
+if (Number($sb18._commOperation) === 1) { Task.Run('steambox_unit_18'); }
+if (Number($sb19._commOperation) === 1) { Task.Run('steambox_unit_19'); }
+if (Number($sb20._commOperation) === 1) { Task.Run('steambox_unit_20'); }
+if (Number($sb21._commOperation) === 1) { Task.Run('steambox_unit_21'); }
+if (Number($sb22._commOperation) === 1) { Task.Run('steambox_unit_22'); }
+if (Number($sb23._commOperation) === 1) { Task.Run('steambox_unit_23'); }
+if (Number($sb24._commOperation) === 1) { Task.Run('steambox_unit_24'); }
+if (Number($sb25._commOperation) === 1) { Task.Run('steambox_unit_25'); }
+if (Number($sb26._commOperation) === 1) { Task.Run('steambox_unit_26'); }
+if (Number($sb27._commOperation) === 1) { Task.Run('steambox_unit_27'); }
+if (Number($sb28._commOperation) === 1) { Task.Run('steambox_unit_28'); }
+if (Number($sb29._commOperation) === 1) { Task.Run('steambox_unit_29'); }
+if (Number($sb30._commOperation) === 1) { Task.Run('steambox_unit_30'); }
+
+// ============================================================================
+// BAGIAN 3: SORTING MONITOR LUAR TOP 5
+// Baca tag sisa dari masing-masing unit (tag statis, binding OK)
+// FIX v27: Semua tag diubah dari $sb_N (dengan underscore) menjadi $sbN (tanpa underscore)
+// ============================================================================
+var runningRooms = [];
+
+if ($sb1.status_pemasakan && $sb1.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 1, sisa: $sb1.sisa_detik_masak, tampilSisa: $sb1.tampil_durasi_aktual, tampilSelesai: $sb1.tampil_jam_selesai });
+}
+if ($sb2.status_pemasakan && $sb2.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 2, sisa: $sb2.sisa_detik_masak, tampilSisa: $sb2.tampil_durasi_aktual, tampilSelesai: $sb2.tampil_jam_selesai });
+}
+if ($sb3.status_pemasakan && $sb3.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 3, sisa: $sb3.sisa_detik_masak, tampilSisa: $sb3.tampil_durasi_aktual, tampilSelesai: $sb3.tampil_jam_selesai });
+}
+if ($sb4.status_pemasakan && $sb4.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 4, sisa: $sb4.sisa_detik_masak, tampilSisa: $sb4.tampil_durasi_aktual, tampilSelesai: $sb4.tampil_jam_selesai });
+}
+if ($sb5.status_pemasakan && $sb5.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 5, sisa: $sb5.sisa_detik_masak, tampilSisa: $sb5.tampil_durasi_aktual, tampilSelesai: $sb5.tampil_jam_selesai });
+}
+if ($sb6.status_pemasakan && $sb6.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 6, sisa: $sb6.sisa_detik_masak, tampilSisa: $sb6.tampil_durasi_aktual, tampilSelesai: $sb6.tampil_jam_selesai });
+}
+if ($sb7.status_pemasakan && $sb7.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 7, sisa: $sb7.sisa_detik_masak, tampilSisa: $sb7.tampil_durasi_aktual, tampilSelesai: $sb7.tampil_jam_selesai });
+}
+if ($sb8.status_pemasakan && $sb8.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 8, sisa: $sb8.sisa_detik_masak, tampilSisa: $sb8.tampil_durasi_aktual, tampilSelesai: $sb8.tampil_jam_selesai });
+}
+if ($sb9.status_pemasakan && $sb9.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 9, sisa: $sb9.sisa_detik_masak, tampilSisa: $sb9.tampil_durasi_aktual, tampilSelesai: $sb9.tampil_jam_selesai });
+}
+if ($sb10.status_pemasakan && $sb10.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 10, sisa: $sb10.sisa_detik_masak, tampilSisa: $sb10.tampil_durasi_aktual, tampilSelesai: $sb10.tampil_jam_selesai });
+}
+if ($sb11.status_pemasakan && $sb11.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 11, sisa: $sb11.sisa_detik_masak, tampilSisa: $sb11.tampil_durasi_aktual, tampilSelesai: $sb11.tampil_jam_selesai });
+}
+if ($sb12.status_pemasakan && $sb12.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 12, sisa: $sb12.sisa_detik_masak, tampilSisa: $sb12.tampil_durasi_aktual, tampilSelesai: $sb12.tampil_jam_selesai });
+}
+if ($sb13.status_pemasakan && $sb13.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 13, sisa: $sb13.sisa_detik_masak, tampilSisa: $sb13.tampil_durasi_aktual, tampilSelesai: $sb13.tampil_jam_selesai });
+}
+if ($sb14.status_pemasakan && $sb14.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 14, sisa: $sb14.sisa_detik_masak, tampilSisa: $sb14.tampil_durasi_aktual, tampilSelesai: $sb14.tampil_jam_selesai });
+}
+if ($sb15.status_pemasakan && $sb15.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 15, sisa: $sb15.sisa_detik_masak, tampilSisa: $sb15.tampil_durasi_aktual, tampilSelesai: $sb15.tampil_jam_selesai });
+}
+if ($sb16.status_pemasakan && $sb16.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 16, sisa: $sb16.sisa_detik_masak, tampilSisa: $sb16.tampil_durasi_aktual, tampilSelesai: $sb16.tampil_jam_selesai });
+}
+if ($sb17.status_pemasakan && $sb17.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 17, sisa: $sb17.sisa_detik_masak, tampilSisa: $sb17.tampil_durasi_aktual, tampilSelesai: $sb17.tampil_jam_selesai });
+}
+if ($sb18.status_pemasakan && $sb18.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 18, sisa: $sb18.sisa_detik_masak, tampilSisa: $sb18.tampil_durasi_aktual, tampilSelesai: $sb18.tampil_jam_selesai });
+}
+if ($sb19.status_pemasakan && $sb19.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 19, sisa: $sb19.sisa_detik_masak, tampilSisa: $sb19.tampil_durasi_aktual, tampilSelesai: $sb19.tampil_jam_selesai });
+}
+if ($sb20.status_pemasakan && $sb20.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 20, sisa: $sb20.sisa_detik_masak, tampilSisa: $sb20.tampil_durasi_aktual, tampilSelesai: $sb20.tampil_jam_selesai });
+}
+if ($sb21.status_pemasakan && $sb21.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 21, sisa: $sb21.sisa_detik_masak, tampilSisa: $sb21.tampil_durasi_aktual, tampilSelesai: $sb21.tampil_jam_selesai });
+}
+if ($sb22.status_pemasakan && $sb22.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 22, sisa: $sb22.sisa_detik_masak, tampilSisa: $sb22.tampil_durasi_aktual, tampilSelesai: $sb22.tampil_jam_selesai });
+}
+if ($sb23.status_pemasakan && $sb23.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 23, sisa: $sb23.sisa_detik_masak, tampilSisa: $sb23.tampil_durasi_aktual, tampilSelesai: $sb23.tampil_jam_selesai });
+}
+if ($sb24.status_pemasakan && $sb24.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 24, sisa: $sb24.sisa_detik_masak, tampilSisa: $sb24.tampil_durasi_aktual, tampilSelesai: $sb24.tampil_jam_selesai });
+}
+if ($sb25.status_pemasakan && $sb25.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 25, sisa: $sb25.sisa_detik_masak, tampilSisa: $sb25.tampil_durasi_aktual, tampilSelesai: $sb25.tampil_jam_selesai });
+}
+if ($sb26.status_pemasakan && $sb26.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 26, sisa: $sb26.sisa_detik_masak, tampilSisa: $sb26.tampil_durasi_aktual, tampilSelesai: $sb26.tampil_jam_selesai });
+}
+if ($sb27.status_pemasakan && $sb27.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 27, sisa: $sb27.sisa_detik_masak, tampilSisa: $sb27.tampil_durasi_aktual, tampilSelesai: $sb27.tampil_jam_selesai });
+}
+if ($sb28.status_pemasakan && $sb28.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 28, sisa: $sb28.sisa_detik_masak, tampilSisa: $sb28.tampil_durasi_aktual, tampilSelesai: $sb28.tampil_jam_selesai });
+}
+if ($sb29.status_pemasakan && $sb29.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 29, sisa: $sb29.sisa_detik_masak, tampilSisa: $sb29.tampil_durasi_aktual, tampilSelesai: $sb29.tampil_jam_selesai });
+}
+if ($sb30.status_pemasakan && $sb30.sisa_detik_masak > 0) {
+    runningRooms.push({ name: 30, sisa: $sb30.sisa_detik_masak, tampilSisa: $sb30.tampil_durasi_aktual, tampilSelesai: $sb30.tampil_jam_selesai });
+}
+
+runningRooms.sort(function(a, b) { return a.sisa - b.sisa; });
+
+if (runningRooms.length >= 1) {
+    $Sys_Control.monitor_room_1    = runningRooms[0].name;
+    $Sys_Control.monitor_sisa_1    = runningRooms[0].tampilSisa;
+    $Sys_Control.monitor_selesai_1 = runningRooms[0].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_1    = "--";
+    $Sys_Control.monitor_sisa_1    = "--";
+    $Sys_Control.monitor_selesai_1 = "--";
+}
+if (runningRooms.length >= 2) {
+    $Sys_Control.monitor_room_2    = runningRooms[1].name;
+    $Sys_Control.monitor_sisa_2    = runningRooms[1].tampilSisa;
+    $Sys_Control.monitor_selesai_2 = runningRooms[1].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_2    = "--";
+    $Sys_Control.monitor_sisa_2    = "--";
+    $Sys_Control.monitor_selesai_2 = "--";
+}
+if (runningRooms.length >= 3) {
+    $Sys_Control.monitor_room_3    = runningRooms[2].name;
+    $Sys_Control.monitor_sisa_3    = runningRooms[2].tampilSisa;
+    $Sys_Control.monitor_selesai_3 = runningRooms[2].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_3    = "--";
+    $Sys_Control.monitor_sisa_3    = "--";
+    $Sys_Control.monitor_selesai_3 = "--";
+}
+if (runningRooms.length >= 4) {
+    $Sys_Control.monitor_room_4    = runningRooms[3].name;
+    $Sys_Control.monitor_sisa_4    = runningRooms[3].tampilSisa;
+    $Sys_Control.monitor_selesai_4 = runningRooms[3].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_4    = "--";
+    $Sys_Control.monitor_sisa_4    = "--";
+    $Sys_Control.monitor_selesai_4 = "--";
+}
+if (runningRooms.length >= 5) {
+    $Sys_Control.monitor_room_5    = runningRooms[4].name;
+    $Sys_Control.monitor_sisa_5    = runningRooms[4].tampilSisa;
+    $Sys_Control.monitor_selesai_5 = runningRooms[4].tampilSelesai;
+} else {
+    $Sys_Control.monitor_room_5    = "--";
+    $Sys_Control.monitor_sisa_5    = "--";
+    $Sys_Control.monitor_selesai_5 = "--";
+}

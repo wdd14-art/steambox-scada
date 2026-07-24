@@ -1,0 +1,254 @@
+====================================================================
+SOURCE OF TRUTH WAJIB
+====================================================================
+
+Seluruh proses analisis, review, debugging, refactoring, dan
+implementasi WAJIB mengacu pada dua dokumen berikut sebagai Source of
+Truth.
+
+1.  Dokumen Aturan: AGENTS.md
+
+    Dokumen ini berisi aturan ketat (behavioral rules) JavaScript
+    Haiwell Cloud SCADA dan WAJIB dipatuhi tanpa pengecualian.
+
+    Seluruh implementasi harus taat terhadap aturan di dalam AGENTS.md,
+    termasuk namun tidak terbatas pada:
+
+    -   Penulisan tag langsung menggunakan simbol $
+    -   Larangan Variable.GetValue() / Variable.SetValue() pada tag
+        normal
+    -   Aturan operasi matematika pada tag HMI
+    -   Aturan Number() untuk Boolean HMI
+    -   Deklarasi variabel menggunakan var
+    -   Aturan status banner
+    -   Manajemen versi file
+    -   Format file output
+
+    AI tidak boleh menghasilkan kode yang melanggar satu pun aturan di
+    AGENTS.md.
+
+2.  Dokumen Implementasi: steambox_unit_1.txt
+
+    File ini merupakan reference implementation yang menjadi acuan
+    logika proses, state machine, variabel, dan alur proses.
+
+PRIORITAS ACUAN
+
+Jika terdapat usulan implementasi yang bertentangan dengan AGENTS.md,
+maka AGENTS.md mempunyai prioritas tertinggi dan wajib dipatuhi.
+
+Tujuan revisi adalah memperbaiki bug dan logika proses TANPA melanggar
+aturan syntax Haiwell yang telah ditetapkan dalam AGENTS.md.
+
+PROMPT REVISION - PREHEAT DAN COOKING STATE SEPARATION (REV-2)
+
+ROLE Anda bertindak sebagai Software Engineer sekaligus Code Reviewer
+untuk proyek Haiwell SCADA Task Script. Fokus revisi adalah LOGIKA
+PROSES (state machine), bukan optimasi coding style.
+
+OBJECTIVE Menyederhanakan dan memisahkan logika Machine Mode dan
+Production Mode agar stabil, mudah dipelihara, dan siap dikembangkan
+pada database internal Haiwell di tahap berikutnya.
+
+====================================================================
+REFERENSI IMPLEMENTASI
+====================================================================
+
+Acuan utama untuk seluruh proses review, analisis bug, dan implementasi
+adalah skrip berikut:
+
+File Referensi: steambox_unit_1.txt
+
+Seluruh keputusan revisi harus mengacu pada struktur, alur proses,
+state, variabel, dan logika yang terdapat pada file tersebut.
+
+Tujuan revisi adalah memperbaiki logika proses tanpa mengubah filosofi
+proses produksi yang telah berjalan dengan benar.
+
+Dilarang melakukan refactoring besar, mengubah urutan proses, atau
+menambahkan fitur baru di luar poin-poin Architecture Decision, kecuali
+ditemukan bug yang berhubungan langsung dengan logika state machine.
+
+====================================================================
+BACKGROUND
+====================================================================
+
+Mode Preheat hanya dilakukan SATU KALI setiap awal shift (umumnya pagi
+hari) sebagai persiapan mesin.
+
+Setelah Preheat selesai, operator akan menjalankan proses produksi
+(Cooking) berkali-kali.
+
+Karena itu Preheat bukan bagian dari siklus produksi.
+
+====================================================================
+ARCHITECTURE DECISION
+====================================================================
+
+1.  PREHEAT DAN COOKING HARUS DIPISAH
+
+Mode Preheat mempunyai state sendiri.
+
+Banner yang digunakan:
+
+-   txt_siap_preheat
+-   txt_preheat
+-   txt_preheat_paused
+-   txt_selesai_preheat
+-   txt_siap_cooking
+
+Boolean Cooking tidak boleh berubah selama mode_preheat == true.
+
+====================================================================
+
+2.  BOOLEAN BERIKUT KHUSUS COOKING
+
+-   status_kosong
+-   status_resep
+-   status_pemanasan
+-   status_pemasakan
+-   status_selesai
+
+Kelima boolean tersebut hanya boleh digunakan ketika mode_preheat ==
+false.
+
+Preheat tidak boleh mengubah salah satu boolean tersebut.
+
+====================================================================
+
+3.  STATE MACHINE PREHEAT
+
+SIAP PREHEAT ↓ PREHEAT ↓ PREHEAT PAUSED ↓ SELESAI PREHEAT ↓ SIAP COOKING
+
+State ini hanya mengontrol Banner.
+
+====================================================================
+
+4.  STATE MACHINE COOKING
+
+KOSONG ↓ RESEP ↓ PEMANASAN ↓ PEMASAKAN ↓ SELESAI
+
+State Cooking menggunakan:
+
+status_kosong status_resep status_pemanasan status_pemasakan
+status_selesai
+
+====================================================================
+
+5.  STATUS_SELESAI HARUS LATCH
+
+status_selesai adalah STATE, bukan EVENT.
+
+Ketika durasi memasak mencapai:
+
+(target_menit + perubahan_waktu)
+
+maka:
+
+status_selesai = true
+
+Status tersebut harus dipertahankan (latched).
+
+Hanya boleh di-clear oleh:
+
+-   Reset Operator
+-   Start Batch Baru
+
+Tidak boleh berubah hanya karena:
+
+-   run_stop = 1
+-   timer berhenti
+-   proses selesai
+
+====================================================================
+
+6.  FREEZE DISPLAY SETELAH SELESAI
+
+Jika status_selesai == true maka script tidak boleh lagi menghitung
+ulang:
+
+-   durasi_aktual_up
+-   tampil_jam_selesai
+-   status_banner
+
+Semua nilai akhir harus tetap ditampilkan sampai Reset atau Start Batch
+Baru.
+
+====================================================================
+TAMBAHAN ARCHITECTURE REVIEW
+====================================================================
+
+7.  PISAHKAN MACHINE MODE DAN PRODUCTION MODE
+
+Machine Mode:
+
+-   Disable
+-   Offline
+-   Maintenance
+-   Preheat
+-   Ready Cooking
+
+Production Mode:
+
+-   Kosong
+-   Resep
+-   Pemanasan
+-   Pemasakan
+-   Selesai
+
+Kedua state machine harus independen dan tidak saling mengubah state.
+
+====================================================================
+
+8.  DEFINISI status_resep HARUS TUNGGAL
+
+status_resep hanya berarti:
+
+-   Recipe telah dipilih
+-   Data recipe valid
+-   Target memasak valid
+-   Batch siap dijalankan
+
+Tidak boleh memiliki arti lain.
+
+====================================================================
+
+9.  run_stop ADALAH COMMAND, BUKAN STATE
+
+run_stop merupakan output/perintah ke TK4M.
+
+State internal software tidak boleh bergantung pada nilai run_stop.
+
+State software harus berasal dari state machine aplikasi.
+
+====================================================================
+
+10. BANNER HANYA OUTPUT
+
+status_banner tidak boleh menjadi bagian dari logika proses.
+
+Urutan yang benar:
+
+State Machine ↓ Internal State ↓ Banner Display
+
+Banner hanya membaca state yang sudah diputuskan.
+
+====================================================================
+EXPECTED RESULT
+====================================================================
+
+-   Preheat menjadi Machine Preparation Mode yang berdiri sendiri.
+-   Cooking menjadi Production State Machine yang independen.
+-   Machine Mode dan Production Mode tidak saling mempengaruhi.
+-   status_resep memiliki satu definisi yang jelas.
+-   run_stop hanya berfungsi sebagai command ke TK4M.
+-   status_selesai tetap latched sampai Reset atau Start Batch Baru.
+-   Setelah batch selesai seluruh data hasil proses tetap freeze.
+-   Banner hanya menjadi output dari state machine, bukan pengambil
+    keputusan logika.
+
+CATATAN SOFTWARE ARCHITECT
+
+Implementasi teknis (database internal Haiwell, internal tag, enum
+state, atau struktur data lain) diserahkan kepada implementor, selama
+prinsip arsitektur di atas tetap dipenuhi.

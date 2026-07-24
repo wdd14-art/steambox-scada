@@ -1,0 +1,186 @@
+// ============================================================================
+// SYSTEM KONTROL MASTER STEAMBOX - MONITOR OUTDOOR (30 UNIT)
+// Versi  : v26 - MODULAR TASK ARCHITECTURE
+// Trigger: Timer 1 Detik (1000ms)
+// Skema  : Master loop memanggil Task.Run('steambox_unit_N') per unit
+//          Setiap unit task menggunakan tag statis sendiri -> binding fisik OK
+// ============================================================================
+
+// ============================================================================
+// BAGIAN 1: INISIALISASI WAKTU & STATUS TEXT
+// ============================================================================
+var waktuSekarangString = ("0" + (Variable.GetById(10) || 0)).slice(-2) + ":" + ("0" + (Variable.GetById(11) || 0)).slice(-2) + ":" + ("0" + (Variable.GetById(12) || 0)).slice(-2);
+var totalDetikSekarang = ((Variable.GetById(10) || 0) * 3600) + ((Variable.GetById(11) || 0) * 60) + (Variable.GetById(12) || 0);
+
+Variable.SetById(827, Variable.GetById(827)       || "STEAMBOX KOSONG");
+Variable.SetById(828, Variable.GetById(828)      || "SEDANG PEMANASAN");
+Variable.SetById(829, Variable.GetById(829)    || "MENUNGGU MENDIDIH (< 100 C)");
+Variable.SetById(830, Variable.GetById(830)    || "SEDANG MEMASAK (MENDIDIH)");
+Variable.SetById(831, Variable.GetById(831)      || "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI");
+Variable.SetById(2348, Variable.GetById(2348)     || "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN");
+Variable.SetById(2349, Variable.GetById(2349)        || "SIAP PEMANASAN - SILAKAN TEKAN START");
+Variable.SetById(2350, Variable.GetById(2350)        || "RESEP TERPASANG - SILAKAN TEKAN START");
+Variable.SetById(2353, Variable.GetById(2353)        || "RESEP TERPASANG - SILAKAN TEKAN START");
+Variable.SetById(2351, Variable.GetById(2351)      || "PRE-HEAT DIHENTIKAN (PAUSED)");
+Variable.SetById(2352, Variable.GetById(2352)       || "MESIN BERHENTI (PAUSED)");
+Variable.SetById(832, Variable.GetById(832)  || "MODE MAINTENANCE (KONTROL MANUAL)");
+Variable.SetById(833, Variable.GetById(833)      || "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)");
+Variable.SetById(834, Variable.GetById(834)      || "UNIT TIDAK DIPAKAI");
+Variable.SetById(835, Variable.GetById(835) || "ERROR SENSOR (OPENLOOP/HHHH)");
+Variable.SetById(2384, Variable.GetById(2384)        || "proses memasak, tetapi sensor error, cek segera !");
+
+// Reset trigger log global
+if (Variable.GetById(2504)) {
+    Variable.SetById(2504, false);
+}
+
+// ============================================================================
+// BAGIAN 2: EKSEKUSI TASK PER UNIT (30 UNIT)
+// Setiap unit task berjalan dengan tag statis sendiri - binding fisik terjamin
+// ============================================================================
+Task.Run('Task_1');
+Task.Run('Task_2');
+// ============================================================================
+// BAGIAN 3: SORTING MONITOR LUAR TOP 5
+// Baca tag sisa dari masing-masing unit (tag statis, binding OK)
+// ============================================================================
+var runningRooms = [];
+
+if (Variable.GetById(1208) && Variable.GetById(1201) > 0) {
+    runningRooms.push({ name: 1, sisa: Variable.GetById(1201), tampilSisa: Variable.GetById(1218), tampilSelesai: Variable.GetById(1216) });
+}
+if (Variable.GetById(1230) && Variable.GetById(1224) > 0) {
+    runningRooms.push({ name: 2, sisa: Variable.GetById(1224), tampilSisa: Variable.GetById(1240), tampilSelesai: Variable.GetById(1238) });
+}
+if (Variable.GetById(1672) && Variable.GetById(1666) > 0) {
+    runningRooms.push({ name: 3, sisa: Variable.GetById(1666), tampilSisa: Variable.GetById(1682), tampilSelesai: Variable.GetById(1680) });
+}
+if (Variable.GetById(1694) && Variable.GetById(1688) > 0) {
+    runningRooms.push({ name: 4, sisa: Variable.GetById(1688), tampilSisa: Variable.GetById(1704), tampilSelesai: Variable.GetById(1702) });
+}
+if (Variable.GetById(1716) && Variable.GetById(1710) > 0) {
+    runningRooms.push({ name: 5, sisa: Variable.GetById(1710), tampilSisa: Variable.GetById(1726), tampilSelesai: Variable.GetById(1724) });
+}
+if (Variable.GetById(1738) && Variable.GetById(1732) > 0) {
+    runningRooms.push({ name: 6, sisa: Variable.GetById(1732), tampilSisa: Variable.GetById(1748), tampilSelesai: Variable.GetById(1746) });
+}
+if (Variable.GetById(1760) && Variable.GetById(1754) > 0) {
+    runningRooms.push({ name: 7, sisa: Variable.GetById(1754), tampilSisa: Variable.GetById(1770), tampilSelesai: Variable.GetById(1768) });
+}
+if (Variable.GetById(1782) && Variable.GetById(1776) > 0) {
+    runningRooms.push({ name: 8, sisa: Variable.GetById(1776), tampilSisa: Variable.GetById(1792), tampilSelesai: Variable.GetById(1790) });
+}
+if (Variable.GetById(1804) && Variable.GetById(1798) > 0) {
+    runningRooms.push({ name: 9, sisa: Variable.GetById(1798), tampilSisa: Variable.GetById(1814), tampilSelesai: Variable.GetById(1812) });
+}
+if (Variable.GetById(1826) && Variable.GetById(1820) > 0) {
+    runningRooms.push({ name: 10, sisa: Variable.GetById(1820), tampilSisa: Variable.GetById(1836), tampilSelesai: Variable.GetById(1834) });
+}
+if (Variable.GetById(1848) && Variable.GetById(1842) > 0) {
+    runningRooms.push({ name: 11, sisa: Variable.GetById(1842), tampilSisa: Variable.GetById(1858), tampilSelesai: Variable.GetById(1856) });
+}
+if (Variable.GetById(1870) && Variable.GetById(1864) > 0) {
+    runningRooms.push({ name: 12, sisa: Variable.GetById(1864), tampilSisa: Variable.GetById(1880), tampilSelesai: Variable.GetById(1878) });
+}
+if (Variable.GetById(1892) && Variable.GetById(1886) > 0) {
+    runningRooms.push({ name: 13, sisa: Variable.GetById(1886), tampilSisa: Variable.GetById(1902), tampilSelesai: Variable.GetById(1900) });
+}
+if (Variable.GetById(1914) && Variable.GetById(1908) > 0) {
+    runningRooms.push({ name: 14, sisa: Variable.GetById(1908), tampilSisa: Variable.GetById(1924), tampilSelesai: Variable.GetById(1922) });
+}
+if (Variable.GetById(1936) && Variable.GetById(1930) > 0) {
+    runningRooms.push({ name: 15, sisa: Variable.GetById(1930), tampilSisa: Variable.GetById(1946), tampilSelesai: Variable.GetById(1944) });
+}
+if (Variable.GetById(1958) && Variable.GetById(1952) > 0) {
+    runningRooms.push({ name: 16, sisa: Variable.GetById(1952), tampilSisa: Variable.GetById(1968), tampilSelesai: Variable.GetById(1966) });
+}
+if (Variable.GetById(1980) && Variable.GetById(1974) > 0) {
+    runningRooms.push({ name: 17, sisa: Variable.GetById(1974), tampilSisa: Variable.GetById(1990), tampilSelesai: Variable.GetById(1988) });
+}
+if (Variable.GetById(2002) && Variable.GetById(1996) > 0) {
+    runningRooms.push({ name: 18, sisa: Variable.GetById(1996), tampilSisa: Variable.GetById(2012), tampilSelesai: Variable.GetById(2010) });
+}
+if (Variable.GetById(2024) && Variable.GetById(2018) > 0) {
+    runningRooms.push({ name: 19, sisa: Variable.GetById(2018), tampilSisa: Variable.GetById(2034), tampilSelesai: Variable.GetById(2032) });
+}
+if (Variable.GetById(2046) && Variable.GetById(2040) > 0) {
+    runningRooms.push({ name: 20, sisa: Variable.GetById(2040), tampilSisa: Variable.GetById(2056), tampilSelesai: Variable.GetById(2054) });
+}
+if (Variable.GetById(2068) && Variable.GetById(2062) > 0) {
+    runningRooms.push({ name: 21, sisa: Variable.GetById(2062), tampilSisa: Variable.GetById(2078), tampilSelesai: Variable.GetById(2076) });
+}
+if (Variable.GetById(2090) && Variable.GetById(2084) > 0) {
+    runningRooms.push({ name: 22, sisa: Variable.GetById(2084), tampilSisa: Variable.GetById(2100), tampilSelesai: Variable.GetById(2098) });
+}
+if (Variable.GetById(2112) && Variable.GetById(2106) > 0) {
+    runningRooms.push({ name: 23, sisa: Variable.GetById(2106), tampilSisa: Variable.GetById(2122), tampilSelesai: Variable.GetById(2120) });
+}
+if (Variable.GetById(2134) && Variable.GetById(2128) > 0) {
+    runningRooms.push({ name: 24, sisa: Variable.GetById(2128), tampilSisa: Variable.GetById(2144), tampilSelesai: Variable.GetById(2142) });
+}
+if (Variable.GetById(2156) && Variable.GetById(2150) > 0) {
+    runningRooms.push({ name: 25, sisa: Variable.GetById(2150), tampilSisa: Variable.GetById(2166), tampilSelesai: Variable.GetById(2164) });
+}
+if (Variable.GetById(2178) && Variable.GetById(2172) > 0) {
+    runningRooms.push({ name: 26, sisa: Variable.GetById(2172), tampilSisa: Variable.GetById(2188), tampilSelesai: Variable.GetById(2186) });
+}
+if (Variable.GetById(2200) && Variable.GetById(2194) > 0) {
+    runningRooms.push({ name: 27, sisa: Variable.GetById(2194), tampilSisa: Variable.GetById(2210), tampilSelesai: Variable.GetById(2208) });
+}
+if (Variable.GetById(2222) && Variable.GetById(2216) > 0) {
+    runningRooms.push({ name: 28, sisa: Variable.GetById(2216), tampilSisa: Variable.GetById(2232), tampilSelesai: Variable.GetById(2230) });
+}
+if (Variable.GetById(2244) && Variable.GetById(2238) > 0) {
+    runningRooms.push({ name: 29, sisa: Variable.GetById(2238), tampilSisa: Variable.GetById(2254), tampilSelesai: Variable.GetById(2252) });
+}
+if (Variable.GetById(2266) && Variable.GetById(2260) > 0) {
+    runningRooms.push({ name: 30, sisa: Variable.GetById(2260), tampilSisa: Variable.GetById(2276), tampilSelesai: Variable.GetById(2274) });
+}
+
+runningRooms.sort(function(a, b) { return a.sisa - b.sisa; });
+
+if (runningRooms.length >= 1) {
+    Variable.SetById(2281, runningRooms[0].name);
+    Variable.SetById(2286, runningRooms[0].tampilSisa);
+    Variable.SetById(2291, runningRooms[0].tampilSelesai);
+} else {
+    Variable.SetById(2281, "--");
+    Variable.SetById(2286, "--");
+    Variable.SetById(2291, "--");
+}
+if (runningRooms.length >= 2) {
+    Variable.SetById(2282, runningRooms[1].name);
+    Variable.SetById(2287, runningRooms[1].tampilSisa);
+    Variable.SetById(2292, runningRooms[1].tampilSelesai);
+} else {
+    Variable.SetById(2282, "--");
+    Variable.SetById(2287, "--");
+    Variable.SetById(2292, "--");
+}
+if (runningRooms.length >= 3) {
+    Variable.SetById(2283, runningRooms[2].name);
+    Variable.SetById(2288, runningRooms[2].tampilSisa);
+    Variable.SetById(2293, runningRooms[2].tampilSelesai);
+} else {
+    Variable.SetById(2283, "--");
+    Variable.SetById(2288, "--");
+    Variable.SetById(2293, "--");
+}
+if (runningRooms.length >= 4) {
+    Variable.SetById(2284, runningRooms[3].name);
+    Variable.SetById(2289, runningRooms[3].tampilSisa);
+    Variable.SetById(2294, runningRooms[3].tampilSelesai);
+} else {
+    Variable.SetById(2284, "--");
+    Variable.SetById(2289, "--");
+    Variable.SetById(2294, "--");
+}
+if (runningRooms.length >= 5) {
+    Variable.SetById(2285, runningRooms[4].name);
+    Variable.SetById(2290, runningRooms[4].tampilSisa);
+    Variable.SetById(2295, runningRooms[4].tampilSelesai);
+} else {
+    Variable.SetById(2285, "--");
+    Variable.SetById(2290, "--");
+    Variable.SetById(2295, "--");
+}

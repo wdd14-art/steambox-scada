@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PT. SIAP - Steambox 30 Unit SCADA Dashboard (Iframe Container v34)</title>
+    <link rel="stylesheet" href="iframe_dashboard.css?v=34">
+</head>
+<body>
+
+    <div class="iframe-container-layout">
+        <!-- TOP HEADER BAR -->
+        <header class="iframe-header">
+            <div class="brand-area">
+                <div>
+                    <div class="brand-title">PT. SIAP</div>
+                    <div class="brand-sub">Outdoor Steambox SCADA Engine</div>
+                </div>
+            </div>
+
+            <div class="header-center-info">
+                <div class="page-title-badge">NATIVE SCADA IFRAME MODE (100% LIVE SYNC)</div>
+                <div class="clock-text" id="liveClock">2026/07/22 RABU 12:06:00</div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-action btn-reload" onclick="reloadScadaFrame()">🔄 Refresh HMI</button>
+                <button class="btn-action" onclick="toggleFullScreen()">Fullscreen</button>
+            </div>
+        </header>
+
+        <!-- MAIN EMBEDDED NATIVE SCADA IFRAME WRAPPER -->
+        <main class="iframe-wrapper">
+            <iframe 
+                id="scadaFrame" 
+                class="scada-embed-frame" 
+                src="/project/views/indexweb.html" 
+                allowfullscreen="true">
+            </iframe>
+        </main>
+    </div>
+
+    <script>
+        // Live Clock Refresh
+        setInterval(() => {
+            const now = new Date();
+            const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+            const dayName = days[now.getDay()];
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mi = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            
+            const clockEl = document.getElementById('liveClock');
+            if (clockEl) {
+                clockEl.innerText = `${yyyy}/${mm}/${dd} ${dayName} ${hh}:${mi}:${ss}`;
+            }
+        }, 1000);
+
+        // Reload Native SCADA Iframe
+        function reloadScadaFrame() {
+            const frame = document.getElementById('scadaFrame');
+            if (frame) {
+                frame.src = '/project/views/indexweb.html?t=' + new Date().getTime();
+            }
+        }
+
+        // Fullscreen Toggle
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(err => {});
+                }
+            }
+        }
+    </script>
+</body>
+</html>
