@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PT. SIAP - SIGaP Industrial Steambox SCADA (Mobile Responsive Edition)</title>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ISA-101 HIGH-PERFORMANCE INDUSTRIAL COLOR SYSTEM */
+        :root[data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-header: #1e293b;
+            --bg-card: #1e293b;
+            --bg-cell: #0f172a;
+            --border-color: #334155;
+
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+
+            --color-kosong: #475569;
+            --color-preheat: #d97706;
+            --color-preheat-selesai: #0891b2;
+            --color-resep: #7c3aed;
+            --color-cooking: #059669;
+            --color-selesai: #ca8a04;
+            --color-danger: #dc2626;
+
+            --btn-start-bg: #059669;
+            --btn-stop-bg: #dc2626;
+        }
+
+        :root[data-theme="light"] {
+            --bg-body: #f1f5f9;
+            --bg-header: #ffffff;
+            --bg-card: #ffffff;
+            --bg-cell: #f8fafc;
+            --border-color: #cbd5e1;
+
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-accent: #0284c7;
+
+            --color-kosong: #64748b;
+            --color-preheat: #b45309;
+            --color-preheat-selesai: #0e7490;
+            --color-resep: #6d28d9;
+            --color-cooking: #047857;
+            --color-selesai: #a16207;
+            --color-danger: #b91c1c;
+
+            --btn-start-bg: #047857;
+            --btn-stop-bg: #b91c1c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif;
+            min-height: 100vh; padding-bottom: 30px; transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* SUPER CLEAN MOBILE-FIRST HEADER BAR (0 RUWET, NO CLOCK) */
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+            background: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; gap: 10px;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+
+        .btn-menu-trigger {
+            background: #0284c7; color: #ffffff; border: none; padding: 8px 12px; border-radius: 6px;
+            font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+
+        .company-logo { font-size: 1.05rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.3px; white-space: nowrap; }
+
+        .header-title-badge {
+            font-size: 0.78rem; font-weight: 700; color: var(--text-accent); background: var(--bg-cell);
+            padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        .btn-theme-toggle {
+            background: var(--bg-cell); border: 1px solid var(--border-color); color: var(--text-main);
+            padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+
+        .styled-select {
+            background: var(--bg-cell); color: var(--text-main); border: 1px solid var(--border-color);
+            padding: 6px 10px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; outline: none; cursor: pointer;
+        }
+
+        /* STEAMBOX GRID (RESPONSIVE GRID) */
+        .units-container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 14px;
+        }
+
+        .unit-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;
+            display: flex; flex-direction: column; gap: 10px; border-top: 4px solid var(--card-border-top, var(--color-kosong));
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .unit-title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+        .mode-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 7px; border-radius: 4px; text-transform: uppercase; }
+        .mode-preheat { background: rgba(217, 119, 6, 0.15); color: var(--color-preheat); border: 1px solid var(--color-preheat); }
+        .mode-cooking { background: rgba(5, 150, 105, 0.15); color: var(--color-cooking); border: 1px solid var(--color-cooking); }
+
+        .temp-display {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700;
+            color: var(--text-accent); background: var(--bg-cell); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color);
+        }
+
+        .status-banner {
+            background: var(--bg-cell); border-left: 4px solid var(--banner-color, var(--color-kosong));
+            padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; color: var(--banner-color, var(--text-main));
+        }
+
+        .timer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--bg-cell); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .timer-box { text-align: center; }
+        .timer-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 2px; }
+        .timer-val { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; color: var(--text-main); }
+        .timer-val.countdown { color: var(--color-danger); }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .metric-cell { background: var(--bg-cell); padding: 6px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .metric-key { font-size: 0.62rem; color: var(--text-muted); font-weight: 600; }
+        .metric-val { font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .card-actions { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 6px; }
+        .btn-action { border: none; padding: 8px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        .btn-start { background: var(--btn-start-bg); color: #ffffff; }
+        .btn-stop { background: var(--btn-stop-bg); color: #ffffff; }
+        .btn-mode { background: var(--bg-cell); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-recipe { background: var(--color-resep); color: #ffffff; }
+        .btn-reset { background: rgba(220, 38, 38, 0.1); color: var(--color-danger); grid-column: span 3; border: 1px solid rgba(220, 38, 38, 0.3); font-size: 0.7rem; margin-top: 2px; }
+
+        /* INDUSTRIAL PANELS & TABLE WRAPPERS (RESPONSIVE SCROLL) */
+        .industrial-panel { margin: 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 8px; }
+        .panel-title { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
+
+        .table-responsive-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        .industrial-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+        .industrial-table th { padding: 10px 12px; background: var(--bg-cell); color: var(--text-accent); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        .industrial-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+
+        .scada-toolbar {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--bg-cell); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;
+        }
+
+        .btn-scada-tool {
+            background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 5px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        }
+
+        .recipe-tabs-container { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 2px; overflow-x: auto; }
+        .recipe-tab-item {
+            padding: 6px 12px; border: 1px solid var(--border-color); border-bottom: none; border-radius: 6px 6px 0 0; background: var(--bg-cell); color: var(--text-muted); font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .recipe-tab-item.active { background: #0284c7; color: #fff; border-color: #0284c7; }
+
+        .btn-export-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .btn-export { border: none; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; color: #fff; white-space: nowrap; }
+        .btn-csv { background: #059669; }
+        .btn-pdf { background: #dc2626; }
+        .btn-json { background: #2563eb; }
+
+        .editable-cell { background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--text-accent); padding: 4px 8px; border-radius: 4px; outline: none; min-width: 50px; }
+        .editable-cell:focus { background: rgba(56, 189, 248, 0.2); border-style: solid; }
+
+        /* RUNTIME HMI RECIPE DIALOG STYLING (RESPONSIVE) */
+        .runtime-hmi-box { background: var(--bg-cell); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-top: 8px; }
+        .runtime-hmi-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .runtime-hmi-title { font-size: 0.88rem; font-weight: 800; color: var(--text-accent); font-family: 'JetBrains Mono', monospace; }
+
+        .runtime-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 768px) {
+            .runtime-grid { grid-template-columns: 1.2fr 2fr; }
+        }
+
+        .runtime-recipe-list { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; max-height: 220px; overflow-y: auto; }
+        .runtime-recipe-item {
+            padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-cell);
+            display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;
+        }
+        .runtime-recipe-item.selected { background: rgba(2, 132, 199, 0.2); border-color: #0284c7; }
+
+        .runtime-details-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+        /* MODAL (TOUCH SAFE ON MOBILE) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal-overlay.active { display: flex; opacity: 1; pointer-events: auto; }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; width: 92%; max-width: 440px; padding: 18px; color: var(--text-main); }
+        .form-input { width: 100%; background: var(--bg-cell); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; color: var(--text-main); font-family: 'Inter', sans-serif; font-size: 0.88rem; outline: none; margin-top: 4px; }
+
+        .toast-container { position: fixed; bottom: 16px; right: 16px; left: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast-item { background: var(--bg-header); border-left: 4px solid var(--color-danger); color: var(--text-main); padding: 10px 14px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-color); pointer-events: auto; }
+
+        /* MOBILE PORTRAIT SPECIFIC MEDIA QUERIES (< 640px) */
+        @media (max-width: 640px) {
+            .header-bar { padding: 8px 12px; }
+            .company-logo { font-size: 0.95rem; }
+            .btn-menu-trigger { padding: 6px 10px; font-size: 0.78rem; }
+            .header-title-badge { display: none; }
+            .units-container { padding: 10px; gap: 10px; grid-template-columns: 1fr; }
+            .industrial-panel { margin: 10px; padding: 10px; }
+        }
+
+        @media print {
+            .header-bar, .scada-toolbar, .btn-export-group, .card-actions { display: none !important; }
+            body { background: #fff !important; color: #000 !important; }
+            .industrial-panel { border: none !important; margin: 0 !important; }
+            .industrial-table th, .industrial-table td { border-color: #999 !important; color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SUPER CLEAN MINIMALIST HEADER BAR (CAPTURE24.JPEG DESIGN) -->
+    <header class="header-bar">
+        <div class="logo-area">
+            <button class="btn-menu-trigger" onclick="openMenuModal()">
+                <span>☰</span> MENU
+            </button>
+            <div class="company-logo">STEAMBOX SCADA</div>
+        </div>
+
+        <div class="header-title-badge" id="activeMenuTitleDisplay">🔑 LOGIN PORTAL</div>
+
+        <div class="header-right">
+            <button class="btn-theme-toggle" onclick="toggleTheme()" id="themeIcon" style="padding:4px 8px; margin-right:4px;">☀️</button>
+
+            <!-- CURRENT LOGGED-IN USER PROFILE BUTTON (CAPTURE24.JPEG DESIGN) -->
+            <div style="position:relative;">
+                <button id="userProfileBtn" onclick="toggleUserDropdown(event)" style="background:#003b6d; color:#fff; border:none; padding:5px 10px; border-radius:20px; font-weight:800; font-size:0.78rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <span id="txtAvatarBadge">A-</span> <span style="font-size:0.6rem;">▲</span>
+                </button>
+
+                <!-- FLOATING PROFILE DROPDOWN CARD (CAPTURE24.JPEG EXACT REPLICATION) -->
+                <div id="userProfileDropdown" style="display:none; position:absolute; top:36px; right:0; width:180px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.25); z-index:500; padding:6px; text-align:left;">
+                    <div style="padding:8px 10px; border-bottom:1px solid var(--border-color); margin-bottom:4px;">
+                        <div id="dropdownName" style="font-weight:800; font-size:0.85rem; color:var(--text-main);">Admin</div>
+                        <div id="dropdownGroup" style="font-size:0.68rem; color:var(--text-accent); font-weight:600;">Administrators</div>
+                    </div>
+                    <button onclick="selectPopUpMenu('userSecurity', '👤 USER SECURITY MANAGER'); closeUserDropdown();" style="width:100%; text-align:left; background:none; border:none; padding:8px 10px; border-radius:6px; font-size:0.8rem; font-weight:600; color:var(--text-main); cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <span>👤</span> Edit Profile
+                    </button>
+                    <button onclick="executeScadaLogout(); closeUserDropdown();" style="width:100%; text-align:left; background:none; border:none; padding:8px 10px; border-radius:6px; font-size:0.8rem; font-weight:700; color:#ef4444; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <span>🚪</span> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- POP-UP NAVIGATION DRAWER (EXACT RATA KIRI 100% FLUSH TO LEFT EDGE LIKE CAPTURE19.JPEG) -->
+    <div id="mainNavMenuModal" class="modal-overlay" style="justify-content:flex-start; align-items:stretch; padding:0; margin:0;" onclick="if(event.target===this)closeMenuModal()">
+        <div class="modal-box" style="width: 280px; max-width: 85vw; height: 100vh; max-height: 100vh; border-radius: 0; border: none; border-right: 1px solid var(--border-color); background: #072d54; padding: 14px 14px; display: flex; flex-direction: column; justify-content: space-between; transform: translateX(-100%); transition: transform 0.22s ease-in-out; text-align:left; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+            <div style="display:flex; flex-direction:column; flex:1; overflow-y:auto;">
+                <!-- BRAND LOGO -->
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:10px; margin-bottom:12px; flex-shrink:0;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.4rem;">🔥</span>
+                        <div style="text-align:left;">
+                            <div style="font-size:1.05rem; font-weight:800; color:#ffffff; letter-spacing:0.5px;">STEAMBOX SCADA</div>
+                            <div style="font-size:0.65rem; color:#93c5fd;">Custom Industrial HMI Suite</div>
+                        </div>
+                    </div>
+                    <button onclick="closeMenuModal()" style="background:none; border:none; color:#ffffff; font-size:1.4rem; cursor:pointer;">&times;</button>
+                </div>
+
+                <!-- VERTICAL MENU ITEMS (STRICTLY SCROLLABLE IN LANDSCAPE MODE) -->
+                <div style="display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex:1; padding-right:2px;">
+                    <button class="btn-nav-menu active" id="menuLoginPortal" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:rgba(255,255,255,0.12); color:#fff; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('loginPortal', '🔑 LOGIN PORTAL')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">🔑</span>
+                        <span>Portal Login Utama</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuGrid" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('grid', '🎛️ GRID LENGKAP')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">🎛️</span>
+                        <span>Steambox Grid Lengkap</span>
+                    </button>
+                    
+                    <button class="btn-nav-menu" id="menuMonitor" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('monitor', '⏱️ MONITOR RUANG')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">⏱️</span>
+                        <span>Monitor Ruang (Top 5)</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuRecipe" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('recipe', '📖 RECIPE MANAGER')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">📖</span>
+                        <span>Recipe Manager</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuProduksi" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('produksi', '📋 LOG PRODUKSI')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">📋</span>
+                        <span>Log Produksi Batch</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuAlarm" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('alarm', '🚨 LOG ALARM')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">🚨</span>
+                        <span>Log Alarm SCADA</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuMaintenance" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('maintenance', '🔧 LOG MAINTENANCE')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">🔧</span>
+                        <span>Log Maintenance</span>
+                    </button>
+
+                    <button class="btn-nav-menu" id="menuUserSecurity" style="padding:8px 10px; text-align:left; justify-content:flex-start; font-size:0.82rem; width:100%; background:transparent; color:#e0f2fe; border-radius:6px; border:none; display:flex; align-items:center; flex-shrink:0;" onclick="selectPopUpMenu('userSecurity', '👤 USER SECURITY MANAGER')">
+                        <span style="font-size:1rem; width:24px; text-align:center; margin-right:6px;">👤</span>
+                        <span>User Security (Capture18)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- DRAWER FOOTER (WITH LOGOUT OPTION) -->
+            <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:8px; margin-top:6px; font-size:0.72rem; color:#93c5fd; text-align:left; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                <span>v27.0 &bull; 2026</span>
+                <button onclick="executeScadaLogout()" style="background:rgba(220,38,38,0.2); color:#fca5a5; border:1px solid rgba(220,38,38,0.4); padding:3px 7px; border-radius:4px; font-weight:700; font-size:0.68rem; cursor:pointer;">🚪 Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU 0: DEDICATED LOGIN LANDING PORTAL (CAPTURE25.JPEG EXACT DESIGN REPLICATION) -->
+    <main id="viewLoginPortal" style="min-height: calc(100vh - 60px); background: #072d54; display: flex; align-items: center; justify-content: center; padding: 20px 14px;">
+        <div style="width: 100%; max-width: 400px; background: #ffffff; color: #0f172a; border-radius: 16px; padding: 28px 22px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center;">
+            <!-- BRAND LOGO -->
+            <div style="font-size: 2.8rem; margin-bottom: 6px;">🔥</div>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: #003b6d; margin-bottom: 4px; font-family: 'Merriweather', Georgia, serif;">Login to STEAMBOX SCADA</h2>
+            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 22px;">Welcome back. Please sign in to continue.</div>
+
+            <!-- LOGIN FORM -->
+            <div style="text-align: left; margin-bottom: 16px;">
+                <label style="font-size: 0.8rem; color: #334155; font-weight: 700; display: block; margin-bottom: 4px;">
+                    User Account <span style="color: #ef4444;">*</span>
+                </label>
+                <select id="portalUserSelect" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer;">
+                    <option value="0">Admin (Administrators)</option>
+                    <option value="1">Supervisor (PowerUsers)</option>
+                    <option value="2">Operator (Users)</option>
+                </select>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="font-size: 0.8rem; color: #334155; font-weight: 700;">Password</label>
+                    <span style="font-size: 0.72rem; color: #ea580c; font-weight: 600; cursor: pointer;" onclick="showToast('Admin: admin123 | PowerUser: power123')">I forgot password</span>
+                </div>
+                <div style="position: relative;">
+                    <input type="password" id="portalPasswordInput" placeholder="Your password" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 36px 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none;" onkeyup="if(event.key==='Enter')executePortalLogin()">
+                    <span onclick="togglePortalPassEye()" style="position: absolute; right: 10px; top: 10px; cursor: pointer; font-size: 0.9rem; color: #64748b;">👁️</span>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="chkRememberMe" checked> Remember me
+                </label>
+            </div>
+
+            <!-- PRIMARY SIGN IN BUTTON (CAPTURE25.JPEG DESIGN) -->
+            <button onclick="executePortalLogin()" style="width: 100%; background: #003b6d; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0, 59, 109, 0.3);">
+                <span>➔</span> Sign in
+            </button>
+
+            <!-- SECONDARY QUICK LOGIN BUTTON (KEYCLOAK STYLE FROM CAPTURE25.JPEG) -->
+            <button onclick="quickAdminLogin()" style="width: 100%; background: #0e7490; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>🔒</span> Quick Sign in as Admin
+            </button>
+
+            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                STEAMBOX SCADA Suite &bull; PT. SIAP Custom HMI
+            </div>
+        </div>
+    </main>
+
+    <!-- MENU 1: GRID LENGKAP -->
+    <main class="units-container" id="viewGrid" style="display: none;"></main>
+
+    <!-- MENU 2: MONITOR RUANG -->
+    <main class="industrial-panel" id="viewMonitor" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title">MONITOR RUANG (TOP 5 COUNTDOWN URGENT)</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Urutan sisa waktu `tampil_durasi_aktual` terkecil</div>
+        </div>
+        <div class="table-responsive-wrapper">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>No. Steambox</th>
+                        <th>Nama Produk</th>
+                        <th>Status Proses</th>
+                        <th>Jam Selesai (Est)</th>
+                        <th>tampil_durasi_aktual (Countdown)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableMonitorBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- MENU 3: RECIPE MANAGER & STATUS BANNER CONFIG -->
+    <main class="industrial-panel" id="viewRecipe" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title" id="activeTableNameDisplay">📖 RECIPE MANAGER</div>
+            <div class="btn-export-group">
+                <button class="btn-nav-menu active" id="btnViewEditor" style="padding:4px 8px; font-size:0.75rem;" onclick="toggleRecipeSubView('editor')">🖥️ Matrix</button>
+                <button class="btn-nav-menu" id="btnViewRuntime" style="padding:4px 8px; font-size:0.75rem;" onclick="toggleRecipeSubView('runtime')">📱 HMI Dialog</button>
+                <button class="btn-nav-menu" id="btnViewBanner" style="padding:4px 8px; font-size:0.75rem; background:#0284c7; color:#fff;" onclick="toggleRecipeSubView('banner')">💬 Status Banner</button>
+                <button class="btn-export btn-csv" onclick="exportRecipeCSV()">📄 CSV</button>
+                <button class="btn-export btn-pdf" onclick="exportPrintPDF('Recipe Matrix')">🖨️ Cetak</button>
+                <button class="btn-export btn-json" onclick="exportRecipeJSON()">📦 JSON</button>
+            </div>
+        </div>
+
+        <!-- SUB VIEW 1: SCADA EDITOR MATRIX VIEW (CAPTURE14.JPG) -->
+        <div id="subViewEditor">
+            <div class="recipe-tabs-container" id="recipeTabsBar"></div>
+
+            <div class="scada-toolbar">
+                <div style="display:flex; align-items:center; gap:4px; margin-right:6px;">
+                    <label style="font-size:0.72rem; font-weight:700; color:var(--text-accent);">Target ($recipe_pilih):</label>
+                    <select id="recipeTargetSelect" class="styled-select" style="padding:2px 6px; font-size:0.72rem;"></select>
+                </div>
+                <span style="color:var(--border-color);">|</span>
+                <button class="btn-scada-tool" onclick="addNewGroupToMatrix()">➕ Add Group</button>
+                <button class="btn-scada-tool" style="color:var(--color-danger);" onclick="deleteSelectedGroup()">❌ Del Group</button>
+                <span style="color:var(--border-color);">|</span>
+                <button class="btn-scada-tool" onclick="addNewComponentToMatrix()">➕ Add Comp</button>
+                <button class="btn-scada-tool" onclick="openViewGroupNumberModal()">✏️ Edit GroupNO</button>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table class="industrial-table" id="matrixTable">
+                    <thead><tr id="matrixHeaderRow"></tr></thead>
+                    <tbody id="matrixBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SUB VIEW 2: HAIWELL PC RUNTIME HMI RECIPE BROWSER DIALOG VIEW -->
+        <div id="subViewRuntime" style="display: none;">
+            <div class="runtime-hmi-box">
+                <div class="runtime-hmi-header">
+                    <div class="runtime-hmi-title">🖥️ HAIWELL RUNTIME RECIPE DIALOG</div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--text-accent);">Target ($recipe_pilih):</label>
+                        <select id="runtimeTargetSelect" class="styled-select" style="padding:2px 6px; font-size:0.75rem;"></select>
+                    </div>
+                </div>
+
+                <div class="runtime-grid">
+                    <div class="runtime-recipe-list">
+                        <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">Group Resep Master:</div>
+                        <div id="runtimeGroupListContainer"></div>
+                    </div>
+
+                    <div class="runtime-details-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
+                            <h4 style="font-size:0.9rem; font-weight:800; color:var(--text-main);" id="runtimeSelectedTitle">group1 — surya</h4>
+                            <span style="font-size:0.68rem; background:rgba(2,132,199,0.2); color:var(--text-accent); padding:2px 6px; border-radius:4px; font-weight:700;">Recipe Table 1</span>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:4px;">
+                            <div class="metric-cell"><span class="metric-key">Kode</span><div class="metric-val" id="rtKode" style="color:var(--text-accent);">sbmp</div></div>
+                            <div class="metric-cell"><span class="metric-key">Nama</span><div class="metric-val" id="rtNama">surya</div></div>
+                            <div class="metric-cell"><span class="metric-key">Warna</span><div class="metric-val" id="rtWarna">putih</div></div>
+                            <div class="metric-cell"><span class="metric-key">Versi</span><div class="metric-val" id="rtVersi">v1</div></div>
+                            <div class="metric-cell"><span class="metric-key">Qty (Jumlah)</span><div class="metric-val" id="rtQty">150 pcs</div></div>
+                            <div class="metric-cell"><span class="metric-key">Durasi</span><div class="metric-val" id="rtDurasi" style="color:#38bdf8;">00:02:00</div></div>
+                            <div class="metric-cell"><span class="metric-key">Batch</span><div class="metric-val" id="rtBatch">#1</div></div>
+                            <div class="metric-cell"><span class="metric-key">Trolly</span><div class="metric-val" id="rtTrolly">longgar</div></div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:6px; margin-top:8px;">
+                            <button class="btn-export" style="background:var(--color-resep); justify-content:center; padding:8px;" onclick="executeRuntimeDownloadRecipe()">🚀 Download (PLC)</button>
+                            <button class="btn-export" style="background:var(--bg-cell); color:var(--text-main); border:1px solid var(--border-color); justify-content:center; padding:8px;" onclick="showToast('Upload from PLC Executed')">📤 Upload</button>
+                            <button class="btn-export btn-csv" style="justify-content:center; padding:8px;" onclick="showToast('Save Group Executed')">💾 Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MENU 4: LOG PRODUKSI -->
+    <main class="industrial-panel" id="viewProduksi" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title">LOG PRODUKSI & HISTORI BATCH</div>
+            <div class="btn-export-group">
+                <button class="btn-export btn-csv" onclick="exportProduksiCSV()">📄 CSV</button>
+                <button class="btn-export btn-pdf" onclick="exportPrintPDF('Log Produksi')">🖨️ Cetak</button>
+                <button class="btn-export btn-json" onclick="exportDataJson('produksi')">📦 JSON Laravel</button>
+            </div>
+        </div>
+        <div class="table-responsive-wrapper">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>Waktu Selesai</th>
+                        <th>Unit</th>
+                        <th>Nama Resep / Kode</th>
+                        <th>Qty (Pcs)</th>
+                        <th>Batch</th>
+                        <th>Trolly</th>
+                        <th>Durasi Masak</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableProduksiBody">
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';">2026-07-25 05:40:12</td>
+                        <td><strong>Steambox 01</strong></td>
+                        <td style="color:var(--text-accent);">surya (sbmp)</td>
+                        <td>150 pcs</td>
+                        <td>#B102</td>
+                        <td>longgar</td>
+                        <td style="font-family:'JetBrains Mono';">00:02:00</td>
+                        <td><span style="color:var(--color-cooking); font-weight:700;">✅ COMPLETED</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- MENU 5: LOG ALARM -->
+    <main class="industrial-panel" id="viewAlarm" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title">🚨 LOG ALARM SENSOR ERROR</div>
+            <div class="btn-export-group">
+                <button class="btn-export btn-csv" onclick="exportAlarmCSV()">📄 CSV Alarm</button>
+                <button class="btn-export btn-pdf" onclick="exportPrintPDF('Log Alarm Sensor Error')">🖨️ Cetak PDF</button>
+            </div>
+        </div>
+        <div class="table-responsive-wrapper">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Unit Steambox</th>
+                        <th>Tag Alarm SCADA</th>
+                        <th>Status Sensor</th>
+                        <th>Deskripsi Gangguan</th>
+                        <th>Status Alarm</th>
+                    </tr>
+                </thead>
+                <tbody id="tableAlarmBody">
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';">2026-07-25 05:12:05</td>
+                        <td><strong>Steambox 03</strong></td>
+                        <td><code>$sb_3.sensor_error</code></td>
+                        <td><span style="color:#ef4444; font-weight:700;">🚨 SENSOR_ERROR (TRUE)</span></td>
+                        <td>Sensor Suhu Thermocouple PT100 Error / Kabel Terputus</td>
+                        <td><span style="background:#ef4444; color:#fff; padding:2px 6px; border-radius:4px; font-weight:800; font-size:0.75rem;">ACTIVE</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- MENU 6: LOG MAINTENANCE -->
+    <main class="industrial-panel" id="viewMaintenance" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title">LOG MAINTENANCE STEAMBOX</div>
+            <div class="btn-export-group">
+                <button class="btn-export btn-csv" onclick="exportMaintenanceCSV()">📄 CSV Maintenance</button>
+            </div>
+        </div>
+        <div class="table-responsive-wrapper">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal Perawatan</th>
+                        <th>Unit</th>
+                        <th>Jenis Perawatan</th>
+                        <th>Teknisi PJ</th>
+                        <th>Catatan Perbaikan</th>
+                        <th>Jadwal Berikutnya</th>
+                    </tr>
+                </thead>
+                <tbody id="tableMaintenanceBody">
+                    <tr>
+                        <td style="font-family:'JetBrains Mono';">2026-07-20</td>
+                        <td><strong>Steambox 01</strong></td>
+                        <td>Preventive Maintenance</td>
+                        <td>Hery (Teknik)</td>
+                        <td>Penggantian Gasket Pintu & Pembersihan Valve Steam</td>
+                        <td style="font-family:'JetBrains Mono'; color:var(--text-accent);">2026-08-20</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- MENU 7: USER SECURITY MANAGER (REPLICATING CAPTURE18 & CAPTURE22.JPEG) -->
+    <main class="industrial-panel" id="viewUserSecurity" style="display: none;">
+        <div class="panel-header">
+            <div class="panel-title">👤 USER SECURITY MANAGER (SCADA GROUPS & ACCOUNTS)</div>
+            <div class="btn-export-group">
+                <button class="btn-scada-tool" onclick="openAddGroupModal()">➕ Add User Group</button>
+                <button class="btn-export btn-json" onclick="openAddUserModal()">➕ Add User</button>
+                <button class="btn-export btn-csv" onclick="exportUserSecurityCSV()">📄 Export CSV</button>
+            </div>
+        </div>
+
+        <!-- SCADA TOOLBAR EXACTLY LIKE CAPTURE22.JPEG CONTEXT MENU -->
+        <div class="scada-toolbar">
+            <button class="btn-scada-tool" onclick="openUserGroupPropertiesModal()">⚙️ User Group Properties</button>
+            <button class="btn-scada-tool" onclick="openAddUserModal()">👤 Add User</button>
+            <button class="btn-scada-tool" style="color:var(--color-danger);" onclick="deleteUserGroup()">❌ Delete User Group</button>
+            <span style="color:var(--border-color);">|</span>
+            <button class="btn-scada-tool" onclick="exportUserSecurityCSV()">📥 User Import</button>
+            <button class="btn-scada-tool" onclick="exportUserSecurityCSV()">📤 User Group Export</button>
+        </div>
+
+        <div class="table-responsive-wrapper">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>User Group</th>
+                        <th>User Type</th>
+                        <th>User Name</th>
+                        <th>User Alias</th>
+                        <th>Disable</th>
+                        <th>Admin Visible</th>
+                        <th>Prohibit Remote</th>
+                        <th>Prohibit Local</th>
+                        <th>User Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableUserSecurityBody">
+                    <tr>
+                        <td><strong style="color:#ef4444;">Administrators</strong></td>
+                        <td>Local users</td>
+                        <td><strong>Admin</strong></td>
+                        <td>Admin</td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td>Super User SCADA System Administrator</td>
+                        <td>
+                            <button class="btn-scada-tool" onclick="editUserSecurity('Admin', 'Administrators')">✏️ Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color:#f59e0b;">PowerUsers</strong></td>
+                        <td>Local users</td>
+                        <td><strong>PowerUser</strong></td>
+                        <td>PowerUser</td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td>Supervisor & Maintenance Engineer</td>
+                        <td>
+                            <button class="btn-scada-tool" onclick="editUserSecurity('PowerUser', 'PowerUsers')">✏️ Edit</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color:#10b981;">Users</strong></td>
+                        <td>Local users</td>
+                        <td><strong>User</strong></td>
+                        <td>User</td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" checked disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td><input type="checkbox" disabled></td>
+                        <td>Operator Steambox Factory Floor</td>
+                        <td>
+                            <button class="btn-scada-tool" onclick="editUserSecurity('User', 'Users')">✏️ Edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- SCADA AUTHENTICATION LOGIN MODAL DIALOG -->
+    <div id="loginAuthModal" class="modal-overlay" onclick="if(event.target===this)closeLoginModal()">
+        <div class="modal-box" style="max-width:380px; padding:24px; text-align:center;">
+            <div style="font-size:2.8rem; margin-bottom:6px;">🔑</div>
+            <h3 style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin-bottom:4px;">LOGIN SCADA SYSTEM</h3>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:18px;">Pilih Akun Pengguna & Masukkan Kata Sandi Keamanan</div>
+
+            <div style="text-align:left; margin-bottom:12px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Pilih User Account:</label>
+                <select id="loginUserSelect" class="styled-select" style="width:100%; margin-top:4px; padding:10px; font-size:0.88rem;" onchange="autoFillLoginAlias()">
+                    <!-- Populated dynamically from scadaUsers -->
+                </select>
+            </div>
+
+            <div style="text-align:left; margin-bottom:18px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Kata Sandi (Password):</label>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                    <input type="password" id="loginPasswordInput" class="form-input" placeholder="Masukkan Password" style="margin-top:0; padding:10px; font-size:0.9rem;" onkeyup="if(event.key==='Enter')executeScadaLogin()">
+                    <label style="font-size:0.72rem; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:4px; cursor:pointer; white-space:nowrap;">
+                        <input type="checkbox" id="chkShowLoginPassword" onchange="document.getElementById('loginPasswordInput').type = this.checked ? 'text' : 'password'"> Show
+                    </label>
+                </div>
+                <div style="font-size:0.68rem; color:var(--text-accent); margin-top:4px;" id="loginHintText">Default Admin: admin123 | PowerUser: power123 | User: user123</div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button onclick="closeLoginModal()" style="flex:1; background:var(--bg-cell); color:var(--text-main); border:1px solid var(--border-color); padding:10px; border-radius:6px; font-weight:700; font-size:0.85rem; cursor:pointer;">Batal</button>
+                <button onclick="executeScadaLogin()" style="flex:1.5; background:#0284c7; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:800; font-size:0.88rem; cursor:pointer;">🚀 LOGIN</button>
+            </div>
+        </div>
+    </div>
+    <div id="userSecurityModal" class="modal-overlay" onclick="if(event.target===this)closeUserSecurityModal()">
+        <div class="modal-box" style="max-width:520px; padding:20px;">
+            <div style="display: flex; justify-content: space-between; align-items:center; margin-bottom: 12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <h3 style="font-size: 0.95rem; color:var(--text-accent); font-family:'JetBrains Mono', monospace;">Property Setting (User Security)</h3>
+                <button onclick="closeUserSecurityModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 140px 1fr; gap:16px; margin-bottom:14px;">
+                <!-- AVATAR PANEL -->
+                <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                    <div style="width:110px; height:120px; background:#38bdf8; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:3rem; color:#fff;">
+                        👤
+                    </div>
+                    <div style="display:flex; gap:4px; width:100%;">
+                        <button class="btn-scada-tool" style="flex:1; justify-content:center;" onclick="showToast('Select Photo')">Select</button>
+                        <button class="btn-scada-tool" style="flex:1; justify-content:center; color:var(--color-danger);" onclick="showToast('Delete Photo')">Delete</button>
+                    </div>
+                    <div style="font-size:0.62rem; color:var(--text-muted); text-align:center;">Max 200KB</div>
+                </div>
+
+                <!-- USER FORM FIELDS (EXACT FROM CAPTURE18 & CAPTURE22.JPEG) -->
+                <div>
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">User group:</label>
+                        <select id="secUserGroupSelect" class="styled-select" style="width:100%; padding:6px 10px; font-weight:700;">
+                            <option value="Administrators">Administrators</option>
+                            <option value="PowerUsers">PowerUsers</option>
+                            <option value="Users">Users</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">User name:</label>
+                        <input type="text" id="secUserName" class="form-input" value="Admin">
+                    </div>
+
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">User alias:</label>
+                        <input type="text" id="secUserAlias" class="form-input" value="Admin">
+                    </div>
+
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Login password:</label>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="password" id="secUserPassword" class="form-input" value="123456" style="margin-top:0;">
+                            <label style="font-size:0.72rem; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:4px; cursor:pointer; white-space:nowrap;">
+                                <input type="checkbox" id="chkShowPassword" onchange="togglePasswordVisibility(this.checked)"> Show
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; font-size:0.75rem;">
+                        <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="chkDisable"> Disable</label>
+                        <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="chkAdminNotVisible"> Admin not visible</label>
+                        <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="chkProhibitRemote"> Prohibit remote login</label>
+                        <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="chkProhibitLocal"> Prohibit local login</label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">User description:</label>
+                <textarea id="secUserDesc" class="form-input" style="height:55px; resize:none;">Super User SCADA System Administrator</textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button onclick="closeUserSecurityModal()" style="background:var(--bg-cell); color:var(--text-main); border:1px solid var(--border-color); padding:6px 14px; border-radius:6px; font-weight:700; font-size:0.8rem; cursor:pointer;">Cancel</button>
+                <button onclick="saveUserSecurityProperty()" style="background:#0284c7; color:#fff; border:none; padding:6px 16px; border-radius:6px; font-weight:700; font-size:0.8rem; cursor:pointer;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW GROUP NUMBER MODAL (CAPTURE17.JPG EXACT REPLICATION) -->
+    <div id="viewGroupNumberModal" class="modal-overlay" onclick="if(event.target===this)closeViewGroupNumberModal()">
+        <div class="modal-box" style="max-width:360px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <h3 style="font-size: 0.9rem; color:var(--text-accent); font-family:'JetBrains Mono', monospace;">View Group Number (Capture17)</h3>
+                <button onclick="closeViewGroupNumberModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div class="table-responsive-wrapper">
+                <table class="industrial-table" style="margin-bottom:12px; min-width:auto;">
+                    <thead>
+                        <tr>
+                            <th style="width:25%;">Index</th>
+                            <th>Value Group</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewGroupNumberBody"></tbody>
+                </table>
+            </div>
+
+            <button onclick="closeViewGroupNumberModal()" style="width:100%; background:#0284c7; color:#fff; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:0.82rem; cursor:pointer;">Tutup</button>
+        </div>
+    </div>
+
+    <!-- POKA-YOKE QUICK RECIPE SELECTION MODAL FOR OPERATOR ON UNIT CARDS -->
+    <div id="recipeModal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+        <div class="modal-box" style="max-width:440px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
+                <h3 style="font-size: 0.95rem; color:var(--text-main);">Resep Poka-Yoke — Steambox <span id="modalUnitNum">01</span></h3>
+                <button onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Pilih Master Resep Produk:</label>
+                <select id="quickRecipeSelect" class="styled-select" style="width:100%; margin-top:4px; padding:8px; font-size:0.85rem;" onchange="updateQuickRecipePreview()"></select>
+            </div>
+
+            <!-- POKA-YOKE INSTANT PREVIEW CARD (ALL 9 RECIPE PARAMETERS FROM CAPTURE16.JPG) -->
+            <div style="background:var(--bg-cell); border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-bottom:12px;">
+                <div style="font-size:0.72rem; font-weight:700; color:var(--text-accent); margin-bottom:6px; text-transform:uppercase;">Live Preview Parameter (9 Tag):</div>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
+                    <div class="metric-cell"><span class="metric-key">Kode</span><div class="metric-val" id="prevKode" style="color:var(--text-accent);">sbmp</div></div>
+                    <div class="metric-cell"><span class="metric-key">Nama</span><div class="metric-val" id="prevNama">surya</div></div>
+                    <div class="metric-cell"><span class="metric-key">Warna</span><div class="metric-val" id="prevWarna">putih</div></div>
+                    <div class="metric-cell"><span class="metric-key">Versi</span><div class="metric-val" id="prevVersi">v1</div></div>
+                    <div class="metric-cell"><span class="metric-key">Qty (Jumlah)</span><div class="metric-val" id="prevQty">150 pcs</div></div>
+                    <div class="metric-cell"><span class="metric-key">Durasi</span><div class="metric-val" id="prevDurasi" style="color:#38bdf8;">00:02:00</div></div>
+                    <div class="metric-cell"><span class="metric-key">Batch</span><div class="metric-val" id="prevBatch">#1</div></div>
+                    <div class="metric-cell"><span class="metric-key">Trolly</span><div class="metric-val" id="prevTrolly">longgar</div></div>
+                    <div class="metric-cell"><span class="metric-key">Target Unit</span><div class="metric-val" id="prevTarget">Unit 01</div></div>
+                </div>
+            </div>
+
+            <button onclick="applyPokaYokeRecipe()" style="width:100%; background:var(--color-resep); color:#fff; border:none; padding:10px; border-radius:6px; font-weight:800; font-size:0.88rem; cursor:pointer;">🚀 TERAPKAN RESEP KE STEAMBOX</button>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // GLOBAL SCADA STATE & USER AUTHENTICATION
+        let currentLoggedUser = { name: 'Guest', group: 'Guest' };
+        localStorage.removeItem('haiwell_logged_user');
+
+        let scadaUsers = JSON.parse(localStorage.getItem('haiwell_scada_users')) || [
+            { group: 'Administrators', type: 'Local users', name: 'Admin', alias: 'Admin', pass: 'admin123', disable: false, adminVisible: true, probRemote: false, probLocal: false, desc: 'Super User SCADA System Administrator' },
+            { group: 'PowerUsers', type: 'Local users', name: 'Supervisor', alias: 'Supervisor', pass: 'power123', disable: false, adminVisible: true, probRemote: false, probLocal: false, desc: 'Shift Supervisor & Process Engineer' },
+            { group: 'Users', type: 'Local users', name: 'Operator', alias: 'Operator Floor', pass: 'user123', disable: false, adminVisible: true, probRemote: false, probLocal: false, desc: 'Floor Operator Steambox Cooking' }
+        ];
+
+        let sysControlBanners = JSON.parse(localStorage.getItem('sys_control_banners')) || [
+            { varName: 'txt_status_kosong', label: 'Standby / Kosong', text: 'STEAMBOX KOSONG' },
+            { varName: 'txt_siap_preheat', label: 'Siap Preheat', text: 'SIAP PEMANASAN - SILAKAN TEKAN START' },
+            { varName: 'txt_status_preheat', label: 'Sedang Preheat', text: 'SEDANG PRE-HEAT (PEMANASAN)' },
+            { varName: 'txt_preheat_paused', label: 'Preheat Paused', text: 'PEMANASAN DI-PAUSE' },
+            { varName: 'txt_selesai_preheat', label: 'Preheat Selesai', text: 'PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN' },
+            { varName: 'txt_siap_cooking', label: 'Siap Cooking', text: 'RESEP TERPASANG - SILAKAN TEKAN START' },
+            { varName: 'txt_status_pemanasan', label: 'Menunggu Mendidih', text: 'MENUNGGU MENDIDIH (< 100 C)' },
+            { varName: 'txt_status_pemasakan', label: 'Sedang Memasak', text: 'SEDANG MEMASAK (MENDIDIH)' },
+            { varName: 'txt_status_paused', label: 'Cooking Paused', text: 'PEMASAKAN DI-PAUSE' },
+            { varName: 'txt_status_selesai', label: 'Selesai Memasak', text: 'PROSES SELESAI - SILAKAN KOSONGKAN TANGKI' },
+            { varName: 'txt_status_maintenance', label: 'Maintenance Mode', text: 'MODE MAINTENANCE (KONTROL MANUAL)' },
+            { varName: 'txt_status_offline', label: 'Koneksi Offline', text: 'KONEKSI OFFLINE (MCB TRIP/ALAT MATI)' },
+            { varName: 'txt_status_disable', label: 'Unit Disable', text: 'KOMUNIKASI UNIT DINONAKTIFKAN' },
+            { varName: 'txt_status_sensor_error', label: 'Sensor Fault', text: 'ERROR SENSOR (OPENLOOP/HHHH)' }
+        ];
+
+        function togglePortalPassEye() {
+            const input = document.getElementById('portalPasswordInput');
+            if (input) input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function executePortalLogin() {
+            const selectEl = document.getElementById('portalUserSelect');
+            const selectedIdx = selectEl ? (parseInt(selectEl.value) || 0) : 0;
+            const targetUser = scadaUsers[selectedIdx] || scadaUsers[0];
+            const passInput = document.getElementById('portalPasswordInput');
+            const typedPass = passInput ? passInput.value : '';
+
+            if (!targetUser) return;
+
+            if (typedPass === targetUser.pass) {
+                currentLoggedUser = { name: targetUser.name, group: targetUser.group };
+                localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+                updateLoggedUserUI();
+                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name} (${targetUser.group}).`);
+                switchView('grid');
+                document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
+            } else {
+                showToast(`❌ Login Gagal: Kata Sandi untuk "${targetUser.name}" Salah!`);
+                if (passInput) { passInput.value = ''; passInput.focus(); }
+            }
+        }
+
+        function quickAdminLogin() {
+            document.getElementById('portalPasswordInput').value = 'admin123';
+            executePortalLogin();
+        }
+
+        // CAPTURE14 & CAPTURE16 NATIVE MATRIX STRUCTURE
+        localStorage.removeItem('haiwell_matrix_groups');
+        let recipeTables = JSON.parse(localStorage.getItem('haiwell_recipe_tables')) || [
+            { id: 1, name: 'Recipe Table 1' },
+            { id: 2, name: 'Recipe Table 2' }
+        ];
+
+        let activeTableId = 1;
+        let selectedRuntimeGroupId = 'group1';
+
+        let matrixComponents = [
+            { index: 1, name: 'pilih_steambox', varName: 'recipe.pilih_steambox', type: 'Integer', integer: '1', decimal: '0' },
+            { index: 2, name: 'kode', varName: 'recipe.kode', type: 'String', integer: '', decimal: '' },
+            { index: 3, name: 'nama', varName: 'recipe.nama', type: 'String', integer: '', decimal: '' },
+            { index: 4, name: 'warna', varName: 'recipe.warna', type: 'String', integer: '', decimal: '' },
+            { index: 5, name: 'versi', varName: 'recipe.versi', type: 'Integer', integer: '5', decimal: '0' },
+            { index: 6, name: 'qty', varName: 'recipe.qty', type: 'Integer', integer: '5', decimal: '0' },
+            { index: 7, name: 'durasi', varName: 'recipe.durasi', type: 'Integer', integer: '5', decimal: '0' },
+            { index: 8, name: 'batch', varName: 'recipe.batch', type: 'Integer', integer: '5', decimal: '0' },
+            { index: 9, name: 'trolly', varName: 'recipe.trolly', type: 'String', integer: '', decimal: '' }
+        ];
+
+        let matrixGroups = JSON.parse(localStorage.getItem('haiwell_matrix_groups')) || [
+            { id: 'group1', values: { pilih_steambox: '1', kode: 'sbmp', nama: 'surya', warna: 'putih', versi: '1', qty: '150', durasi: '10', batch: '1', trolly: 'longgar' } },
+            { id: 'group2', values: { pilih_steambox: '2', kode: 'sbmk', nama: 'mentor', warna: 'kuning', versi: '1', qty: '120', durasi: '2', batch: '1', trolly: 'rapat' } }
+        ];
+
+        function saveMatrixToStorage() {
+            localStorage.setItem('haiwell_recipe_tables', JSON.stringify(recipeTables));
+            localStorage.setItem('haiwell_matrix_groups', JSON.stringify(matrixGroups));
+        }
+
+        function getBannerTextByVar(varName, fallbackText) {
+            if (typeof sysControlBanners === 'undefined' || !sysControlBanners) return fallbackText;
+            const found = sysControlBanners.find(b => b.varName === varName);
+            return found ? found.text : fallbackText;
+        }
+
+        function getPokaBannerInfo(u) {
+            if (!u) return { text: 'READY', color: 'var(--color-kosong)' };
+            if (u.state === 'kosong') return { text: getBannerTextByVar('txt_status_kosong', 'STEAMBOX KOSONG'), color: 'var(--color-kosong)' };
+            if (u.state === 'preheat') return { text: getBannerTextByVar('txt_status_preheat', 'SEDANG PEMANASAN'), color: 'var(--color-preheat)' };
+            if (u.state === 'resep_terpasang') return { text: getBannerTextByVar('txt_siap_cooking', 'RESEP TERPASANG — SILAKAN START'), color: 'var(--color-resep)' };
+            if (u.state === 'cooking') return { text: getBannerTextByVar('txt_status_pemasakan', 'SEDANG MEMASAK (MENDIDIH)'), color: 'var(--color-cooking)' };
+            if (u.state === 'selesai') return { text: getBannerTextByVar('txt_status_selesai', 'PROSES SELESAI — SILAKAN KOSONGKAN TANGKI'), color: 'var(--color-selesai)' };
+            return { text: getBannerTextByVar('txt_siap_preheat', 'SIAP PEMANASAN'), color: 'var(--color-kosong)' };
+        }
+
+        function formatTime(totalSec) {
+            const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+            const s = (totalSec % 60).toString().padStart(2, '0');
+            return `00:${m}:${s}`;
+        }
+
+        function getEstimatedFinishTime(remSec) {
+            const finishDate = new Date(Date.now() + (remSec * 1000));
+            const h = finishDate.getHours().toString().padStart(2, '0');
+            const m = finishDate.getMinutes().toString().padStart(2, '0');
+            const s = finishDate.getSeconds().toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // MOCK STEAMBOX DATABASE (30 UNITS)
+        const units = Array.from({ length: 30 }, (_, i) => {
+            const id = i + 1;
+            let state = 'kosong';
+            let mode = (id % 2 === 0) ? 'preheat' : 'cooking';
+            let recipeName = '--';
+            let recipeKode = '--';
+            let qty = '--';
+            let trolly = '--';
+            let temp = (92.0 + (Math.random() * 6)).toFixed(1);
+            let targetMenit = 2;
+            let secondsRunning = 0;
+            let runStop = 1;
+
+            if (id === 1) {
+                state = 'cooking'; mode = 'cooking'; recipeKode = 'sbmp'; recipeName = 'surya'; qty = '150 pcs'; trolly = 'longgar'; runStop = 0; secondsRunning = 110;
+            } else if (id === 2) {
+                state = 'cooking'; mode = 'cooking'; recipeKode = 'sbmk'; recipeName = 'mentor'; qty = '120 pcs'; trolly = 'rapat'; runStop = 0; secondsRunning = 85;
+            } else if (id === 3) {
+                state = 'preheat'; mode = 'preheat'; runStop = 0; secondsRunning = 40;
+            } else if (id === 4) {
+                state = 'cooking'; mode = 'cooking'; recipeKode = 'ghj'; recipeName = 'garuda'; qty = '100 pcs'; runStop = 0; secondsRunning = 20;
+            }
+
+            return { id, state, mode, temp, recipeKode, recipeName, qty, trolly, targetMenit, secondsRunning, runStop };
+        });
+
+        let activeTargetUnit = 1;
+
+        function renderGrid() {
+            const gridEl = document.getElementById('viewGrid');
+            gridEl.innerHTML = '';
+
+            units.forEach(u => {
+                const banner = getPokaBannerInfo(u);
+                const isRunning = u.runStop === 0;
+                const remSec = Math.max(0, (u.targetMenit * 60) - u.secondsRunning);
+
+                const card = document.createElement('div');
+                card.className = 'unit-card';
+                card.style.setProperty('--card-border-top', banner.color);
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="unit-title">Steambox ${u.id.toString().padStart(2, '0')}</span>
+                            <span class="mode-badge ${u.mode === 'preheat' ? 'mode-preheat' : 'mode-cooking'}">${u.mode}</span>
+                        </div>
+                        <div class="temp-display">${u.temp} °C</div>
+                    </div>
+
+                    <!-- STATUS BANNER -->
+                    <div class="status-banner" style="--banner-color: ${banner.color}">
+                        ${banner.text}
+                    </div>
+
+                    <!-- 4 UTAMA PARAMETER STEAMBOX (NAMA PRODUK, QTY, TARGET MENIT, DURASI AKTUAL UP) -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; background:var(--bg-cell); padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:8px;">
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+                            Nama Produk:<br>
+                            <strong style="color:var(--text-accent); font-size:0.88rem;">${u.recipeName}</strong>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-align:right;">
+                            Quantity (Pcs):<br>
+                            <strong style="color:var(--text-main); font-size:0.88rem;">${u.qty} pcs</strong>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; background:var(--bg-cell); padding:8px 10px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:10px;">
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+                            Target Menit:<br>
+                            <strong style="color:var(--text-main); font-size:0.88rem;">${u.targetMenit} Min</strong>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-align:right;">
+                            Durasi Aktual (UP):<br>
+                            <strong style="color:var(--color-cooking); font-size:0.95rem; font-family:'JetBrains Mono', monospace;">${formatTime(u.secondsRunning)}</strong>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        ${isRunning ? `<button class="btn-action btn-stop" onclick="toggleRunStop(${u.id})">STOP</button>` : `<button class="btn-action btn-start" onclick="toggleRunStop(${u.id})">START</button>`}
+                        <button class="btn-action btn-mode" onclick="toggleMode(${u.id})">MODE</button>
+                        <button class="btn-action btn-recipe" onclick="openModal(${u.id})">RESEP</button>
+                        <button class="btn-action btn-reset" onclick="resetUnit(${u.id})">RESET UNIT</button>
+                    </div>
+                `;
+                gridEl.appendChild(card);
+            });
+
+            renderSimpleMonitorRuang();
+            renderMatrixTable();
+            renderRuntimeHmiView();
+            renderUserSecurityTable();
+            updateLoggedUserUI();
+        }
+
+        function renderSimpleMonitorRuang() {
+            const tbody = document.getElementById('tableMonitorBody');
+            tbody.innerHTML = '';
+
+            const top5Units = units
+                .map(u => {
+                    const remSec = Math.max(0, (u.targetMenit * 60) - u.secondsRunning);
+                    return { ...u, remSec };
+                })
+                .sort((a, b) => a.remSec - b.remSec)
+                .slice(0, 5);
+
+            top5Units.forEach((u, idx) => {
+                const isTop1 = (idx === 0);
+                const estFinish = getEstimatedFinishTime(u.remSec);
+
+                const tr = document.createElement('tr');
+                if (isTop1) tr.style.background = 'rgba(220, 38, 38, 0.08)';
+
+                tr.innerHTML = `
+                    <td>
+                        <strong>Steambox ${u.id.toString().padStart(2, '0')}</strong>
+                        ${isTop1 ? '<span style="font-size:0.65rem; background:var(--color-danger); color:#fff; padding:2px 5px; border-radius:4px; margin-left:4px; font-weight:700;">URGENT #1</span>' : ''}
+                    </td>
+                    <td style="color:var(--text-accent); font-weight:700;">
+                        ${u.recipeName} (${u.recipeKode})
+                    </td>
+                    <td>
+                        <span style="font-size:0.75rem; font-weight:800; padding:2px 6px; border-radius:4px; background:rgba(5,150,105,0.15); color:var(--color-cooking);">${u.state.toUpperCase()}</span>
+                    </td>
+                    <td style="font-family:'JetBrains Mono', monospace; font-size:0.95rem; color:var(--text-main); font-weight:700;">
+                        ${estFinish}
+                    </td>
+                    <td style="font-family:'JetBrains Mono', monospace; font-size:1.05rem; color:${u.remSec <= 30 ? 'var(--color-danger)' : 'var(--color-cooking)'}; font-weight:700;">
+                        ${formatTime(u.remSec)}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // RENDER RUNTIME HMI RECIPE VIEW
+        function renderRuntimeHmiView() {
+            const listContainer = document.getElementById('runtimeGroupListContainer');
+            listContainer.innerHTML = '';
+
+            matrixGroups.forEach(g => {
+                const item = document.createElement('div');
+                item.className = `runtime-recipe-item ${g.id === selectedRuntimeGroupId ? 'selected' : ''}`;
+                item.onclick = () => selectRuntimeGroup(g.id);
+                item.innerHTML = `
+                    <div>
+                        <strong style="color:var(--text-main); font-size:0.82rem;">${g.id}</strong>
+                        <div style="font-size:0.72rem; color:var(--text-accent); font-weight:600;">${g.values['nama'] || 'produk'} (${g.values['kode'] || 'sbmk'})</div>
+                    </div>
+                    <div style="font-family:'JetBrains Mono'; font-size:0.75rem; font-weight:700; color:var(--text-muted);">${g.values['durasi'] || 2}m</div>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            updateRuntimeDetailsCard();
+        }
+
+        function selectRuntimeGroup(groupId) {
+            selectedRuntimeGroupId = groupId;
+            renderRuntimeHmiView();
+        }
+
+        function updateRuntimeDetailsCard() {
+            const g = matrixGroups.find(x => x.id === selectedRuntimeGroupId) || matrixGroups[0];
+            if (!g) return;
+
+            document.getElementById('runtimeSelectedTitle').innerText = `${g.id} — ${g.values['nama'] || 'produk'} (${g.values['kode'] || 'sbmk'})`;
+            document.getElementById('rtKode').innerText = g.values['kode'] || 'sbmk';
+            document.getElementById('rtNama').innerText = g.values['nama'] || 'surya';
+            document.getElementById('rtWarna').innerText = g.values['warna'] || 'putih';
+            document.getElementById('rtVersi').innerText = `v${g.values['versi'] || '1'}`;
+            document.getElementById('rtQty').innerText = `${g.values['qty'] || '150'} pcs`;
+            document.getElementById('rtDurasi').innerText = formatTime((parseFloat(g.values['durasi']) || 2) * 60);
+            document.getElementById('rtBatch').innerText = `#${g.values['batch'] || '1'}`;
+            document.getElementById('rtTrolly').innerText = g.values['trolly'] || 'longgar';
+        }
+
+        function executeRuntimeDownloadRecipe() {
+            const targetUnitId = parseInt(document.getElementById('runtimeTargetSelect').value) || 1;
+            transferGroupRecipe(selectedRuntimeGroupId);
+        }
+
+        // RENDER CAPTURE14 MATRIX TABLE
+        function renderMatrixTable() {
+            const activeTbl = recipeTables.find(t => t.id === activeTableId) || recipeTables[0];
+
+            const tabsContainer = document.getElementById('recipeTabsBar');
+            tabsContainer.innerHTML = '';
+            recipeTables.forEach(t => {
+                const tab = document.createElement('div');
+                tab.className = `recipe-tab-item ${t.id === activeTableId ? 'active' : ''}`;
+                tab.onclick = () => switchRecipeTable(t.id);
+                tab.innerHTML = `
+                    <span>📊 ${t.name}</span>
+                    <span onclick="event.stopPropagation(); renameRecipeTable(${t.id})" style="cursor:pointer; font-size:0.68rem;" title="Edit Nama Tabel">✏️</span>
+                `;
+                tabsContainer.appendChild(tab);
+            });
+
+            const addTabBtn = document.createElement('button');
+            addTabBtn.className = 'btn-scada-tool';
+            addTabBtn.style.cssText = 'border-radius:4px; padding:3px 8px; font-size:0.72rem;';
+            addTabBtn.onclick = addNewRecipeTable;
+            addTabBtn.innerText = '➕ Tambah Tabel';
+            tabsContainer.appendChild(addTabBtn);
+
+            const headerRow = document.getElementById('matrixHeaderRow');
+            headerRow.innerHTML = `
+                <th>Index</th>
+                <th>Component Name</th>
+                <th>Var Name</th>
+                <th>Var Type</th>
+                <th>Integer</th>
+                <th>Decimal</th>
+            `;
+
+            matrixGroups.forEach(g => {
+                const th = document.createElement('th');
+                th.style.cssText = 'background:#0284c7; color:#fff; text-align:center;';
+                th.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                        <span>${g.id}</span>
+                        <button class="btn-export" style="background:var(--color-resep); padding:2px 5px; font-size:0.65rem;" onclick="transferGroupRecipe('${g.id}')">🚀 Transfer</button>
+                    </div>
+                `;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = document.getElementById('matrixBody');
+            tbody.innerHTML = '';
+
+            matrixComponents.forEach(c => {
+                const tr = document.createElement('tr');
+                let groupCellsHtml = '';
+
+                matrixGroups.forEach(g => {
+                    const val = g.values[c.name] || '0';
+                    groupCellsHtml += `
+                        <td>
+                            <div class="editable-cell" contenteditable="true" onblur="updateMatrixCellValue('${g.id}', '${c.name}', this.innerText)">${val}</div>
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = `
+                    <td style="font-family:'JetBrains Mono';">${c.index}</td>
+                    <td><strong>${c.name}</strong></td>
+                    <td><code>${c.varName}</code></td>
+                    <td><span style="color:var(--text-accent); font-weight:700;">${c.type}</span></td>
+                    <td>${c.integer}</td>
+                    <td>${c.decimal}</td>
+                    ${groupCellsHtml}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function switchRecipeTable(id) { activeTableId = id; renderMatrixTable(); }
+
+        function addNewRecipeTable() {
+            const name = prompt("Masukkan Nama Tabel Resep Baru:", `Recipe Table ${recipeTables.length + 1}`);
+            if (name) {
+                const newId = Date.now();
+                recipeTables.push({ id: newId, name });
+                activeTableId = newId; saveMatrixToStorage(); renderMatrixTable();
+                showToast(`✅ Tabel Resep Baru "${name}" Ditambahkan!`);
+            }
+        }
+
+        function renameRecipeTable(id) {
+            const tbl = recipeTables.find(t => t.id === id);
+            if (!tbl) return;
+            const newName = prompt("Ubah Nama Tabel Resep:", tbl.name);
+            if (newName) { tbl.name = newName; saveMatrixToStorage(); renderMatrixTable(); showToast(`✏️ Nama Tabel Diubah Menjadi "${newName}"`); }
+        }
+
+        function openViewGroupNumberModal() {
+            const tbody = document.getElementById('viewGroupNumberBody');
+            tbody.innerHTML = '';
+            matrixGroups.forEach((g, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-family:'JetBrains Mono'; font-weight:700;">${idx + 1}</td>
+                    <td>
+                        <input type="text" class="form-input" style="padding:4px 8px; font-weight:700; color:var(--text-accent);" value="${g.id}" onchange="renameMatrixGroup(${idx}, this.value)">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('viewGroupNumberModal').classList.add('active');
+        }
+
+        function renameMatrixGroup(index, newName) {
+            const trimmed = newName.trim();
+            if (trimmed && matrixGroups[index]) {
+                const oldId = matrixGroups[index].id;
+                matrixGroups[index].id = trimmed;
+                saveMatrixToStorage(); renderMatrixTable();
+                showToast(`✏️ Group "${oldId}" Diubah Menjadi "${trimmed}"!`);
+            }
+        }
+
+        function closeViewGroupNumberModal() { document.getElementById('viewGroupNumberModal').classList.remove('active'); }
+
+        function addNewGroupToMatrix() {
+            const nextGroupId = `group${matrixGroups.length + 1}`;
+            matrixGroups.push({
+                id: nextGroupId,
+                values: { pilih_steambox: '1', kode: 'new', nama: 'produk', warna: 'putih', versi: '1', qty: '100', durasi: '2', batch: '1', trolly: 'longgar' }
+            });
+            saveMatrixToStorage(); renderMatrixTable();
+            showToast(`➕ Group Baru "${nextGroupId}" Ditambahkan!`);
+        }
+
+        function deleteSelectedGroup() {
+            if (matrixGroups.length <= 1) { showToast("Peringatan: Minimal 1 Group Resep!"); return; }
+            const removed = matrixGroups.pop();
+            saveMatrixToStorage(); renderMatrixTable();
+            showToast(`❌ Group "${removed.id}" Dihapus.`);
+        }
+
+        function addNewComponentToMatrix() {
+            const compName = prompt("Nama Component Baru:");
+            if (compName) {
+                matrixComponents.push({
+                    index: matrixComponents.length + 1,
+                    name: compName, varName: `recipe.${compName.toLowerCase()}`, type: 'String', integer: '', decimal: ''
+                });
+                renderMatrixTable();
+                showToast(`➕ Component "${compName}" Ditambahkan!`);
+            }
+        }
+
+        function deleteSelectedComponent() {
+            if (matrixComponents.length <= 1) return;
+            const removed = matrixComponents.pop();
+            renderMatrixTable();
+            showToast(`❌ Component "${removed.name}" Dihapus.`);
+        }
+
+        function updateMatrixCellValue(groupId, compName, val) {
+            const g = matrixGroups.find(x => x.id === groupId);
+            if (g) {
+                g.values[compName] = val.trim();
+                saveMatrixToStorage();
+                showToast(`💾 ${compName} (${groupId}) Diperbarui: "${val.trim()}"`);
+            }
+        }
+
+        function transferGroupRecipe(groupId) {
+            const g = matrixGroups.find(x => x.id === groupId);
+            if (!g) return;
+            const targetUnitId = parseInt(document.getElementById('recipeTargetSelect').value) || parseInt(document.getElementById('runtimeTargetSelect').value) || 1;
+            const u = units.find(x => x.id === targetUnitId);
+            if (!u) return;
+
+            u.recipeKode = g.values['kode'] || 'sbmk';
+            u.recipeName = g.values['nama'] || 'surya';
+            u.qty = (g.values['qty'] || '150') + ' pcs';
+            u.trolly = g.values['trolly'] || 'longgar';
+            u.targetMenit = parseFloat(g.values['durasi']) || 2;
+            u.state = 'resep_terpasang';
+            u.mode = 'cooking';
+
+            showToast(`🚀 Transfer "${u.recipeName}" dari ${groupId} Ke Steambox ${targetUnitId} Sukses!`);
+            renderGrid();
+        }
+
+        // REAL CSV & JSON EXPORTER ENGINE
+        function downloadFile(filename, content, type = 'text/csv') {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportRecipeCSV() {
+            let csv = "Index,ComponentName,VarName,VarType,Integer,Decimal";
+            matrixGroups.forEach(g => { csv += `,${g.id}`; });
+            csv += "\n";
+
+            matrixComponents.forEach(c => {
+                csv += `${c.index},"${c.name}","${c.varName}","${c.type}","${c.integer}","${c.decimal}"`;
+                matrixGroups.forEach(g => { csv += `,"${g.values[c.name] || '0'}"`; });
+                csv += "\n";
+            });
+
+            downloadFile(`Haiwell_SCADA_Recipe_Matrix_${new Date().toISOString().slice(0,10)}.csv`, csv);
+            showToast("📄 Berkas CSV Recipe Matrix Diunduh!");
+        }
+
+        function exportRecipeJSON() {
+            const exportObj = { recipeTables, matrixComponents, matrixGroups };
+            downloadFile(`Haiwell_SCADA_Recipe_Matrix_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(exportObj, null, 2), 'application/json');
+            showToast("📦 Berkas JSON Recipe Matrix Diunduh!");
+        }
+
+        function exportProduksiCSV() {
+            let csv = "Timestamp,SteamboxUnit,RecipeCode,RecipeName,QtyPcs,BatchNo,Trolly,CookingDuration,Status\n";
+            csv += `"2026-07-25 05:40:12","Steambox 01","sbmp","surya","150 pcs","#B102","longgar","00:02:00","COMPLETED"\n`;
+            downloadFile(`Log_Produksi_Steambox_${new Date().toISOString().slice(0,10)}.csv`, csv);
+            showToast("📄 Log Produksi CSV Diunduh!");
+        }
+
+        function exportAlarmCSV() {
+            let csv = "Timestamp,SteamboxUnit,AlarmTag,SensorStatus,Description,AlarmState\n";
+            csv += `"2026-07-25 05:12:05","Steambox 03","$sb_3.sensor_error","SENSOR_ERROR (TRUE)","PT100 Sensor Error / Cable Cut","ACTIVE"\n`;
+            downloadFile(`Log_Alarm_SCADA_${new Date().toISOString().slice(0,10)}.csv`, csv);
+            showToast("📄 Log Alarm CSV Diunduh!");
+        }
+
+        function exportMaintenanceCSV() {
+            let csv = "MaintenanceDate,SteamboxUnit,Type,Technician,Notes,NextSchedule\n";
+            csv += `"2026-07-20","Steambox 01","Preventive","Hery (Teknik)","Gasket & Valve Check","2026-08-20"\n`;
+            downloadFile(`Log_Maintenance_Steambox_${new Date().toISOString().slice(0,10)}.csv`, csv);
+            showToast("📄 Log Maintenance CSV Diunduh!");
+        }
+
+        function exportPrintPDF(title) {
+            showToast(`🖨️ Menyiapkan Tampilan Cetak / PDF Laporan ${title}...`);
+            setTimeout(() => window.print(), 500);
+        }
+
+        // POP-UP NAVIGATION SIDE DRAWER HANDLERS (STRICT RBAC PROTECTION & UNAUTHENTICATED LOCKOUT)
+        function openMenuModal() {
+            // Unauthenticated Lockout Guard
+            if (!currentLoggedUser || currentLoggedUser.group === 'Guest') {
+                showToast("🔒 Akses Terkunci! Silakan Login Terlebih Dahulu di Portal Login.");
+                switchView('loginPortal');
+                return;
+            }
+
+            const modal = document.getElementById('mainNavMenuModal');
+            const drawer = modal.querySelector('.modal-box');
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            setTimeout(() => { drawer.style.transform = 'translateX(0)'; }, 10);
+        }
+
+        function closeMenuModal() {
+            const modal = document.getElementById('mainNavMenuModal');
+            const drawer = modal.querySelector('.modal-box');
+            drawer.style.transform = 'translateX(-100%)';
+            setTimeout(() => { 
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }, 220);
+        }
+
+        function selectPopUpMenu(viewName, titleText) {
+            // Unauthenticated Lockout Guard
+            if (!currentLoggedUser || currentLoggedUser.group === 'Guest') {
+                if (viewName !== 'loginPortal') {
+                    showToast("🔒 Akses Terkunci! Silakan Login Terlebih Dahulu di Portal Login.");
+                    switchView('loginPortal');
+                    closeMenuModal();
+                    return;
+                }
+            }
+
+            // STRICT ROLE-BASED ACCESS CONTROL (RBAC) GUARDS
+            const userRole = currentLoggedUser ? currentLoggedUser.group : 'Guest';
+
+            if (viewName === 'recipe') {
+                if (userRole !== 'Administrators' && userRole !== 'PowerUsers') {
+                    showToast("🔒 Akses Terkunci! Menu Recipe Manager Khusus untuk PowerUser & Admin.");
+                    return;
+                }
+            }
+
+            if (viewName === 'userSecurity') {
+                if (userRole !== 'Administrators') {
+                    showToast("🔒 Akses Terkunci! Menu User Security Khusus untuk Administrators.");
+                    return;
+                }
+            }
+
+            switchView(viewName);
+            document.getElementById('activeMenuTitleDisplay').innerText = titleText;
+            closeMenuModal();
+        }
+
+        // SWITCH BETWEEN 8 INDUSTRIAL MENUS (INCLUDING LOGIN PORTAL LANDING)
+        function switchView(viewName) {
+            const views = ['loginPortal', 'grid', 'monitor', 'recipe', 'produksi', 'alarm', 'maintenance', 'userSecurity'];
+            views.forEach(v => {
+                const viewEl = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+                const btnEl = document.getElementById('menu' + v.charAt(0).toUpperCase() + v.slice(1));
+                if (viewEl) viewEl.style.display = (v === viewName) ? (v === 'grid' ? 'grid' : 'block') : 'none';
+                if (btnEl) {
+                    if (v === viewName) btnEl.classList.add('active');
+                    else btnEl.classList.remove('active');
+                }
+            });
+
+            const filterGroupArea = document.getElementById('filterGroupArea');
+            if (filterGroupArea) filterGroupArea.style.display = (viewName === 'grid') ? 'flex' : 'none';
+        }
+
+        // USER PROFILE DROPDOWN & PORTAL LOGIN HANDLERS (CAPTURE24 & CAPTURE25 DESIGN)
+        function toggleUserDropdown(e) {
+            if (e) e.stopPropagation();
+            const dd = document.getElementById('userProfileDropdown');
+            if (dd) dd.style.display = (dd.style.display === 'none' || !dd.style.display) ? 'block' : 'none';
+        }
+
+        function closeUserDropdown() {
+            const dd = document.getElementById('userProfileDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('userProfileBtn');
+            const dd = document.getElementById('userProfileDropdown');
+            if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.style.display = 'none';
+            }
+        });
+
+        function togglePortalPassEye() {
+            const input = document.getElementById('portalPasswordInput');
+            if (input) input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function quickAdminLogin() {
+            document.getElementById('portalPasswordInput').value = 'admin123';
+            executePortalLogin();
+        }
+
+        function populatePortalUserSelect() {
+            const selectEl = document.getElementById('portalUserSelect');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            scadaUsers.forEach((u, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `${u.name} (${u.group})`;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function executePortalLogin() {
+            const selectedIdx = parseInt(document.getElementById('portalUserSelect').value) || 0;
+            const targetUser = scadaUsers[selectedIdx];
+            const typedPass = document.getElementById('portalPasswordInput').value;
+
+            if (!targetUser) return;
+
+            if (typedPass === targetUser.pass) {
+                currentLoggedUser = { name: targetUser.name, group: targetUser.group };
+                localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+                updateLoggedUserUI();
+                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name} (${targetUser.group}).`);
+                switchView('grid');
+                document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
+            } else {
+                showToast(`❌ Login Gagal: Kata Sandi untuk "${targetUser.name}" Salah!`);
+                document.getElementById('portalPasswordInput').value = '';
+                document.getElementById('portalPasswordInput').focus();
+            }
+        }
+
+        function updateLoggedUserUI() {
+            const avatarBadge = document.getElementById('txtAvatarBadge');
+            const dropName = document.getElementById('dropdownName');
+            const dropGroup = document.getElementById('dropdownGroup');
+
+            if (avatarBadge) {
+                const firstChar = currentLoggedUser.name ? currentLoggedUser.name.charAt(0).toUpperCase() : 'G';
+                avatarBadge.innerText = `${firstChar}-`;
+            }
+
+            if (dropName) dropName.innerText = currentLoggedUser.name;
+            if (dropGroup) dropGroup.innerText = currentLoggedUser.group;
+
+            // Visual RBAC Badges on Side Drawer
+            const userRole = currentLoggedUser ? currentLoggedUser.group : 'Users';
+            const recipeBtn = document.getElementById('menuRecipe');
+            const securityBtn = document.getElementById('menuUserSecurity');
+
+            if (recipeBtn) {
+                if (userRole === 'Users') {
+                    recipeBtn.style.opacity = '0.5';
+                    recipeBtn.title = "🔒 Akses Terkunci untuk Operator";
+                } else {
+                    recipeBtn.style.opacity = '1';
+                    recipeBtn.title = "";
+                }
+            }
+
+            if (securityBtn) {
+                if (userRole !== 'Administrators') {
+                    securityBtn.style.opacity = '0.5';
+                    securityBtn.title = "🔒 Akses Terkunci Khusus Administrators";
+                } else {
+                    securityBtn.style.opacity = '1';
+                    securityBtn.title = "";
+                }
+            }
+        }
+
+        function openLoginModal() {
+            const selectEl = document.getElementById('loginUserSelect');
+            selectEl.innerHTML = '';
+
+            scadaUsers.forEach((u, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `${u.name} (${u.group})`;
+                selectEl.appendChild(opt);
+            });
+
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('chkShowLoginPassword').checked = false;
+            document.getElementById('loginPasswordInput').type = 'password';
+
+            document.getElementById('loginAuthModal').classList.add('active');
+            setTimeout(() => document.getElementById('loginPasswordInput').focus(), 150);
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginAuthModal').classList.remove('active');
+        }
+
+        function executeScadaLogin() {
+            const selectedIdx = parseInt(document.getElementById('loginUserSelect').value) || 0;
+            const targetUser = scadaUsers[selectedIdx];
+            const typedPass = document.getElementById('loginPasswordInput').value;
+
+            if (!targetUser) return;
+
+            if (typedPass === targetUser.pass) {
+                currentLoggedUser = { name: targetUser.name, group: targetUser.group };
+                localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+                updateLoggedUserUI();
+                closeLoginModal();
+                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name} (${targetUser.group}).`);
+            } else {
+                showToast(`❌ Login Gagal: Kata Sandi (Password) untuk "${targetUser.name}" Salah!`);
+                document.getElementById('loginPasswordInput').value = '';
+                document.getElementById('loginPasswordInput').focus();
+            }
+        }
+
+        function executeScadaLogout() {
+            currentLoggedUser = { name: 'Guest', group: 'Guest' };
+            localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+            updateLoggedUserUI();
+            switchView('loginPortal');
+            document.getElementById('activeMenuTitleDisplay').innerText = '🔑 LOGIN PORTAL';
+            showToast("🚪 Logout Berhasil. Kembali ke Portal Login Utama.");
+        }
+
+        let activeEditUserIndex = 0;
+
+        function renderUserSecurityTable() {
+            const tbody = document.getElementById('tableUserSecurityBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const groups = ['Administrators', 'PowerUsers', 'Users'];
+            
+            groups.forEach(grp => {
+                const groupUsers = scadaUsers.filter(u => u.group === grp);
+                const groupColor = grp === 'Administrators' ? '#ef4444' : (grp === 'PowerUsers' ? '#f59e0b' : '#10b981');
+                
+                // Group Header Row matching Capture22.jpeg
+                const grpTr = document.createElement('tr');
+                grpTr.style.background = 'var(--bg-cell)';
+                grpTr.innerHTML = `
+                    <td colspan="10" style="padding:6px 12px; border-bottom:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:800; color:${groupColor}; font-size:0.82rem;">📁 User Group: ${grp} (${groupUsers.length} Users)</span>
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn-scada-tool" style="font-size:0.68rem; padding:2px 8px; background:#0284c7; color:#fff;" onclick="openAddUserToGroup('${grp}')">➕ Add User to ${grp}</button>
+                                <button class="btn-scada-tool" style="font-size:0.68rem; padding:2px 6px;" onclick="openUserGroupPropertiesModal('${grp}')">⚙️ Group Properties</button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(grpTr);
+
+                groupUsers.forEach(u => {
+                    const idx = scadaUsers.indexOf(u);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="padding-left:24px;"><span style="color:${groupColor}; font-weight:700;">└─ ${u.group}</span></td>
+                        <td>${u.type}</td>
+                        <td><strong>${u.name}</strong></td>
+                        <td>${u.alias}</td>
+                        <td><input type="checkbox" ${u.disable ? 'checked' : ''} disabled></td>
+                        <td><input type="checkbox" ${u.adminVisible ? 'checked' : ''} disabled></td>
+                        <td><input type="checkbox" ${u.probRemote ? 'checked' : ''} disabled></td>
+                        <td><input type="checkbox" ${u.probLocal ? 'checked' : ''} disabled></td>
+                        <td>${u.desc}</td>
+                        <td>
+                            <button class="btn-scada-tool" onclick="editUserSecurity(${idx})">✏️ Edit</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        function editUserSecurity(idx) {
+            activeEditUserIndex = idx;
+            const u = scadaUsers[idx];
+            if (!u) return;
+
+            document.getElementById('secUserGroupSelect').value = u.group || 'Users';
+            document.getElementById('secUserName').value = u.name;
+            document.getElementById('secUserAlias').value = u.alias;
+            document.getElementById('secUserPassword').value = u.pass;
+            document.getElementById('chkShowPassword').checked = false;
+            document.getElementById('secUserPassword').type = 'password';
+
+            document.getElementById('chkDisable').checked = u.disable;
+            document.getElementById('chkAdminNotVisible').checked = !u.adminVisible;
+            document.getElementById('chkProhibitRemote').checked = u.probRemote;
+            document.getElementById('chkProhibitLocal').checked = u.probLocal;
+            document.getElementById('secUserDesc').value = u.desc;
+
+            document.getElementById('userSecurityModal').classList.add('active');
+        }
+
+        function openAddUserToGroup(targetGroup = 'Users') {
+            activeEditUserIndex = -1;
+            document.getElementById('secUserGroupSelect').value = targetGroup;
+            document.getElementById('secUserName').value = `New_${targetGroup}_User`;
+            document.getElementById('secUserAlias').value = `New_${targetGroup}_User`;
+            document.getElementById('secUserPassword').value = '123456';
+            document.getElementById('chkShowPassword').checked = false;
+            document.getElementById('secUserPassword').type = 'password';
+
+            document.getElementById('chkDisable').checked = false;
+            document.getElementById('chkAdminNotVisible').checked = false;
+            document.getElementById('chkProhibitRemote').checked = false;
+            document.getElementById('chkProhibitLocal').checked = false;
+            document.getElementById('secUserDesc').value = `New account under ${targetGroup} group`;
+
+            document.getElementById('userSecurityModal').classList.add('active');
+        }
+
+        function togglePasswordVisibility(isShown) {
+            document.getElementById('secUserPassword').type = isShown ? 'text' : 'password';
+        }
+
+        function closeUserSecurityModal() {
+            document.getElementById('userSecurityModal').classList.remove('active');
+        }
+
+        function saveUserSecurityProperty() {
+            const group = document.getElementById('secUserGroupSelect').value || 'Users';
+            const name = document.getElementById('secUserName').value.trim();
+            const alias = document.getElementById('secUserAlias').value.trim();
+            const pass = document.getElementById('secUserPassword').value;
+            const disable = document.getElementById('chkDisable').checked;
+            const adminVisible = !document.getElementById('chkAdminNotVisible').checked;
+            const probRemote = document.getElementById('chkProhibitRemote').checked;
+            const probLocal = document.getElementById('chkProhibitLocal').checked;
+            const desc = document.getElementById('secUserDesc').value.trim();
+
+            if (!name || !pass) {
+                showToast("Peringatan: User Name dan Password tidak boleh kosong!");
+                return;
+            }
+
+            if (activeEditUserIndex >= 0 && scadaUsers[activeEditUserIndex]) {
+                scadaUsers[activeEditUserIndex] = {
+                    ...scadaUsers[activeEditUserIndex],
+                    group, name, alias, pass, disable, adminVisible, probRemote, probLocal, desc
+                };
+            } else {
+                scadaUsers.push({
+                    group, type: 'Local users', name, alias, pass, disable, adminVisible, probRemote, probLocal, desc
+                });
+            }
+
+            localStorage.setItem('haiwell_scada_users', JSON.stringify(scadaUsers));
+            renderUserSecurityTable();
+            populatePortalUserSelect();
+            closeUserSecurityModal();
+            showToast(`💾 Account "${name}" Berhasil Disimpan ke Group "${group}"!`);
+        }
+
+        function openAddGroupModal() {
+            const grpName = prompt("Masukkan Nama User Group Baru:", "NewGroup");
+            if (grpName) {
+                showToast(`➕ User Group "${grpName}" Berhasil Ditambahkan!`);
+            }
+        }
+
+        function openUserGroupPropertiesModal(grpName = 'Administrators') {
+            showToast(`⚙️ Menampilkan User Group Properties untuk: "${grpName}" (Capture22 Sync)`);
+        }
+
+        function deleteUserGroup() {
+            showToast("⚠️ Peringatan: Pilih User Group yang ingin dihapus.");
+        }
+
+        function exportUserSecurityCSV() {
+            let csv = "UserGroup,UserType,UserName,UserAlias,Disable,AdminVisible,ProhibitRemote,ProhibitLocal,UserDescription\n";
+            scadaUsers.forEach(u => {
+                csv += `"${u.group}","${u.type}","${u.name}","${u.alias}","${u.disable}","${u.adminVisible}","${u.probRemote}","${u.probLocal}","${u.desc}"\n`;
+            });
+            downloadFile(`Haiwell_SCADA_User_Security_${new Date().toISOString().slice(0,10)}.csv`, csv);
+            showToast("📄 Berkas CSV User Security Diunduh!");
+        }
+        function toggleRunStop(id) {
+            const u = units.find(x => x.id === id);
+            if (!u) return;
+            if (u.runStop === 1 && u.mode === 'cooking' && u.state === 'kosong') {
+                showToast(`Peringatan: Steambox ${id} Belum Diisi Resep! Silakan Masukkan Resep Terlebih Dahulu.`);
+                return;
+            }
+            u.runStop = (u.runStop === 1) ? 0 : 1;
+            if (u.runStop === 0) u.state = (u.mode === 'cooking') ? 'cooking' : 'preheat';
+            renderGrid();
+        }
+
+        function toggleMode(id) {
+            const u = units.find(x => x.id === id);
+            if (u) { u.mode = (u.mode === 'preheat') ? 'cooking' : 'preheat'; renderGrid(); }
+        }
+
+        function resetUnit(id) {
+            const u = units.find(x => x.id === id);
+            if (u) { u.runStop = 1; u.state = 'kosong'; u.secondsRunning = 0; u.recipeName = '--'; renderGrid(); }
+        }
+
+        function openModal(id) {
+            activeTargetUnit = id;
+            document.getElementById('modalUnitNum').innerText = id.toString().padStart(2, '0');
+            
+            const selectEl = document.getElementById('quickRecipeSelect');
+            selectEl.innerHTML = '';
+            matrixGroups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.innerText = `${g.id} — ${g.values['nama'] || 'produk'} (${g.values['kode'] || 'sbmk'})`;
+                selectEl.appendChild(opt);
+            });
+
+            updateQuickRecipePreview();
+            document.getElementById('recipeModal').classList.add('active');
+        }
+
+        function updateQuickRecipePreview() {
+            const selectVal = document.getElementById('quickRecipeSelect').value;
+            const g = matrixGroups.find(x => x.id === selectVal) || matrixGroups[0];
+            if (!g) return;
+
+            document.getElementById('prevKode').innerText = g.values['kode'] || 'sbmk';
+            document.getElementById('prevNama').innerText = g.values['nama'] || 'surya';
+            document.getElementById('prevWarna').innerText = g.values['warna'] || 'putih';
+            document.getElementById('prevVersi').innerText = `v${g.values['versi'] || '1'}`;
+            document.getElementById('prevQty').innerText = `${g.values['qty'] || '150'} pcs`;
+            document.getElementById('prevDurasi').innerText = formatTime((parseFloat(g.values['durasi']) || 2) * 60);
+            document.getElementById('prevBatch').innerText = `#${g.values['batch'] || '1'}`;
+            document.getElementById('prevTrolly').innerText = g.values['trolly'] || 'longgar';
+            document.getElementById('prevTarget').innerText = `Unit ${activeTargetUnit.toString().padStart(2, '0')}`;
+        }
+
+        function closeModal() { document.getElementById('recipeModal').classList.remove('active'); }
+
+        function applyPokaYokeRecipe() {
+            const selectVal = document.getElementById('quickRecipeSelect').value;
+            const g = matrixGroups.find(x => x.id === selectVal);
+            if (!g) return;
+
+            const u = units.find(x => x.id === activeTargetUnit);
+            if (!u) return;
+
+            u.recipeKode = g.values['kode'] || 'sbmk';
+            u.recipeName = g.values['nama'] || 'surya';
+            u.qty = (g.values['qty'] || '150') + ' pcs';
+            u.trolly = g.values['trolly'] || 'longgar';
+            u.targetMenit = parseFloat(g.values['durasi']) || 2;
+            u.state = 'resep_terpasang';
+            u.mode = 'cooking';
+
+            closeModal();
+            showToast(`🚀 Resep "${u.recipeName}" (${u.recipeKode}) Terpasang di Steambox ${activeTargetUnit}!`);
+            renderGrid();
+        }
+
+        function exportDataJson(type) {
+            const sampleData = [
+                { timestamp: "2026-07-25 05:40:12", unit: 1, kode: "sbmp", nama: "surya", qty: "150", trolly: "longgar", durasi: "00:02:00", status: "COMPLETED" }
+            ];
+            downloadFile(`Log_${type.toUpperCase()}_Steambox_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(sampleData, null, 2), 'application/json');
+            showToast(`📦 File JSON Log ${type.toUpperCase()} Diunduh!`);
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-item';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            document.getElementById('themeIcon').innerText = (newTheme === 'dark') ? '☀️' : '🌙';
+        }
+
+        function filterUnits(val) { showToast(`Filter Group: ${val}`); }
+
+        function populate30TargetUnits() {
+            const selectIds = ['recipeTargetSelect', 'runtimeTargetSelect'];
+            selectIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '';
+                for (let i = 1; i <= 30; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerText = `Unit ${i.toString().padStart(2, '0')}`;
+                    el.appendChild(opt);
+                }
+            });
+        }
+
+        setInterval(() => {
+            units.forEach(u => {
+                if (u.runStop === 0) {
+                    u.secondsRunning += 1;
+                    if (u.secondsRunning >= (u.targetMenit * 60)) { u.state = 'selesai'; u.runStop = 1; }
+                }
+            });
+            renderGrid();
+        }, 1000);
+
+        populate30TargetUnits();
+        populatePortalUserSelect();
+        renderGrid();
+
+        // Enforce initial view based on authentication state
+        if (!currentLoggedUser || currentLoggedUser.group === 'Guest') {
+            switchView('loginPortal');
+            document.getElementById('activeMenuTitleDisplay').innerText = '🔑 LOGIN PORTAL';
+        } else {
+            switchView('grid');
+            document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
+        }
+    </script>
+</body>
+</html>

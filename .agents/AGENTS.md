@@ -85,3 +85,10 @@ Seluruh skrip harus mendukung panduan operasional Poka-Yoke untuk operator pabri
 
 *   **ATURAN UTAMA:** AI Agent hanya diperbolehkan membuat berkas baru dalam format teks mentah (**`.txt`** atau **`.js`**). **Dilarang keras membuat atau memperbarui berkas berkekstensi `.hwExport`.**
 *   **ALASAN:** Proses impor berkas `.hwExport` yang berisi naskah sangat panjang (seperti master loop yang mencapai ~7000 baris) membutuhkan waktu pemrosesan yang sangat lama di editor SCADA Haiwell. Menggunakan format `.txt` atau `.js` memungkinkan operator melakukan salin-tempel (*copy-paste*) kode secara instan dan cepat.
+
+---
+
+## 9. Proteksi Berkas Backend Node.js (`nodejs/public/` Only)
+
+*   **ATURAN UTAMA:** AI Agent **DILARANG KERAS** menyunting, mengubah, atau menghapus berkas dan modul di dalam direktori `nodejs/` **KECUALI berkas di dalam folder `nodejs/public/`**.
+*   **ALASAN:** Seluruh sistem backend di luar `nodejs/public/` (seperti API Server, Enkripsi AES-128-CBC, dan pembuatan IV output JSON data array) sudah terbukti 100% stabil, valid, dan diproduksi khusus untuk kebutuhan integrasi tim IT pabrik.
