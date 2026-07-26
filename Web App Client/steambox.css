@@ -1,0 +1,567 @@
+/* ============================================================================
+   STEAMBOX 30 UNIT DASHBOARD CSS - HAIWELL CLOUD SCADA STYLE (v38 MODULAR)
+   ============================================================================ */
+
+:root {
+  --primary-blue: #1e40af;
+  --secondary-blue: #3b82f6;
+  --header-bg: #f8fafc;
+  --tab-active: #2563eb;
+  --tab-inactive: #94a3b8;
+  --card-bg: #ffffff;
+  --border-color: #cbd5e1;
+  --text-main: #1e293b;
+  --status-kosong: #e2e8f0;
+  --status-cooking: #22c55e;
+  --status-preheat: #eab308;
+  --status-selesai: #3b82f6;
+  --status-error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* HEADER BAR */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 8px 16px;
+  border-bottom: 2px solid #334155;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.company-logo {
+  font-size: 20px;
+  font-weight: 900;
+  color: #60a5fa;
+  letter-spacing: 0.5px;
+}
+
+.company-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+.clock-display {
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  color: #38bdf8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e3a8a;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #3b82f6;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.user-icon {
+  width: 20px;
+  height: 20px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* TOP MENU BAR */
+.top-menu-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  padding: 8px 16px;
+  border-bottom: 1px solid #334155;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.menu-left, .menu-center, .menu-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.styled-select {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #3b82f6;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn-switch-view {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-switch-view.active {
+  background: #2563eb;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.auto-rotate-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+/* MONITOR RUANG TABLE */
+.monitor-ruang-container {
+  padding: 16px;
+  background: #f8fafc;
+  min-height: calc(100vh - 120px);
+}
+
+.monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  border: 2px solid #cbd5e1;
+}
+
+.monitor-table th {
+  background: #000080;
+  color: white;
+  font-weight: 900;
+  font-size: 18px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #cbd5e1;
+}
+
+.monitor-table td {
+  padding: 12px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+}
+
+.monitor-table tbody tr:nth-child(even) {
+  background-color: #f1f5f9;
+}
+
+/* GRID CONTAINER & CARDS */
+.units-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  min-height: calc(100vh - 120px);
+}
+
+.unit-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr 180px;
+  gap: 12px;
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: border-color 0.3s ease;
+}
+
+.unit-row.status-cooking { border-left: 8px solid #22c55e; }
+.unit-row.status-preheat { border-left: 8px solid #eab308; }
+.unit-row.status-selesai { border-left: 8px solid #3b82f6; }
+.unit-row.status-error { border-left: 8px solid #ef4444; }
+
+/* COLUMN 1: STEAMBOX NO & TEMP */
+.col-steambox {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.steambox-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.steambox-number {
+  font-size: 42px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+  margin: 4px 0 8px 0;
+}
+
+.temp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.temp-table td {
+  padding: 2px 0;
+}
+
+.temp-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.temp-val {
+  text-align: right;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* COLUMN 2 & 3: DETAIL PRODUK & PROSES */
+.col-produk, .col-proses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.sec-header {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  border-bottom: 2px solid #cbd5e1;
+  padding-bottom: 4px;
+}
+
+.produk-banner {
+  background: #1e3a8a;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-banner {
+  background: #cbd5e1;
+  color: #0f172a;
+  font-weight: 900;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.status-banner.cooking { background: #22c55e; color: white; }
+.status-banner.preheat { background: #eab308; color: black; }
+.status-banner.selesai { background: #3b82f6; color: white; }
+.status-banner.error { background: #ef4444; color: white; }
+
+.grid-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.item-label {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.item-val {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* COLUMN 4: COMMAND BUTTONS */
+.col-perintah {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.btn-cmd {
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.btn-tugas {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-mode {
+  background: #f59e0b;
+  color: black;
+}
+.btn-mode.mode-preheat { background: #eab308; color: black; }
+.btn-mode.mode-cooking { background: #22c55e; color: white; }
+
+.btn-runstop {
+  background: #16a34a;
+  color: white;
+}
+.btn-runstop.active-run { background: #dc2626; color: white; }
+.btn-runstop.active-stop { background: #16a34a; color: white; }
+
+.btn-reset {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-cmd:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-cmd:active {
+  transform: translateY(0);
+}
+
+/* MODAL STYLES */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-card {
+  background: #ffffff;
+  color: #0f172a;
+  width: 90%;
+  max-width: 650px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 2px solid #cbd5e1;
+}
+
+.modal-header {
+  background: #1e293b;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #2563eb;
+  border-bottom: 3px solid #2563eb;
+}
+
+.modal-body {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.recipe-grid-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.recipe-card-btn {
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recipe-card-btn:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.recipe-card-btn h4 {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.recipe-card-btn p {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+/* RESPONSIVE DESIGN FOR MOBILE */
+@media (max-width: 900px) {
+  .unit-row {
+    grid-template-columns: 1fr;
+  }
+}
