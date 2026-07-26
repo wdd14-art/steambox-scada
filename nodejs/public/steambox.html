@@ -1414,14 +1414,21 @@
             setScadaTagValue(`sb_${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
             setScadaTagValue(`sb${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
 
-            // 4. Set per-unit recipe array variables
+            // 4. Set per-unit recipe array variables (write both recipe_kode.X and recipe.X.kode for 100% tag binding!)
             setScadaTagValue(`recipe_kode.${id}`, kode);
+            setScadaTagValue(`recipe.${id}.kode`, kode);
             setScadaTagValue(`recipe_nama.${id}`, nama);
+            setScadaTagValue(`recipe.${id}.nama`, nama);
             setScadaTagValue(`recipe_versi.${id}`, versi);
+            setScadaTagValue(`recipe.${id}.versi`, versi);
             setScadaTagValue(`recipe_warna.${id}`, warna);
+            setScadaTagValue(`recipe.${id}.warna`, warna);
             setScadaTagValue(`recipe_qty.${id}`, qty);
+            setScadaTagValue(`recipe.${id}.qty`, qty);
             setScadaTagValue(`recipe_batch.${id}`, batch);
+            setScadaTagValue(`recipe.${id}.batch`, batch);
             setScadaTagValue(`recipe_trolly.${id}`, trolly);
+            setScadaTagValue(`recipe.${id}.trolly`, trolly);
 
             showToast(`🚀 Transfer "${nama}" ke Steambox ${id} Sukses!`);
             renderGrid();
@@ -2127,22 +2134,22 @@
             const varsMap = getScadaVarsMap();
             if (!varsMap) return null;
 
-            const variants = [
-                tagName,
-                tagName.replace(/^sb_(\d+)_mode_preheat$/, 'sb_$1.mode_preheat'),
-                tagName.replace(/^sb_(\d+)\.mode_preheat$/, 'sb_$1_mode_preheat'),
-                tagName.replace(/^sb(\d+)\.runstop$/, 'sb$1.run_stop'),
-                tagName.replace(/^sb(\d+)\.run_stop$/, 'sb$1.runstop'),
-                tagName.replace(/^sb_(\d+)\./, 'sb$1.'),
-                tagName.replace(/^sb(\d+)\./, 'sb_$1.')
-            ];
+            const cleanName = tagName.trim();
+            const alt1 = cleanName.replace(/^sb_(\d+)\./, 'sb$1.');
+            const alt2 = cleanName.replace(/^sb(\d+)\./, 'sb_$1.');
+            const alt3 = cleanName.replace(/\.run_stop$/, '.runstop');
+            const alt4 = cleanName.replace(/\.runstop$/, '.run_stop');
+            const alt5 = cleanName.replace(/_mode_preheat$/, '.mode_preheat');
+            const alt6 = cleanName.replace(/\.mode_preheat$/, '_mode_preheat');
 
-            for (const key in varsMap) {
-                const item = varsMap[key];
+            const searchList = [cleanName, alt1, alt2, alt3, alt4, alt5, alt6];
+
+            for (let id in varsMap) {
+                const item = varsMap[id];
                 if (item) {
-                    for (const vName of variants) {
-                        if (item.FullName === vName || item.Name === vName || item.FullName === tagName || key === tagName) {
-                            return item.ID !== undefined ? item.ID : key;
+                    for (let s of searchList) {
+                        if (item.FullName === s || item.Name === s || id === s) {
+                            return item.ID !== undefined ? item.ID : id;
                         }
                     }
                 }
@@ -2166,6 +2173,13 @@
                 const strId = String(tagId);
                 if (varsMap && varsMap[strId]) {
                     varsMap[strId].Value = rawVal;
+                }
+
+                // Update all matching items in varsMap so syncScadaVarsToUnits reads the new value immediately without UI revert/mental!
+                for (let k in varsMap) {
+                    if (varsMap[k] && (varsMap[k].ID == tagId || k === strId)) {
+                        varsMap[k].Value = rawVal;
+                    }
                 }
 
                 // 1. Direct Socket.io Emission (Guaranteed Write to Haiwell www.js)
@@ -2199,63 +2213,47 @@
         }
 
         function toggleMode(id) {
-            const u = units.find(x => x.id === id);
-            if (!u) return;
+            const scadaMap = fetchAllScadaMap();
+            const currentMode = getScadaTagValue(scadaMap, [`sb_${id}_mode_preheat`, `sb_${id}.mode_preheat`, `sb${id}.mode_preheat`], 0);
+            const newMode = (Number(currentMode) === 1 || currentMode === true) ? 0 : 1;
 
-            const isCurrentlyPreheat = (u.mode === 'preheat');
-            const newModeStr = isCurrentlyPreheat ? 'cooking' : 'preheat';
-            const newModeNum = isCurrentlyPreheat ? 0 : 1; // 1 = preheat, 0 = cooking
+            setScadaTagValue(`sb_${id}_mode_preheat`, newMode);
+            setScadaTagValue(`sb_${id}.mode_preheat`, newMode);
+            setScadaTagValue(`sb${id}.mode_preheat`, newMode);
 
-            u.mode = newModeStr; // Immediate Local UI Update
-            renderGrid();
-
-            // Write to SCADA physical tags
-            setScadaTagValue(`sb_${id}.mode_preheat`, newModeNum);
-            setScadaTagValue(`sb${id}.mode_preheat`, newModeNum);
-            setScadaTagValue(`sb_${id}_mode_preheat`, newModeNum);
-            showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${newModeStr.toUpperCase()}`);
+            const modeStr = newMode === 1 ? 'PREHEAT' : 'COOKING';
+            showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${modeStr}`);
         }
 
         function toggleRunStop(id) {
-            const u = units.find(x => x.id === id);
-            if (!u) return;
-
-            // In Haiwell SCADA: 0 = RUN (START), 1 = STOP
-            const isRunning = (Number(u.runStop) === 0);
-            const newRunStop = isRunning ? 1 : 0; // If running (0), set to 1 (Stop). If stopped (1), set to 0 (Run/Start).
-
-            u.runStop = newRunStop;
-            renderGrid();
-
-            // Write to SCADA physical tags
-            setScadaTagValue(`sb_${id}.run_stop`, newRunStop);
-            setScadaTagValue(`sb${id}.run_stop`, newRunStop);
-            setScadaTagValue(`sb_${id}.runstop`, newRunStop);
-            setScadaTagValue(`sb${id}.runstop`, newRunStop);
-
-            if (newRunStop === 0) {
-                // Trigger Start init flag
+            const scadaMap = fetchAllScadaMap();
+            const runStopVal = getScadaTagValue(scadaMap, [`sb${id}.runstop`, `sb${id}.run_stop`, `sb_${id}.runstop`, `sb_${id}.run_stop`], 1);
+            let newRunStop = 1;
+            if (Number(runStopVal) === 0 || runStopVal === false) {
+                newRunStop = 1;
+            } else {
+                newRunStop = 0;
                 setScadaTagValue(`sb_${id}.flag_init_start`, 1);
                 setScadaTagValue(`sb${id}.flag_init_start`, 1);
             }
+
+            setScadaTagValue(`sb${id}.runstop`, newRunStop);
+            setScadaTagValue(`sb${id}.run_stop`, newRunStop);
+            setScadaTagValue(`sb_${id}.runstop`, newRunStop);
+            setScadaTagValue(`sb_${id}.run_stop`, newRunStop);
 
             showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} Perintah: ${newRunStop === 0 ? 'START' : 'STOP'}`);
         }
 
         function resetUnit(id) {
-            const u = units.find(x => x.id === id);
-            if (!u) return;
+            setScadaTagValue(`sb_${id}.run_stop`, 1);
+            setScadaTagValue(`sb${id}.run_stop`, 1);
+            setScadaTagValue(`sb_${id}.runstop`, 1);
+            setScadaTagValue(`sb${id}.runstop`, 1);
 
-            u.runStop = 0;
-            u.secondsRunning = 0;
-            u.durasiAktualUp = '00:00:00';
-            u.statusText = 'STEAMBOX KOSONG';
-            renderGrid();
-
-            setScadaTagValue(`sb_${id}.run_stop`, 0);
-            setScadaTagValue(`sb${id}.run_stop`, 0);
             setScadaTagValue(`sb_${id}.status_kosong`, 1);
             setScadaTagValue(`sb${id}.status_kosong`, 1);
+
             setScadaTagValue(`sb_${id}.reset`, 1);
             setScadaTagValue(`sb${id}.reset`, 1);
             showToast(`🔄 Reset Unit Steambox ${id.toString().padStart(2,'0')} Sukses!`);
