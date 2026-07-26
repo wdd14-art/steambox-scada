@@ -224,7 +224,7 @@
 <body>
 
     <!-- SUPER CLEAN MINIMALIST HEADER BAR (CAPTURE24.JPEG DESIGN) -->
-    <header class="header-bar">
+    <header class="header-bar" style="display: none;">
         <div class="logo-area">
             <button class="btn-menu-trigger" onclick="openMenuModal()">
                 <span>☰</span> MENU
@@ -361,7 +361,9 @@
                 </div>
                 <div style="position: relative;">
                     <input type="password" id="portalPasswordInput" placeholder="Your password" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 36px 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none;" onkeyup="if(event.key==='Enter')executePortalLogin()">
-                    <span onclick="togglePortalPassEye()" style="position: absolute; right: 10px; top: 10px; cursor: pointer; font-size: 0.9rem; color: #64748b;">👁️</span>
+                    <span onclick="togglePortalPassEye()" style="position: absolute; right: 10px; top: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Toggle Password Visibility">
+                        <svg style="width: 18px; height: 18px; fill: none; stroke: #64748b; stroke-width: 2;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
                 </div>
             </div>
 
