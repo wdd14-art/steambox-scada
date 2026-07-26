@@ -342,16 +342,12 @@
             <h2 style="font-size: 1.4rem; font-weight: 800; color: #003b6d; margin-bottom: 4px; font-family: 'Merriweather', Georgia, serif;">Login to OTLink Enterprise</h2>
             <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 22px;">Welcome back. Please sign in to continue.</div>
 
-            <!-- LOGIN FORM (DISGUISED USERNAME & PASSWORD ONLY - GROUPS HIDDEN) -->
+            <!-- LOGIN FORM (TEXT INPUT FOR USERNAME & PASSWORD ONLY - DROPDOWN & GROUPS HIDDEN) -->
             <div style="text-align: left; margin-bottom: 16px;">
                 <label style="font-size: 0.8rem; color: #334155; font-weight: 700; display: block; margin-bottom: 4px;">
                     Username <span style="color: #ef4444;">*</span>
                 </label>
-                <select id="portalUserSelect" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer;">
-                    <option value="0">Admin</option>
-                    <option value="1">Supervisor</option>
-                    <option value="2">Operator</option>
-                </select>
+                <input type="text" id="portalUsernameInput" placeholder="Enter your username (e.g. Admin)" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none;" onkeyup="if(event.key==='Enter')document.getElementById('portalPasswordInput').focus()">
             </div>
 
             <div style="text-align: left; margin-bottom: 18px;">
@@ -1517,29 +1513,36 @@
         }
 
         function quickAdminLogin() {
-            document.getElementById('portalPasswordInput').value = 'admin123';
+            const userInput = document.getElementById('portalUsernameInput');
+            const passInput = document.getElementById('portalPasswordInput');
+            if (userInput) userInput.value = 'Admin';
+            if (passInput) passInput.value = 'admin123';
             executePortalLogin();
         }
 
-        function populatePortalUserSelect() {
-            const selectEl = document.getElementById('portalUserSelect');
-            if (!selectEl) return;
-            selectEl.innerHTML = '';
-
-            scadaUsers.forEach((u, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                opt.innerText = u.name; // Disguised: Pure Username without group category
-                selectEl.appendChild(opt);
-            });
-        }
-
         function executePortalLogin() {
-            const selectedIdx = parseInt(document.getElementById('portalUserSelect').value) || 0;
-            const targetUser = scadaUsers[selectedIdx];
-            const typedPass = document.getElementById('portalPasswordInput').value;
+            const userInput = document.getElementById('portalUsernameInput');
+            const passInput = document.getElementById('portalPasswordInput');
+            const typedUser = userInput ? userInput.value.trim() : '';
+            const typedPass = passInput ? passInput.value : '';
 
-            if (!targetUser) return;
+            if (!typedUser) {
+                showToast('❌ Login Gagal: Silakan masukkan Username!');
+                if (userInput) userInput.focus();
+                return;
+            }
+
+            // Find matching user in scadaUsers array (case insensitive)
+            const targetUser = scadaUsers.find(u => 
+                u.name.toLowerCase() === typedUser.toLowerCase() || 
+                (u.alias && u.alias.toLowerCase() === typedUser.toLowerCase())
+            );
+
+            if (!targetUser) {
+                showToast(`❌ Login Gagal: Username "${typedUser}" tidak ditemukan!`);
+                if (userInput) userInput.focus();
+                return;
+            }
 
             if (typedPass === targetUser.pass) {
                 currentLoggedUser = { name: targetUser.name, group: targetUser.group };
@@ -1550,8 +1553,10 @@
                 document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
             } else {
                 showToast(`❌ Login Gagal: Kata Sandi untuk "${targetUser.name}" Salah!`);
-                document.getElementById('portalPasswordInput').value = '';
-                document.getElementById('portalPasswordInput').focus();
+                if (passInput) {
+                    passInput.value = '';
+                    passInput.focus();
+                }
             }
         }
 
