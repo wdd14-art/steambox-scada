@@ -965,9 +965,8 @@
 
         function getPokaBannerInfo(u) {
             if (!u) return { text: 'READY', color: 'var(--color-kosong)' };
-            if (u.isDisable || u.commStatus === 'Disconnected') {
-                return { text: getBannerTextByVar('txt_status_disable', 'COMMUNICATION DISABLE'), color: '#475569' };
-            }
+
+            // 1. Prioritize physical SCADA status_banner tag for ALL Units (1 to 30)
             if (u.statusText && u.statusText !== '--' && u.statusText.trim() !== '') {
                 const txtUpper = u.statusText.toUpperCase();
                 let bannerColor = 'var(--color-kosong)';
@@ -983,6 +982,10 @@
                     bannerColor = '#475569';
                 }
                 return { text: u.statusText, color: bannerColor };
+            }
+
+            if (u.isDisable || u.commStatus === 'Disconnected') {
+                return { text: getBannerTextByVar('txt_status_disable', 'COMMUNICATION DISABLE'), color: '#475569' };
             }
 
             if (u.state === 'kosong') return { text: getBannerTextByVar('txt_status_kosong', 'STEAMBOX KOSONG'), color: 'var(--color-kosong)' };
@@ -2071,6 +2074,76 @@
                 }
             }
             return defaultValue;
+        }
+
+        function setScadaTagValue(tagName, val) {
+            try {
+                if (typeof Variable !== 'undefined' && Variable.SetValue) {
+                    Variable.SetValue(tagName, val);
+                }
+            } catch(e) {}
+
+            try {
+                const varsMap = getScadaVarsMap();
+                let targetId = null;
+                if (varsMap) {
+                    for (const id in varsMap) {
+                        const item = varsMap[id];
+                        if (item && item.FullName) {
+                            if (item.FullName === tagName || 
+                                item.FullName === tagName.replace(/^sb_(\d+)\./, 'sb$1.') || 
+                                item.FullName === tagName.replace(/^sb(\d+)\./, 'sb_$1.')) {
+                                targetId = id;
+                                item.Value = val;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (targetId && activeScadaSocket) {
+                    activeScadaSocket.emit('SetById', targetId, val);
+                    activeScadaSocket.emit('varChange', targetId, val);
+                }
+            } catch(e) {}
+        }
+
+        function toggleMode(id) {
+            const u = units.find(x => x.id === id);
+            if (!u) return;
+
+            const newModeNum = (u.mode === 'preheat') ? 0 : 1; // 1 = preheat, 0 = cooking
+            u.mode = (newModeNum === 1) ? 'preheat' : 'cooking'; // Optimistic local UI state update
+            renderGrid();
+
+            // Write to SCADA physical tags
+            setScadaTagValue(`sb_${id}.mode_preheat`, newModeNum);
+            setScadaTagValue(`sb${id}.mode_preheat`, newModeNum);
+            showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${u.mode.toUpperCase()}`);
+        }
+
+        function toggleRunStop(id) {
+            const u = units.find(x => x.id === id);
+            if (!u) return;
+
+            const newRunStop = (u.runStop === 1) ? 0 : 1; // 0 = Run, 1 = Stop
+            u.runStop = newRunStop;
+            renderGrid();
+
+            // Write to SCADA physical tags
+            setScadaTagValue(`sb_${id}.run_stop`, newRunStop);
+            setScadaTagValue(`sb${id}.run_stop`, newRunStop);
+            showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} ${newRunStop === 0 ? 'START' : 'STOP'}`);
+        }
+
+        function resetUnit(id) {
+            const u = units.find(x => x.id === id);
+            if (!u) return;
+
+            setScadaTagValue(`sb_${id}.run_stop`, 1);
+            setScadaTagValue(`sb${id}.run_stop`, 1);
+            setScadaTagValue(`sb_${id}.status_kosong`, 1);
+            setScadaTagValue(`sb${id}.status_kosong`, 1);
+            showToast(`🔄 Reset Unit Steambox ${id.toString().padStart(2,'0')} Berhasil!`);
         }
 
         function syncSysControlBanners(map) {
