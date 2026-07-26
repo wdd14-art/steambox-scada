@@ -22,10 +22,8 @@ copy /y "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\pu
 copy /y "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.js" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master\"
 
 echo.
-echo [2/3] Menyalin steambox.html, steambox.css, dan steambox.js ke folder WebServer Haiwell...
+echo [2/3] Menyalin steambox.html ke folder WebServer Haiwell...
 copy /y "%~dp0nodejs\public\steambox.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\steambox.html"
-copy /y "%~dp0nodejs\public\steambox.css" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\steambox.css"
-copy /y "%~dp0nodejs\public\steambox.js" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\steambox.js"
 
 echo.
 echo ========================================================
