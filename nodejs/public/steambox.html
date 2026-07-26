@@ -1010,31 +1010,25 @@
             return `${h}:${m}:${s}`;
         }
 
-        // MOCK STEAMBOX DATABASE (30 UNITS)
+        // REAL STEAMBOX DATABASE (30 UNITS - PURE REAL SCADA ENGINE, NO SIMULATION MOCK DATA)
         const units = Array.from({ length: 30 }, (_, i) => {
             const id = i + 1;
-            let state = 'kosong';
-            let mode = (id % 2 === 0) ? 'preheat' : 'cooking';
-            let recipeName = '--';
-            let recipeKode = '--';
-            let qty = '--';
-            let trolly = '--';
-            let temp = (92.0 + (Math.random() * 6)).toFixed(1);
-            let targetMenit = 2;
-            let secondsRunning = 0;
-            let runStop = 1;
-
-            if (id === 1) {
-                state = 'cooking'; mode = 'cooking'; recipeKode = 'sbmp'; recipeName = 'surya'; qty = '150 pcs'; trolly = 'longgar'; runStop = 0; secondsRunning = 110;
-            } else if (id === 2) {
-                state = 'cooking'; mode = 'cooking'; recipeKode = 'sbmk'; recipeName = 'mentor'; qty = '120 pcs'; trolly = 'rapat'; runStop = 0; secondsRunning = 85;
-            } else if (id === 3) {
-                state = 'preheat'; mode = 'preheat'; runStop = 0; secondsRunning = 40;
-            } else if (id === 4) {
-                state = 'cooking'; mode = 'cooking'; recipeKode = 'ghj'; recipeName = 'garuda'; qty = '100 pcs'; runStop = 0; secondsRunning = 20;
-            }
-
-            return { id, state, mode, temp, recipeKode, recipeName, qty, trolly, targetMenit, secondsRunning, runStop };
+            return {
+                id,
+                state: 'kosong',
+                mode: 'preheat',
+                temp: 0.0,
+                recipeKode: '--',
+                recipeName: '--',
+                qty: '0',
+                trolly: '--',
+                targetMenit: 0,
+                secondsRunning: 0,
+                runStop: 1,
+                commStatus: 'Connected',
+                isDisable: false,
+                statusText: ''
+            };
         });
 
         let activeTargetUnit = 1;
@@ -2077,32 +2071,44 @@
         }
 
         function setScadaTagValue(tagName, val) {
+            // Method 1 & 2: Native Haiwell SCADA Variable.SetValue API
             try {
-                if (typeof Variable !== 'undefined' && Variable.SetValue) {
+                if (typeof Variable !== 'undefined' && Variable && typeof Variable.SetValue === 'function') {
                     Variable.SetValue(tagName, val);
                 }
             } catch(e) {}
+            try {
+                if (parent && parent.Variable && typeof parent.Variable.SetValue === 'function') {
+                    parent.Variable.SetValue(tagName, val);
+                }
+            } catch(e) {}
+            try {
+                if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetValue === 'function') {
+                    window.parent.Variable.SetValue(tagName, val);
+                }
+            } catch(e) {}
 
+            // Method 3 & 4: Socket.io Emit + Direct Memory Map Binding
             try {
                 const varsMap = getScadaVarsMap();
-                let targetId = null;
-                if (varsMap) {
+                if (varsMap && typeof varsMap === 'object') {
                     for (const id in varsMap) {
                         const item = varsMap[id];
                         if (item && item.FullName) {
-                            if (item.FullName === tagName || 
-                                item.FullName === tagName.replace(/^sb_(\d+)\./, 'sb$1.') || 
-                                item.FullName === tagName.replace(/^sb(\d+)\./, 'sb_$1.')) {
-                                targetId = id;
-                                item.Value = val;
+                            const fName = item.FullName;
+                            const alt1 = fName.replace(/^sb(\d+)\./, 'sb_$1.');
+                            const alt2 = fName.replace(/^sb_(\d+)\./, 'sb$1.');
+                            if (fName === tagName || alt1 === tagName || alt2 === tagName || item.Name === tagName) {
+                                item.Value = val; // Direct Memory Update so polling loop doesn't revert!
+                                if (activeScadaSocket) {
+                                    activeScadaSocket.emit('SetById', id, val);
+                                    activeScadaSocket.emit('varChange', id, val);
+                                    activeScadaSocket.emit('var to browser', [{ ID: id, Value: val }]);
+                                }
                                 break;
                             }
                         }
                     }
-                }
-                if (targetId && activeScadaSocket) {
-                    activeScadaSocket.emit('SetById', targetId, val);
-                    activeScadaSocket.emit('varChange', targetId, val);
                 }
             } catch(e) {}
         }
@@ -2111,39 +2117,60 @@
             const u = units.find(x => x.id === id);
             if (!u) return;
 
-            const newModeNum = (u.mode === 'preheat') ? 0 : 1; // 1 = preheat, 0 = cooking
-            u.mode = (newModeNum === 1) ? 'preheat' : 'cooking'; // Optimistic local UI state update
+            const isCurrentlyPreheat = (u.mode === 'preheat');
+            const newModeStr = isCurrentlyPreheat ? 'cooking' : 'preheat';
+            const newModeNum = isCurrentlyPreheat ? 0 : 1; // 1 = preheat, 0 = cooking
+
+            u.mode = newModeStr; // Immediate Local UI Update
             renderGrid();
 
             // Write to SCADA physical tags
             setScadaTagValue(`sb_${id}.mode_preheat`, newModeNum);
             setScadaTagValue(`sb${id}.mode_preheat`, newModeNum);
-            showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${u.mode.toUpperCase()}`);
+            showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${newModeStr.toUpperCase()}`);
         }
 
         function toggleRunStop(id) {
             const u = units.find(x => x.id === id);
             if (!u) return;
 
-            const newRunStop = (u.runStop === 1) ? 0 : 1; // 0 = Run, 1 = Stop
+            const isCurrentlyRunning = (u.runStop === 1 || u.runStop === true || u.runStop === '1');
+            const newRunStop = isCurrentlyRunning ? 0 : 1; // 1 = Run, 0 = Stop
             u.runStop = newRunStop;
             renderGrid();
 
             // Write to SCADA physical tags
             setScadaTagValue(`sb_${id}.run_stop`, newRunStop);
             setScadaTagValue(`sb${id}.run_stop`, newRunStop);
-            showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} ${newRunStop === 0 ? 'START' : 'STOP'}`);
+            setScadaTagValue(`sb_${id}.flag_init_start`, newRunStop === 1 ? 1 : 0);
+            setScadaTagValue(`sb${id}.flag_init_start`, newRunStop === 1 ? 1 : 0);
+            showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} Perintah: ${newRunStop === 1 ? 'START' : 'STOP'}`);
         }
 
         function resetUnit(id) {
             const u = units.find(x => x.id === id);
             if (!u) return;
 
-            setScadaTagValue(`sb_${id}.run_stop`, 1);
-            setScadaTagValue(`sb${id}.run_stop`, 1);
+            u.runStop = 0;
+            u.secondsRunning = 0;
+            u.durasiAktualUp = '00:00:00';
+            u.statusText = 'STEAMBOX KOSONG';
+            renderGrid();
+
+            setScadaTagValue(`sb_${id}.run_stop`, 0);
+            setScadaTagValue(`sb${id}.run_stop`, 0);
             setScadaTagValue(`sb_${id}.status_kosong`, 1);
             setScadaTagValue(`sb${id}.status_kosong`, 1);
-            showToast(`🔄 Reset Unit Steambox ${id.toString().padStart(2,'0')} Berhasil!`);
+            setScadaTagValue(`sb_${id}.reset`, 1);
+            setScadaTagValue(`sb${id}.reset`, 1);
+            showToast(`🔄 Reset Unit Steambox ${id.toString().padStart(2,'0')} Sukses!`);
+        }
+
+        function openModal(id) {
+            const selectEl = document.getElementById('recipeTargetSelect') || document.getElementById('runtimeTargetSelect');
+            if (selectEl) selectEl.value = id;
+            switchView('recipe');
+            showToast(`📋 Membuka Recipe Manager untuk Steambox ${id.toString().padStart(2,'0')}`);
         }
 
         function syncSysControlBanners(map) {
