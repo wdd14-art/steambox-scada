@@ -2073,19 +2073,6 @@
             return defaultValue;
         }
 
-        let sysControlBanners = [
-            { varName: 'txt_status_kosong', text: 'STEAMBOX KOSONG' },
-            { varName: 'txt_siap_preheat', text: 'SIAP PEMANASAN — SILAKAN TEKAN START' },
-            { varName: 'txt_status_preheat', text: 'SEDANG PEMANASAN' },
-            { varName: 'txt_selesai_preheat', text: 'PEMANASAN SELESAI — STEAMBOX SIAP UNTUK PEMASAKAN' },
-            { varName: 'txt_siap_cooking', text: 'RESEP TERPASANG — SILAKAN TEKAN START' },
-            { varName: 'txt_status_pemasakan', text: 'SEDANG MEMASAK (MENDIDIH)' },
-            { varName: 'txt_status_selesai', text: 'PROSES SELESAI — SILAKAN KOSONGKAN TANGKI' },
-            { varName: 'txt_status_disable', text: 'COMMUNICATION DISABLE' },
-            { varName: 'txt_status_offline', text: 'COMMUNICATION DISABLE' },
-            { varName: 'txt_status_sensor_error', text: 'SENSOR ERROR' }
-        ];
-
         function syncSysControlBanners(map) {
             const keys = [
                 'txt_status_kosong', 'txt_status_preheat', 'txt_status_pemanasan',
