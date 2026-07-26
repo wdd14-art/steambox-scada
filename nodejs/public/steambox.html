@@ -2236,6 +2236,59 @@
             });
         }
 
+        function computeUnitStatusBanner(id, map) {
+            const directBanner = getScadaTagValue(map, [
+                `sb_${id}.status_banner`, 
+                `sb${id}.status_banner`,
+                `sb_${id}.banner`,
+                `sb${id}.banner`
+            ], null);
+
+            if (directBanner && typeof directBanner === 'string' && directBanner.trim() !== '' && directBanner !== '--' && directBanner !== 'STEAMBOX KOSONG') {
+                return directBanner;
+            }
+
+            const commOp = getScadaTagValue(map, [`sb${id}._commOperation`, `sb_${id}._commOperation`, `sb_${id}.comm_operation`], 1);
+            const commStat = getScadaTagValue(map, [`sb${id}._commStatus`, `sb_${id}._commStatus`, `sb_${id}.comm_status`], 1);
+            const maintMode = getScadaTagValue(map, [`sb_${id}.maintenance_mode`, `sb${id}.maintenance_mode`], false);
+            const tempRaw = getScadaTagValue(map, [`sb_${id}.temp`, `sb${id}.temp`, `sb_${id}.suhu_aktual`, `sb${id}.suhu_aktual`], 0.0);
+            const statusSelesai = getScadaTagValue(map, [`sb_${id}.status_selesai`, `sb${id}.status_selesai`], 0);
+            const modePreheat = getScadaTagValue(map, [`sb_${id}.mode_preheat`, `sb${id}.mode_preheat`], 0);
+            const runStop = getScadaTagValue(map, [`sb${id}.run_stop`, `sb_${id}.run_stop`, `sb${id}.runstop`, `sb_${id}.runstop`], 1);
+            const totalDetikPreheat = getScadaTagValue(map, [`sb_${id}.total_detik_pemanasan`, `sb${id}.total_detik_pemanasan`], 0);
+            const recipeNama = getScadaTagValue(map, [`recipe_nama.${id}`, `recipe.${id}.nama`], '');
+            const sisaDetikMasak = getScadaTagValue(map, [`sb_${id}.sisa_detik_masak`, `sb${id}.sisa_detik_masak`], 0);
+
+            if (Number(commOp) === 0) return "UNIT TIDAK DIPAKAI";
+            if (Number(commStat) === 0) return "KONEKSI OFFLINE (MCB TRIP/ALAT MATI)";
+            if (maintMode === true || Number(maintMode) === 1) return "MODE MAINTENANCE (KONTROL MANUAL)";
+            if (tempRaw >= 3000) return "ERROR SENSOR (OPENLOOP/HHHH)";
+            if (Number(statusSelesai) === 1 || statusSelesai === true) return "PROSES SELESAI - SILAKAN KOSONGKAN TANGKI";
+
+            if (Number(modePreheat) === 1 || modePreheat === true) {
+                if (Number(runStop) === 0 || runStop === false) {
+                    return "SEDANG PEMANASAN";
+                } else if (Number(totalDetikPreheat) === 0) {
+                    return "SIAP PEMANASAN - SILAKAN TEKAN START";
+                } else {
+                    return "PRE-HEAT DIHENTIKAN (PAUSED)";
+                }
+            } else {
+                if (Number(runStop) === 1 || runStop === true) {
+                    if (recipeNama && recipeNama !== '--' && recipeNama !== 'RESEP KOSONG') {
+                        if (Number(sisaDetikMasak) === 0) return "RESEP TERPASANG - SILAKAN TEKAN START";
+                        else return "MESIN BERHENTI (PAUSED)";
+                    } else {
+                        if (Number(totalDetikPreheat) > 0) return "PEMANASAN SELESAI - STEAMBOX SIAP UNTUK PEMASAKAN";
+                        else return "STEAMBOX KOSONG";
+                    }
+                } else {
+                    if (tempRaw < 1000) return "MENUNGGU MENDIDIH (< 100 C)";
+                    else return "SEDANG MEMASAK (MENDIDIH)";
+                }
+            }
+        }
+
         function syncScadaVarsToUnits() {
             const map = fetchAllScadaMap();
             if (Object.keys(map).length === 0) return;
@@ -2334,8 +2387,8 @@
                 const durAktualUp = getScadaTagValue(map, [`sb_${id}.durasi_aktual_up`, `sb_${id}.tampil_durasi_aktual`, `sb${id}.durasi_aktual`], null);
                 if (durAktualUp !== null) u.durasiAktualUp = String(durAktualUp);
 
-                const statusBanner = getScadaTagValue(map, [`sb_${id}.status_banner`, `sb${id}.status_banner`, `sb_${id}.banner`], null);
-                if (statusBanner !== null) u.statusText = String(statusBanner);
+                // Strictly evaluate status banner using computeUnitStatusBanner
+                u.statusText = computeUnitStatusBanner(id, map);
 
                 const runStopVal = getScadaTagValue(map, [`sb_${id}.run_stop`, `sb${id}.run_stop`, `sb_${id}.runstop`, `sb${id}.runstop`], null);
                 if (runStopVal !== null) u.runStop = (Number(runStopVal) === 0 || runStopVal === false || runStopVal === '0') ? 0 : 1;
