@@ -1366,19 +1366,64 @@
         function transferGroupRecipe(groupId) {
             const g = matrixGroups.find(x => x.id === groupId);
             if (!g) return;
-            const targetUnitId = parseInt(document.getElementById('recipeTargetSelect').value) || parseInt(document.getElementById('runtimeTargetSelect').value) || 1;
-            const u = units.find(x => x.id === targetUnitId);
+            const id = parseInt(document.getElementById('recipeTargetSelect').value) || parseInt(document.getElementById('runtimeTargetSelect').value) || 1;
+            const u = units.find(x => x.id === id);
             if (!u) return;
 
-            u.recipeKode = g.values['kode'] || 'sbmk';
-            u.recipeName = g.values['nama'] || 'surya';
-            u.qty = (g.values['qty'] || '150') + ' pcs';
-            u.trolly = g.values['trolly'] || 'longgar';
-            u.targetMenit = parseFloat(g.values['durasi']) || 2;
-            u.state = 'resep_terpasang';
+            const kode = g.values['kode'] || 'sbmk';
+            const nama = g.values['nama'] || 'surya';
+            const versi = g.values['versi'] || '1';
+            const warna = g.values['warna'] || 'putih';
+            const qty = g.values['qty'] || '150';
+            const trolly = g.values['trolly'] || 'longgar';
+            const batch = g.values['batch'] || '1';
+            const durasi = parseFloat(g.values['durasi']) || 2;
+
+            u.recipeKode = kode;
+            u.recipeName = nama;
+            u.qty = qty;
+            u.trolly = trolly;
+            u.targetMenit = durasi;
             u.mode = 'cooking';
 
-            showToast(`🚀 Transfer "${u.recipeName}" dari ${groupId} Ke Steambox ${targetUnitId} Sukses!`);
+            // 1. Target steambox selection
+            setScadaTagValue(`recipe.pilih_steambox`, id);
+            setScadaTagValue(`recipe_pilih_steambox`, id);
+
+            // 2. Set active global recipe parameters
+            setScadaTagValue(`recipe.kode`, kode);
+            setScadaTagValue(`recipe.nama`, nama);
+            setScadaTagValue(`recipe.versi`, versi);
+            setScadaTagValue(`recipe.warna`, warna);
+            setScadaTagValue(`recipe.qty`, qty);
+            setScadaTagValue(`recipe.durasi`, durasi);
+            setScadaTagValue(`recipe.trolly`, trolly);
+            setScadaTagValue(`recipe.batch`, batch);
+
+            // 3. Set Unit Specific SCADA State Machine Flags
+            setScadaTagValue(`sb_${id}.target_menit`, durasi);
+            setScadaTagValue(`sb${id}.target_menit`, durasi);
+            setScadaTagValue(`sb_${id}.mode_preheat`, 0);
+            setScadaTagValue(`sb${id}.mode_preheat`, 0);
+            setScadaTagValue(`sb_${id}.status_kosong`, 0);
+            setScadaTagValue(`sb${id}.status_kosong`, 0);
+            setScadaTagValue(`sb_${id}.status_selesai`, 0);
+            setScadaTagValue(`sb${id}.status_selesai`, 0);
+            setScadaTagValue(`sb_${id}.status_resep`, 1);
+            setScadaTagValue(`sb${id}.status_resep`, 1);
+            setScadaTagValue(`sb_${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+            setScadaTagValue(`sb${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+
+            // 4. Set per-unit recipe array variables
+            setScadaTagValue(`recipe_kode.${id}`, kode);
+            setScadaTagValue(`recipe_nama.${id}`, nama);
+            setScadaTagValue(`recipe_versi.${id}`, versi);
+            setScadaTagValue(`recipe_warna.${id}`, warna);
+            setScadaTagValue(`recipe_qty.${id}`, qty);
+            setScadaTagValue(`recipe_batch.${id}`, batch);
+            setScadaTagValue(`recipe_trolly.${id}`, trolly);
+
+            showToast(`🚀 Transfer "${nama}" ke Steambox ${id} Sukses!`);
             renderGrid();
         }
 
@@ -2110,14 +2155,10 @@
             if (value !== true && value !== false && value !== 1 && value !== 0 && value !== "1" && value !== "0") {
                 valStr = String(value);
             }
+
             const rawVal = (valStr === "1" ? 1 : (valStr === "0" ? 0 : value));
+            const boolVal = (valStr === "1");
 
-            // 1. Native Haiwell SCADA Variable.SetValue API
-            try { if (typeof Variable !== 'undefined' && Variable && Variable.SetValue) Variable.SetValue(tagName, rawVal); } catch(e) {}
-            try { if (parent && parent.Variable && parent.Variable.SetValue) parent.Variable.SetValue(tagName, rawVal); } catch(e) {}
-            try { if (window.parent && window.parent.Variable && window.parent.Variable.SetValue) window.parent.Variable.SetValue(tagName, rawVal); } catch(e) {}
-
-            // 2. Socket.io SetById with "WRITE" argument (exact master match!)
             const varsMap = getScadaVarsMap();
             const tagId = findTagIdByName(tagName);
 
@@ -2127,25 +2168,34 @@
                     varsMap[strId].Value = rawVal;
                 }
 
+                // 1. Direct Socket.io Emission (Guaranteed Write to Haiwell www.js)
                 try {
-                    let sock = window.activeSocket || window.socket || (parent && parent.socket) || (window.parent && window.parent.socket);
+                    let sock = window.activeSocket || window.socket || activeScadaSocket || (parent && parent.socket) || (window.parent && window.parent.socket);
                     if (sock && typeof sock.emit === 'function') {
                         sock.emit("SetById", Number(tagId), valStr, "WRITE");
-                        sock.emit("varChange", Number(tagId), rawVal);
                     }
                 } catch(e) {}
 
+                // 2. Native SCADA Lib helper API (if available)
                 try {
                     if (window.Variable && typeof window.Variable.SetById === 'function') {
                         window.Variable.SetById(Number(tagId), valStr);
                     }
                 } catch(e) {}
+
+                // 3. Parent C++ Host object (if inside iframe Web Box)
                 try {
                     if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetById === 'function') {
-                        window.parent.Variable.SetById(Number(tagId), (valStr === "1"));
+                        window.parent.Variable.SetById(Number(tagId), boolVal);
                     }
                 } catch(e) {}
             }
+
+            try {
+                if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetValue === 'function') {
+                    window.parent.Variable.SetValue(tagName, rawVal);
+                }
+            } catch(e) {}
         }
 
         function toggleMode(id) {
