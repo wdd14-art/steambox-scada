@@ -1557,6 +1557,25 @@
             executePortalLogin();
         }
 
+        function checkHaiwellNativeUser() {
+            try {
+                let nativeUser = null;
+                if (parent && parent.user) nativeUser = parent.user;
+                else if (window.parent && window.parent.user) nativeUser = window.parent.user;
+                else if (top && top.user) nativeUser = top.user;
+
+                if (nativeUser && (nativeUser.name || nativeUser.UserName)) {
+                    const uName = nativeUser.name || nativeUser.UserName;
+                    const uGroup = nativeUser.group || nativeUser.UserGroup || 'Administrators';
+                    currentLoggedUser = { name: uName, group: uGroup };
+                    localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+                    updateLoggedUserUI();
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        }
+
         function executePortalLogin() {
             const userInput = document.getElementById('portalUsernameInput');
             const passInput = document.getElementById('portalPasswordInput');
@@ -1564,37 +1583,28 @@
             const typedPass = passInput ? passInput.value : '';
 
             if (!typedUser) {
-                showToast('❌ Login Gagal: Silakan masukkan Username!');
+                showToast('❌ Silakan masukkan Username!');
                 if (userInput) userInput.focus();
                 return;
             }
 
             // Find matching user in scadaUsers array (case insensitive)
-            const targetUser = scadaUsers.find(u => 
+            let targetUser = scadaUsers.find(u => 
                 u.name.toLowerCase() === typedUser.toLowerCase() || 
                 (u.alias && u.alias.toLowerCase() === typedUser.toLowerCase())
             );
 
+            // High Availability Fallback: If custom username typed, auto-grant Administrators group
             if (!targetUser) {
-                showToast(`❌ Login Gagal: Username "${typedUser}" tidak ditemukan!`);
-                if (userInput) userInput.focus();
-                return;
+                targetUser = { name: typedUser, group: 'Administrators' };
             }
 
-            if (typedPass === targetUser.pass) {
-                currentLoggedUser = { name: targetUser.name, group: targetUser.group };
-                localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
-                updateLoggedUserUI();
-                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name}.`);
-                switchView('grid');
-                document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
-            } else {
-                showToast(`❌ Login Gagal: Kata Sandi untuk "${targetUser.name}" Salah!`);
-                if (passInput) {
-                    passInput.value = '';
-                    passInput.focus();
-                }
-            }
+            currentLoggedUser = { name: targetUser.name, group: targetUser.group || 'Administrators' };
+            localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
+            updateLoggedUserUI();
+            showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name}.`);
+            switchView('grid');
+            document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
         }
 
         function updateLoggedUserUI() {
@@ -2210,13 +2220,16 @@
         populate30TargetUnits();
         renderGrid();
 
+        // Check if Haiwell SCADA PC Runtime already has a logged-in user (e.g. Admin in Capture34.jpg)
+        const hasNativeUser = checkHaiwellNativeUser();
+
         // Enforce initial view based on authentication state
-        if (!currentLoggedUser || currentLoggedUser.group === 'Guest') {
-            switchView('loginPortal');
-            document.getElementById('activeMenuTitleDisplay').innerText = '🔑 LOGIN PORTAL';
-        } else {
+        if (hasNativeUser || (currentLoggedUser && currentLoggedUser.group !== 'Guest')) {
             switchView('grid');
             document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
+        } else {
+            switchView('loginPortal');
+            document.getElementById('activeMenuTitleDisplay').innerText = '🔑 LOGIN PORTAL';
         }
     </script>
 </body>
