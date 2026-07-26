@@ -7,26 +7,46 @@ if %errorLevel% neq 0 (
     exit /b
 )
 
-title STEAMBOX SCADA - DEPLOY TO HAIWELL WEBSERVER
+title STEAMBOX SCADA - DEPLOYMENT FILTER CHECK
 color 0A
 echo ========================================================
-echo   STEAMBOX SCADA - DEPLOY TO HAIWELL WEBSERVER NATIVE
+echo   STEAMBOX SCADA - SMART DEPLOYMENT FILTER
 echo ========================================================
 echo.
-echo [1/2] Memulihkan berkas master dashboard.html / css / js asli...
-copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.html"
-copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.css" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.css"
-copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.js" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.js"
 
-echo.
-echo [2/2] Menyalin steambox.html ke folder WebServer Haiwell...
-copy /y "%~dp0nodejs\public\steambox.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\steambox.html"
+set "DEST=C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project"
+set "SRC_BACKUP=%~dp0backup_skrip_lama\haiwell_webserver_backup"
+set "SRC_PUBLIC=%~dp0nodejs\public"
+
+call :CheckAndCopy "%SRC_BACKUP%\dashboard.html" "%DEST%\dashboard.html" "dashboard.html (Master)"
+call :CheckAndCopy "%SRC_BACKUP%\dashboard.css"  "%DEST%\dashboard.css"  "dashboard.css (Master)"
+call :CheckAndCopy "%SRC_BACKUP%\dashboard.js"   "%DEST%\dashboard.js"   "dashboard.js (Master)"
+call :CheckAndCopy "%SRC_PUBLIC%\steambox.html"  "%DEST%\steambox.html"  "steambox.html (Poka-Yoke)"
 
 echo.
 echo ========================================================
-echo   DEPLOYMENT SUKSES 100%!
-echo   File steambox.html & dashboard.html telah terpasang
-echo   di WebServer Haiwell Scada.
+echo   VERIFIKASI SISTEM SUKSES 100%!
 echo ========================================================
 echo.
 pause
+goto :eof
+
+:CheckAndCopy
+set "SRC_FILE=%~1"
+set "DEST_FILE=%~2"
+set "LABEL=%~3"
+
+if not exist "%DEST_FILE%" (
+    echo [DISALIN - BARU] %LABEL% belum ada di folder tujuan. Menyalin...
+    copy /y "%SRC_FILE%" "%DEST_FILE%" >nul
+    goto :eof
+)
+
+fc /b "%SRC_FILE%" "%DEST_FILE%" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo [SKIP - SUDAH SAMA] %LABEL% sudah ada & identik di tujuan. Tidak disalin.
+) else (
+    echo [DISALIN - UPDATE] %LABEL% berbeda/ada pembaruan. Menyalin...
+    copy /y "%SRC_FILE%" "%DEST_FILE%" >nul
+)
+goto :eof
