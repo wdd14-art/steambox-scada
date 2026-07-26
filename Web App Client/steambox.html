@@ -365,7 +365,7 @@
                     <span style="font-size: 0.72rem; color: #ea580c; font-weight: 600; cursor: pointer;" onclick="showToast('Admin: admin123 | Supervisor: power123 | Operator: user123')">I forgot password</span>
                 </div>
                 <div style="position: relative;">
-                    <input type="password" id="portalPasswordInput" placeholder="Your password" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 36px 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none;" onkeyup="if(event.key==='Enter')executePortalLogin()">
+                    <input type="text" id="portalPasswordInput" placeholder="Your password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 36px 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; -webkit-text-security: disc; text-security: disc;" onkeyup="if(event.key==='Enter')executePortalLogin()">
                     <span onclick="togglePortalPassEye()" style="position: absolute; right: 10px; top: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Toggle Password Visibility">
                         <svg style="width: 18px; height: 18px; fill: none; stroke: #64748b; stroke-width: 2;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </span>
@@ -1543,7 +1543,15 @@
 
         function togglePortalPassEye() {
             const input = document.getElementById('portalPasswordInput');
-            if (input) input.type = input.type === 'password' ? 'text' : 'password';
+            if (input) {
+                if (input.style.webkitTextSecurity === 'none' || input.style.textSecurity === 'none') {
+                    input.style.webkitTextSecurity = 'disc';
+                    input.style.textSecurity = 'disc';
+                } else {
+                    input.style.webkitTextSecurity = 'none';
+                    input.style.textSecurity = 'none';
+                }
+            }
         }
 
         function quickAdminLogin() {
@@ -2070,47 +2078,74 @@
             return defaultValue;
         }
 
-        function setScadaTagValue(tagName, val) {
-            // Method 1 & 2: Native Haiwell SCADA Variable.SetValue API
-            try {
-                if (typeof Variable !== 'undefined' && Variable && typeof Variable.SetValue === 'function') {
-                    Variable.SetValue(tagName, val);
-                }
-            } catch(e) {}
-            try {
-                if (parent && parent.Variable && typeof parent.Variable.SetValue === 'function') {
-                    parent.Variable.SetValue(tagName, val);
-                }
-            } catch(e) {}
-            try {
-                if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetValue === 'function') {
-                    window.parent.Variable.SetValue(tagName, val);
-                }
-            } catch(e) {}
+        function findTagIdByName(tagName) {
+            const varsMap = getScadaVarsMap();
+            if (!varsMap) return null;
 
-            // Method 3 & 4: Socket.io Emit + Direct Memory Map Binding
-            try {
-                const varsMap = getScadaVarsMap();
-                if (varsMap && typeof varsMap === 'object') {
-                    for (const id in varsMap) {
-                        const item = varsMap[id];
-                        if (item && item.FullName) {
-                            const fName = item.FullName;
-                            const alt1 = fName.replace(/^sb(\d+)\./, 'sb_$1.');
-                            const alt2 = fName.replace(/^sb_(\d+)\./, 'sb$1.');
-                            if (fName === tagName || alt1 === tagName || alt2 === tagName || item.Name === tagName) {
-                                item.Value = val; // Direct Memory Update so polling loop doesn't revert!
-                                if (activeScadaSocket) {
-                                    activeScadaSocket.emit('SetById', id, val);
-                                    activeScadaSocket.emit('varChange', id, val);
-                                    activeScadaSocket.emit('var to browser', [{ ID: id, Value: val }]);
-                                }
-                                break;
-                            }
+            const variants = [
+                tagName,
+                tagName.replace(/^sb_(\d+)_mode_preheat$/, 'sb_$1.mode_preheat'),
+                tagName.replace(/^sb_(\d+)\.mode_preheat$/, 'sb_$1_mode_preheat'),
+                tagName.replace(/^sb(\d+)\.runstop$/, 'sb$1.run_stop'),
+                tagName.replace(/^sb(\d+)\.run_stop$/, 'sb$1.runstop'),
+                tagName.replace(/^sb_(\d+)\./, 'sb$1.'),
+                tagName.replace(/^sb(\d+)\./, 'sb_$1.')
+            ];
+
+            for (const key in varsMap) {
+                const item = varsMap[key];
+                if (item) {
+                    for (const vName of variants) {
+                        if (item.FullName === vName || item.Name === vName || item.FullName === tagName || key === tagName) {
+                            return item.ID !== undefined ? item.ID : key;
                         }
                     }
                 }
-            } catch(e) {}
+            }
+            return null;
+        }
+
+        function setScadaTagValue(tagName, value) {
+            let valStr = (value === true || value === 1 || value === "1") ? "1" : "0";
+            if (value !== true && value !== false && value !== 1 && value !== 0 && value !== "1" && value !== "0") {
+                valStr = String(value);
+            }
+            const rawVal = (valStr === "1" ? 1 : (valStr === "0" ? 0 : value));
+
+            // 1. Native Haiwell SCADA Variable.SetValue API
+            try { if (typeof Variable !== 'undefined' && Variable && Variable.SetValue) Variable.SetValue(tagName, rawVal); } catch(e) {}
+            try { if (parent && parent.Variable && parent.Variable.SetValue) parent.Variable.SetValue(tagName, rawVal); } catch(e) {}
+            try { if (window.parent && window.parent.Variable && window.parent.Variable.SetValue) window.parent.Variable.SetValue(tagName, rawVal); } catch(e) {}
+
+            // 2. Socket.io SetById with "WRITE" argument (exact master match!)
+            const varsMap = getScadaVarsMap();
+            const tagId = findTagIdByName(tagName);
+
+            if (tagId !== null && tagId !== undefined) {
+                const strId = String(tagId);
+                if (varsMap && varsMap[strId]) {
+                    varsMap[strId].Value = rawVal;
+                }
+
+                try {
+                    let sock = window.activeSocket || window.socket || (parent && parent.socket) || (window.parent && window.parent.socket);
+                    if (sock && typeof sock.emit === 'function') {
+                        sock.emit("SetById", Number(tagId), valStr, "WRITE");
+                        sock.emit("varChange", Number(tagId), rawVal);
+                    }
+                } catch(e) {}
+
+                try {
+                    if (window.Variable && typeof window.Variable.SetById === 'function') {
+                        window.Variable.SetById(Number(tagId), valStr);
+                    }
+                } catch(e) {}
+                try {
+                    if (window.parent && window.parent.Variable && typeof window.parent.Variable.SetById === 'function') {
+                        window.parent.Variable.SetById(Number(tagId), (valStr === "1"));
+                    }
+                } catch(e) {}
+            }
         }
 
         function toggleMode(id) {
@@ -2127,6 +2162,7 @@
             // Write to SCADA physical tags
             setScadaTagValue(`sb_${id}.mode_preheat`, newModeNum);
             setScadaTagValue(`sb${id}.mode_preheat`, newModeNum);
+            setScadaTagValue(`sb_${id}_mode_preheat`, newModeNum);
             showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${newModeStr.toUpperCase()}`);
         }
 
@@ -2134,17 +2170,26 @@
             const u = units.find(x => x.id === id);
             if (!u) return;
 
-            const isCurrentlyRunning = (u.runStop === 1 || u.runStop === true || u.runStop === '1');
-            const newRunStop = isCurrentlyRunning ? 0 : 1; // 1 = Run, 0 = Stop
+            // In Haiwell SCADA: 0 = RUN (START), 1 = STOP
+            const isRunning = (Number(u.runStop) === 0);
+            const newRunStop = isRunning ? 1 : 0; // If running (0), set to 1 (Stop). If stopped (1), set to 0 (Run/Start).
+
             u.runStop = newRunStop;
             renderGrid();
 
             // Write to SCADA physical tags
             setScadaTagValue(`sb_${id}.run_stop`, newRunStop);
             setScadaTagValue(`sb${id}.run_stop`, newRunStop);
-            setScadaTagValue(`sb_${id}.flag_init_start`, newRunStop === 1 ? 1 : 0);
-            setScadaTagValue(`sb${id}.flag_init_start`, newRunStop === 1 ? 1 : 0);
-            showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} Perintah: ${newRunStop === 1 ? 'START' : 'STOP'}`);
+            setScadaTagValue(`sb_${id}.runstop`, newRunStop);
+            setScadaTagValue(`sb${id}.runstop`, newRunStop);
+
+            if (newRunStop === 0) {
+                // Trigger Start init flag
+                setScadaTagValue(`sb_${id}.flag_init_start`, 1);
+                setScadaTagValue(`sb${id}.flag_init_start`, 1);
+            }
+
+            showToast(`⏯️ Steambox ${id.toString().padStart(2,'0')} Perintah: ${newRunStop === 0 ? 'START' : 'STOP'}`);
         }
 
         function resetUnit(id) {
@@ -2293,7 +2338,7 @@
                 if (statusBanner !== null) u.statusText = String(statusBanner);
 
                 const runStopVal = getScadaTagValue(map, [`sb_${id}.run_stop`, `sb${id}.run_stop`, `sb_${id}.runstop`, `sb${id}.runstop`], null);
-                if (runStopVal !== null) u.runStop = (Number(runStopVal) === 1 || runStopVal === true || runStopVal === '1') ? 1 : 0;
+                if (runStopVal !== null) u.runStop = (Number(runStopVal) === 0 || runStopVal === false || runStopVal === '0') ? 0 : 1;
 
                 const modeVal = getScadaTagValue(map, [`sb_${id}.mode_preheat`, `sb${id}.mode_preheat`], null);
                 if (modeVal !== null) u.mode = (Number(modeVal) === 1 || modeVal === true || modeVal === '1') ? 'preheat' : 'cooking';
