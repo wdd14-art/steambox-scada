@@ -328,30 +328,36 @@
         </div>
     </div>
 
-    <!-- MENU 0: DEDICATED LOGIN LANDING PORTAL (CAPTURE25.JPEG EXACT DESIGN REPLICATION) -->
-    <main id="viewLoginPortal" style="min-height: calc(100vh - 60px); background: #072d54; display: flex; align-items: center; justify-content: center; padding: 20px 14px;">
-        <div style="width: 100%; max-width: 400px; background: #ffffff; color: #0f172a; border-radius: 16px; padding: 28px 22px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); text-align: center;">
-            <!-- BRAND LOGO -->
-            <div style="font-size: 2.8rem; margin-bottom: 6px;">🔥</div>
-            <h2 style="font-size: 1.4rem; font-weight: 800; color: #003b6d; margin-bottom: 4px; font-family: 'Merriweather', Georgia, serif;">Login to STEAMBOX SCADA</h2>
+    <!-- MENU 0: DEDICATED FULLSCREEN LOGIN LANDING PORTAL (OTLINK ENTERPRISE - NO HEADER BAR, EMOJI-FREE) -->
+    <main id="viewLoginPortal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: linear-gradient(135deg, #05192d 0%, #0a2e52 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 14px; overflow-y: auto;">
+        <!-- OTLINK ENTERPRISE CLEAN TYPOGRAPHY LOGO (NO EMOJI) -->
+        <div style="text-align: center; margin-bottom: 22px;">
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: 'Merriweather', Georgia, serif; letter-spacing: 1px;">
+                OTLink <span style="font-weight: 300; color: #38bdf8;">Enterprise</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; font-weight: 600;">Industrial IoT & SCADA Gateway</div>
+        </div>
+
+        <div style="width: 100%; max-width: 390px; background: #ffffff; color: #0f172a; border-radius: 16px; padding: 30px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center;">
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: #003b6d; margin-bottom: 4px; font-family: 'Merriweather', Georgia, serif;">Login to OTLink Enterprise</h2>
             <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 22px;">Welcome back. Please sign in to continue.</div>
 
-            <!-- LOGIN FORM -->
+            <!-- LOGIN FORM (DISGUISED USERNAME & PASSWORD ONLY - GROUPS HIDDEN) -->
             <div style="text-align: left; margin-bottom: 16px;">
                 <label style="font-size: 0.8rem; color: #334155; font-weight: 700; display: block; margin-bottom: 4px;">
-                    User Account <span style="color: #ef4444;">*</span>
+                    Username <span style="color: #ef4444;">*</span>
                 </label>
                 <select id="portalUserSelect" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer;">
-                    <option value="0">Admin (Administrators)</option>
-                    <option value="1">Supervisor (PowerUsers)</option>
-                    <option value="2">Operator (Users)</option>
+                    <option value="0">Admin</option>
+                    <option value="1">Supervisor</option>
+                    <option value="2">Operator</option>
                 </select>
             </div>
 
             <div style="text-align: left; margin-bottom: 18px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <label style="font-size: 0.8rem; color: #334155; font-weight: 700;">Password</label>
-                    <span style="font-size: 0.72rem; color: #ea580c; font-weight: 600; cursor: pointer;" onclick="showToast('Admin: admin123 | PowerUser: power123')">I forgot password</span>
+                    <span style="font-size: 0.72rem; color: #ea580c; font-weight: 600; cursor: pointer;" onclick="showToast('Admin: admin123 | Supervisor: power123 | Operator: user123')">I forgot password</span>
                 </div>
                 <div style="position: relative;">
                     <input type="password" id="portalPasswordInput" placeholder="Your password" style="width: 100%; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 10px 36px 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none;" onkeyup="if(event.key==='Enter')executePortalLogin()">
@@ -365,18 +371,24 @@
                 </label>
             </div>
 
-            <!-- PRIMARY SIGN IN BUTTON (CAPTURE25.JPEG DESIGN) -->
+            <!-- PRIMARY SIGN IN BUTTON (CAPTURE29 DESIGN - CLEAN & NO EMOJI) -->
             <button onclick="executePortalLogin()" style="width: 100%; background: #003b6d; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0, 59, 109, 0.3);">
-                <span>➔</span> Sign in
+                Sign in
             </button>
 
-            <!-- SECONDARY QUICK LOGIN BUTTON (KEYCLOAK STYLE FROM CAPTURE25.JPEG) -->
-            <button onclick="quickAdminLogin()" style="width: 100%; background: #0e7490; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                <span>🔒</span> Quick Sign in as Admin
+            <div style="display: flex; align-items: center; gap: 10px; margin: 12px 0 14px 0; color: #94a3b8; font-size: 0.75rem;">
+                <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                <span>or</span>
+                <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            </div>
+
+            <!-- SECONDARY QUICK LOGIN BUTTON (KEYCLOAK TEAL STYLE - NO EMOJI) -->
+            <button onclick="quickAdminLogin()" style="width: 100%; background: #479794; color: #ffffff; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(71, 151, 148, 0.25);">
+                Login with Keycloak SSO (Admin)
             </button>
 
             <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
-                STEAMBOX SCADA Suite &bull; PT. SIAP Custom HMI
+                OTLink Enterprise SCADA Suite &bull; PT. SIAP Custom HMI
             </div>
         </div>
     </main>
@@ -1455,13 +1467,18 @@
             closeMenuModal();
         }
 
-        // SWITCH BETWEEN 8 INDUSTRIAL MENUS (INCLUDING LOGIN PORTAL LANDING)
+        // SWITCH BETWEEN 8 INDUSTRIAL MENUS (INCLUDING FULLSCREEN OTLINK LOGIN PORTAL)
         function switchView(viewName) {
+            const headerBar = document.querySelector('.header-bar');
+            if (headerBar) {
+                headerBar.style.display = (viewName === 'loginPortal') ? 'none' : 'flex';
+            }
+
             const views = ['loginPortal', 'grid', 'monitor', 'recipe', 'produksi', 'alarm', 'maintenance', 'userSecurity'];
             views.forEach(v => {
                 const viewEl = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
                 const btnEl = document.getElementById('menu' + v.charAt(0).toUpperCase() + v.slice(1));
-                if (viewEl) viewEl.style.display = (v === viewName) ? (v === 'grid' ? 'grid' : 'block') : 'none';
+                if (viewEl) viewEl.style.display = (v === viewName) ? (v === 'grid' ? 'grid' : (v === 'loginPortal' ? 'flex' : 'block')) : 'none';
                 if (btnEl) {
                     if (v === viewName) btnEl.classList.add('active');
                     else btnEl.classList.remove('active');
@@ -1510,7 +1527,7 @@
             scadaUsers.forEach((u, idx) => {
                 const opt = document.createElement('option');
                 opt.value = idx;
-                opt.innerText = `${u.name} (${u.group})`;
+                opt.innerText = u.name; // Disguised: Pure Username without group category
                 selectEl.appendChild(opt);
             });
         }
@@ -1526,7 +1543,7 @@
                 currentLoggedUser = { name: targetUser.name, group: targetUser.group };
                 localStorage.setItem('haiwell_logged_user', JSON.stringify(currentLoggedUser));
                 updateLoggedUserUI();
-                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name} (${targetUser.group}).`);
+                showToast(`✅ Login Berhasil! Selamat Datang, ${targetUser.name}.`);
                 switchView('grid');
                 document.getElementById('activeMenuTitleDisplay').innerText = '🎛️ STEAMBOX GRID LENGKAP';
             } else {
