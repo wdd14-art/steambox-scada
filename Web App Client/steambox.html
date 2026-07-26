@@ -1092,10 +1092,10 @@
                     </div>
 
                     <div class="card-actions">
-                        ${isDisable ? `<button class="btn-action" disabled style="opacity:0.4; cursor:not-allowed; background:#334155; color:#94a3b8;">DISABLE</button>` : (isRunning ? `<button class="btn-action btn-stop" onclick="toggleRunStop(${u.id})">STOP</button>` : `<button class="btn-action btn-start" onclick="toggleRunStop(${u.id})">START</button>`)}
-                        <button class="btn-action btn-mode" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="toggleMode(${u.id})">MODE</button>
-                        <button class="btn-action btn-recipe" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="openModal(${u.id})">RESEP</button>
-                        <button class="btn-action btn-reset" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="resetUnit(${u.id})">RESET UNIT</button>
+                        ${isDisable ? `<button class="btn-action" disabled style="opacity:0.4; cursor:not-allowed; background:#334155; color:#94a3b8;">DISABLE</button>` : (isRunning ? `<button class="btn-action btn-stop" onclick="toggleRunStop(${u.id})">STOP (RUNNING)</button>` : `<button class="btn-action btn-start" onclick="toggleRunStop(${u.id})">START (STOPPED)</button>`)}
+                        <button class="btn-action btn-mode" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="toggleMode(${u.id})">${u.mode === 'preheat' ? 'MODE PREHEAT' : 'MODE COOKING'}</button>
+                        <button class="btn-action btn-recipe" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="openModal(${u.id})">TUGAS BARU</button>
+                        <button class="btn-action btn-reset" ${isDisable ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''} onclick="resetUnit(${u.id})">RESET</button>
                     </div>
                 `;
                 gridEl.appendChild(card);
@@ -2221,6 +2221,14 @@
             setScadaTagValue(`sb_${id}.mode_preheat`, newMode);
             setScadaTagValue(`sb${id}.mode_preheat`, newMode);
 
+            if (newMode === 0) {
+                setScadaTagValue(`sb_${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+                setScadaTagValue(`sb${id}.status_banner`, "RESEP TERPASANG - SILAKAN TEKAN START");
+            } else {
+                setScadaTagValue(`sb_${id}.status_banner`, "SIAP PEMANASAN - SILAKAN TEKAN START");
+                setScadaTagValue(`sb${id}.status_banner`, "SIAP PEMANASAN - SILAKAN TEKAN START");
+            }
+
             const modeStr = newMode === 1 ? 'PREHEAT' : 'COOKING';
             showToast(`⚙️ Steambox ${id.toString().padStart(2,'0')} Mode Diubah Menjadi ${modeStr}`);
         }
@@ -2256,10 +2264,14 @@
 
             setScadaTagValue(`sb_${id}.reset`, 1);
             setScadaTagValue(`sb${id}.reset`, 1);
+
+            setScadaTagValue(`sb_${id}.status_banner`, "STEAMBOX KOSONG");
+            setScadaTagValue(`sb${id}.status_banner`, "STEAMBOX KOSONG");
             showToast(`🔄 Reset Unit Steambox ${id.toString().padStart(2,'0')} Sukses!`);
         }
 
         function openModal(id) {
+            activeTargetUnit = id;
             const selectEl = document.getElementById('recipeTargetSelect') || document.getElementById('runtimeTargetSelect');
             if (selectEl) selectEl.value = id;
             switchView('recipe');
