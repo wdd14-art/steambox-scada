@@ -1935,18 +1935,179 @@
             });
         }
 
-        setInterval(() => {
-            units.forEach(u => {
-                if (u.runStop === 0) {
-                    u.secondsRunning += 1;
-                    if (u.secondsRunning >= (u.targetMenit * 60)) { u.state = 'selesai'; u.runStop = 1; }
+        // ============================================================================
+        // REAL-TIME NATIVE HAIWELL SCADA SOCKET.IO & MEMORY RESOLVER
+        // ============================================================================
+        function getScadaVarsMap() {
+            try { if (parent && parent.variables && typeof parent.variables === 'object') return parent.variables; } catch(e) {}
+            try { if (window.parent && window.parent.variables && typeof window.parent.variables === 'object') return window.parent.variables; } catch(e) {}
+            try { if (top && top.variables && typeof top.variables === 'object') return top.variables; } catch(e) {}
+            if (!window.variables) window.variables = {};
+            return window.variables;
+        }
+
+        function updateVarsFromPayload(data) {
+            if (!data) return;
+            const varsMap = getScadaVarsMap();
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    if (item && item.ID !== undefined) {
+                        const strId = String(item.ID);
+                        if (varsMap[strId] && typeof varsMap[strId] === 'object') {
+                            varsMap[strId].Value = item.Value;
+                        }
+                    }
+                });
+            } else if (typeof data === 'object') {
+                for (const id in data) {
+                    const strId = String(id);
+                    const val = data[id];
+                    if (varsMap[strId] && typeof varsMap[strId] === 'object') {
+                        if (typeof val === 'object' && val !== null && val.Value !== undefined) {
+                            varsMap[strId].Value = val.Value;
+                        } else {
+                            varsMap[strId].Value = val;
+                        }
+                    }
                 }
+            }
+            syncScadaVarsToUnits();
+        }
+
+        // Initialize Socket.io Connection to Native Haiwell Cloud SCADA WebServer
+        let activeScadaSocket = null;
+        if (typeof io === 'function') {
+            try {
+                activeScadaSocket = io();
+                window.activeSocket = activeScadaSocket;
+                window.socket = activeScadaSocket;
+
+                activeScadaSocket.on('connect', () => {
+                    const activeConnId = (window.connId || 'myLocalId');
+                    activeScadaSocket.emit("conn", activeConnId);
+                    activeScadaSocket.emit("get all variables");
+                });
+
+                activeScadaSocket.on('return all var to browser', (data) => updateVarsFromPayload(data));
+                activeScadaSocket.on('return var to browser',     (data) => updateVarsFromPayload(data));
+                activeScadaSocket.on('var to browser',            (data) => updateVarsFromPayload(data));
+                activeScadaSocket.on('varChange', (id, value) => {
+                    if (id !== undefined && value !== undefined) {
+                        const obj = {}; obj[String(id)] = value;
+                        updateVarsFromPayload(obj);
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function fetchAllScadaMap() {
+            const map = {};
+            const varsMap = getScadaVarsMap();
+            if (varsMap && typeof varsMap === 'object') {
+                for (const id in varsMap) {
+                    const item = varsMap[id];
+                    if (item && item.FullName) {
+                        map[item.FullName] = item.Value;
+                        const alt1 = item.FullName.replace(/^sb(\d+)\./, 'sb_$1.');
+                        const alt2 = item.FullName.replace(/^sb_(\d+)\./, 'sb$1.');
+                        map[alt1] = item.Value;
+                        map[alt2] = item.Value;
+                        if (item.Name) map[item.Name] = item.Value;
+                    }
+                }
+            }
+            return map;
+        }
+
+        function getScadaTagValue(map, nameList, defaultValue) {
+            for (const origName of nameList) {
+                const variants = [
+                    origName,
+                    origName.replace(/^sb_(\d+)\./, 'sb$1.'),
+                    origName.replace(/^sb(\d+)\./, 'sb_$1.')
+                ];
+                for (const name of variants) {
+                    if (map[name] !== undefined && map[name] !== null && map[name] !== '') {
+                        return map[name];
+                    }
+                }
+            }
+            return defaultValue;
+        }
+
+        function syncScadaVarsToUnits() {
+            const map = fetchAllScadaMap();
+            if (Object.keys(map).length === 0) return;
+
+            units.forEach(u => {
+                const id = u.id;
+                // Sync Temp
+                const tempVal = getScadaTagValue(map, [`sb_${id}.suhu_aktual`, `sb${id}.suhu_aktual`, `sb_${id}.temp`, `sb${id}.temp`], null);
+                if (tempVal !== null) u.temp = parseFloat(tempVal) || 0.0;
+
+                const tempAwalVal = getScadaTagValue(map, [`sb_${id}.suhu_awal`, `sb${id}.suhu_awal`], null);
+                if (tempAwalVal !== null) u.tempAwal = parseFloat(tempAwalVal) || 0.0;
+
+                const tempAkhirVal = getScadaTagValue(map, [`sb_${id}.suhu_akhir`, `sb${id}.suhu_akhir`], null);
+                if (tempAkhirVal !== null) u.tempAkhir = parseFloat(tempAkhirVal) || 0.0;
+
+                // Sync Recipe Details
+                const rNama = getScadaTagValue(map, [`recipe_nama.${id}`, `recipe_nama_${id}`, `recipe.${id}.nama`], null);
+                if (rNama !== null) u.recipeName = String(rNama);
+
+                const rKode = getScadaTagValue(map, [`recipe_kode.${id}`, `recipe_kode_${id}`, `recipe.${id}.kode`], null);
+                if (rKode !== null) u.recipeKode = String(rKode);
+
+                const rWarna = getScadaTagValue(map, [`recipe_warna.${id}`, `recipe_warna_${id}`, `recipe.${id}.warna`], null);
+                if (rWarna !== null) u.recipeWarna = String(rWarna);
+
+                const rVersi = getScadaTagValue(map, [`recipe_versi.${id}`, `recipe_versi_${id}`, `recipe.${id}.versi`], null);
+                if (rVersi !== null) u.recipeVersi = String(rVersi);
+
+                const rQty = getScadaTagValue(map, [`recipe_qty.${id}`, `recipe_qty_${id}`, `recipe.${id}.qty`], null);
+                if (rQty !== null) u.qty = String(rQty) + ' pcs';
+
+                const rBatch = getScadaTagValue(map, [`recipe_batch.${id}`, `recipe_batch_${id}`, `recipe.${id}.batch`], null);
+                if (rBatch !== null) u.batchNo = '#' + String(rBatch);
+
+                const rTrolly = getScadaTagValue(map, [`recipe_trolly.${id}`, `recipe_trolly_${id}`, `recipe.${id}.trolly`], null);
+                if (rTrolly !== null) u.trolly = String(rTrolly);
+
+                // Sync Process Details & Timers
+                const jMulai = getScadaTagValue(map, [`sb_${id}.txt_jam_mulai_pemanasan`, `sb_${id}.jam_mulai`], null);
+                if (jMulai !== null) u.jamMulai = String(jMulai);
+
+                const jMasak = getScadaTagValue(map, [`sb_${id}.txt_jam_mulai_pemasakan`, `sb_${id}.jam_masak`], null);
+                if (jMasak !== null) u.jamMasak = String(jMasak);
+
+                const jSelesai = getScadaTagValue(map, [`sb_${id}.txt_jam_selesai_pemasakan`, `sb_${id}.jam_selesai`], null);
+                if (jSelesai !== null) u.jamSelesai = String(jSelesai);
+
+                const durPemanasan = getScadaTagValue(map, [`sb_${id}.txt_durasi_pemanasan`, `sb_${id}.pemanasan`], null);
+                if (durPemanasan !== null) u.durasiPemanasan = String(durPemanasan);
+
+                const targetMin = getScadaTagValue(map, [`sb_${id}.target_menit`, `sb${id}.target_menit`], null);
+                if (targetMin !== null) u.targetMenit = parseFloat(targetMin) || 0;
+
+                const durAktualUp = getScadaTagValue(map, [`sb_${id}.durasi_aktual_up`, `sb_${id}.tampil_durasi_aktual`, `sb${id}.durasi_aktual`], null);
+                if (durAktualUp !== null) u.durasiAktualUp = String(durAktualUp);
+
+                const statusBanner = getScadaTagValue(map, [`sb_${id}.status_banner`, `sb${id}.status_banner`, `sb_${id}.banner`], null);
+                if (statusBanner !== null) u.statusText = String(statusBanner);
+
+                const runStopVal = getScadaTagValue(map, [`sb_${id}.run_stop`, `sb${id}.run_stop`, `sb_${id}.runstop`, `sb${id}.runstop`], null);
+                if (runStopVal !== null) u.runStop = (Number(runStopVal) === 1 || runStopVal === true || runStopVal === '1') ? 1 : 0;
+
+                const modeVal = getScadaTagValue(map, [`sb_${id}.mode_preheat`, `sb${id}.mode_preheat`], null);
+                if (modeVal !== null) u.mode = (Number(modeVal) === 1 || modeVal === true || modeVal === '1') ? 'preheat' : 'cooking';
             });
+
             renderGrid();
-        }, 1000);
+        }
+
+        setInterval(syncScadaVarsToUnits, 500);
 
         populate30TargetUnits();
-        populatePortalUserSelect();
         renderGrid();
 
         // Enforce initial view based on authentication state
