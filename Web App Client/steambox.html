@@ -960,11 +960,31 @@
         function getBannerTextByVar(varName, fallbackText) {
             if (typeof sysControlBanners === 'undefined' || !sysControlBanners) return fallbackText;
             const found = sysControlBanners.find(b => b.varName === varName);
-            return found ? found.text : fallbackText;
+            return (found && found.text && found.text.trim() !== '') ? found.text : fallbackText;
         }
 
         function getPokaBannerInfo(u) {
             if (!u) return { text: 'READY', color: 'var(--color-kosong)' };
+            if (u.isDisable || u.commStatus === 'Disconnected') {
+                return { text: getBannerTextByVar('txt_status_disable', 'COMMUNICATION DISABLE'), color: '#475569' };
+            }
+            if (u.statusText && u.statusText !== '--' && u.statusText.trim() !== '') {
+                const txtUpper = u.statusText.toUpperCase();
+                let bannerColor = 'var(--color-kosong)';
+                if (txtUpper.includes('MEMASAK') || txtUpper.includes('MENDIDIH') || txtUpper.includes('COOKING')) {
+                    bannerColor = 'var(--color-cooking)';
+                } else if (txtUpper.includes('PEMANASAN') || txtUpper.includes('PREHEAT') || txtUpper.includes('PRE-HEAT')) {
+                    bannerColor = 'var(--color-preheat)';
+                } else if (txtUpper.includes('RESEP') || txtUpper.includes('TERPASANG')) {
+                    bannerColor = 'var(--color-resep)';
+                } else if (txtUpper.includes('SELESAI') || txtUpper.includes('KOSONGKAN')) {
+                    bannerColor = 'var(--color-selesai)';
+                } else if (txtUpper.includes('DISABLE') || txtUpper.includes('DISCONNECTED') || txtUpper.includes('OFFLINE')) {
+                    bannerColor = '#475569';
+                }
+                return { text: u.statusText, color: bannerColor };
+            }
+
             if (u.state === 'kosong') return { text: getBannerTextByVar('txt_status_kosong', 'STEAMBOX KOSONG'), color: 'var(--color-kosong)' };
             if (u.state === 'preheat') return { text: getBannerTextByVar('txt_status_preheat', 'SEDANG PEMANASAN'), color: 'var(--color-preheat)' };
             if (u.state === 'resep_terpasang') return { text: getBannerTextByVar('txt_siap_cooking', 'RESEP TERPASANG — SILAKAN START'), color: 'var(--color-resep)' };
@@ -2043,9 +2063,42 @@
             return defaultValue;
         }
 
+        let sysControlBanners = [
+            { varName: 'txt_status_kosong', text: 'STEAMBOX KOSONG' },
+            { varName: 'txt_siap_preheat', text: 'SIAP PEMANASAN — SILAKAN TEKAN START' },
+            { varName: 'txt_status_preheat', text: 'SEDANG PEMANASAN' },
+            { varName: 'txt_selesai_preheat', text: 'PEMANASAN SELESAI — STEAMBOX SIAP UNTUK PEMASAKAN' },
+            { varName: 'txt_siap_cooking', text: 'RESEP TERPASANG — SILAKAN TEKAN START' },
+            { varName: 'txt_status_pemasakan', text: 'SEDANG MEMASAK (MENDIDIH)' },
+            { varName: 'txt_status_selesai', text: 'PROSES SELESAI — SILAKAN KOSONGKAN TANGKI' },
+            { varName: 'txt_status_disable', text: 'COMMUNICATION DISABLE' },
+            { varName: 'txt_status_offline', text: 'COMMUNICATION DISABLE' },
+            { varName: 'txt_status_sensor_error', text: 'SENSOR ERROR' }
+        ];
+
+        function syncSysControlBanners(map) {
+            const keys = [
+                'txt_status_kosong', 'txt_status_preheat', 'txt_status_pemanasan',
+                'txt_status_pemasakan', 'txt_status_selesai', 'txt_status_maintenance',
+                'txt_status_offline', 'txt_status_disable', 'txt_status_sensor_error',
+                'txt_selesai_preheat', 'txt_siap_preheat', 'txt_siap_cooking',
+                'txt_preheat_paused', 'txt_status_paused'
+            ];
+            keys.forEach(k => {
+                const val = getScadaTagValue(map, [`Sys_Control.${k}`, `Sys_Control_${k}`, k], null);
+                if (val !== null && String(val).trim() !== '') {
+                    let item = sysControlBanners.find(b => b.varName === k);
+                    if (item) item.text = String(val).trim();
+                    else sysControlBanners.push({ varName: k, text: String(val).trim() });
+                }
+            });
+        }
+
         function syncScadaVarsToUnits() {
             const map = fetchAllScadaMap();
             if (Object.keys(map).length === 0) return;
+
+            syncSysControlBanners(map);
 
             units.forEach(u => {
                 const id = u.id;
