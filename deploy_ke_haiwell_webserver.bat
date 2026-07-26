@@ -13,16 +13,13 @@ echo ========================================================
 echo   STEAMBOX SCADA - DEPLOY TO HAIWELL WEBSERVER NATIVE
 echo ========================================================
 echo.
-echo [1/3] Mem-backup berkas dashboard.html / css / js asli...
-if not exist "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master" (
-    mkdir "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master"
-)
-copy /y "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.css" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master\"
-copy /y "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master\"
-copy /y "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.js" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\_backup_dashboard_master\"
+echo [1/2] Memulihkan berkas master dashboard.html / css / js asli...
+copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.html"
+copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.css" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.css"
+copy /y "%~dp0backup_skrip_lama\haiwell_webserver_backup\dashboard.js" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\dashboard.js"
 
 echo.
-echo [2/3] Menyalin steambox.html ke folder WebServer Haiwell...
+echo [2/2] Menyalin steambox.html ke folder WebServer Haiwell...
 copy /y "%~dp0nodejs\public\steambox.html" "C:\Program Files (x86)\Haiwell\HaiwellScada3\Resources\app\webserver\public\project\steambox.html"
 
 echo.
