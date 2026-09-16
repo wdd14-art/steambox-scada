@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Haiwell SCADA - Raw JSON Stream Output</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #58a6ff;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 1.5rem;
+            margin: 0;
+        }
+        h2 {
+            color: #7ee787;
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 0.5rem;
+        }
+        #rawJsonOutput {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            color: #a5d6ff;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .status-tag {
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <!-- Library Socket.io bawaan Haiwell Web Server -->
+    <script src="http://127.0.0.1:8888/socket.io/socket.io.js"></script>
+    <!-- Headless Data Bridge -->
+    <script src="haiwell_raw_bridge.js"></script>
+</head>
+<body>
+    <h2>[HAIWELL SCADA RUNTIME] - RAW JSON EXTERNAL VARIABLES STREAM</h2>
+    <div class="status-tag">Status: <span id="statusText" style="color: #f2cc60;">Menghubungkan ke Socket.io Haiwell (Port 8888)...</span></div>
+    
+    <pre id="rawJsonOutput">Menunggu data dari Haiwell SCADA...</pre>
+
+    <script>
+        const outputEl = document.getElementById('rawJsonOutput');
+        const statusEl = document.getElementById('statusText');
+
+        // Dengarkan data mentah dari HaiwellBridge
+        HaiwellBridge.onData(function (jsonData) {
+            statusEl.innerText = "STREAMING LIVE (Real-time auto-refresh)";
+            statusEl.style.color = "#7ee787";
+            outputEl.innerText = JSON.stringify(jsonData, null, 2);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haiwell SCADA - Live Universal JSON Stream</title>
+    <style>
+        :root {
+            --bg-main: #0a0e17;
+            --bg-panel: #111827;
+            --border-panel: #1f293d;
+            --accent-cyan: #38bdf8;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --text-muted: #94a3b8;
+            --text-light: #f1f5f9;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 1.5rem;
+            margin: 0;
+        }
+
+        .header-bar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .title-area h1 {
+            font-size: 1.25rem;
+            color: var(--accent-cyan);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .title-area p {
+            margin: 0.3rem 0 0 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .badge-online { background: #064e3b; color: var(--accent-green); border: 1px solid #059669; }
+        .badge-offline { background: #7f1d1d; color: var(--accent-red); border: 1px solid #dc2626; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-panel);
+            padding-bottom: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel-header h2 {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-badge {
+            background: #1e293b;
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        pre {
+            background: #06090e;
+            color: #a5f3fc;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            font-size: 0.88rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            height: 380px;
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        .table-container {
+            height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border-panel);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: #1e293b;
+            color: var(--accent-cyan);
+            text-align: left;
+            padding: 0.6rem 0.8rem;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid var(--border-panel);
+        }
+
+        td {
+            padding: 0.5rem 0.8rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        tr:hover {
+            background: #131d2e;
+        }
+
+        .val-bool-true { color: var(--accent-green); font-weight: bold; }
+        .val-bool-false { color: var(--accent-red); font-weight: bold; }
+        .val-number { color: #fde047; font-weight: bold; }
+
+        .write-section {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+        }
+
+        .write-controls {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+        }
+
+        select, input {
+            background: #06090e;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.9rem;
+            font-family: inherit;
+            border-radius: 6px;
+        }
+
+        select { min-width: 260px; }
+        input { width: 160px; }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.15s;
+        }
+
+        .btn-blue { background: #2563eb; color: #fff; }
+        .btn-blue:hover { background: #1d4ed8; }
+        .btn-copy { background: #334155; color: #94a3b8; font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+        .btn-copy:hover { background: #475569; color: #fff; }
+
+        .log-box {
+            background: #06090e;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            height: 140px;
+            overflow-y: auto;
+            padding: 0.8rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 1rem;
+        }
+
+        .log-entry { margin-bottom: 0.3rem; }
+        .log-entry.change { color: var(--accent-orange); }
+        .log-entry.success { color: var(--accent-green); }
+    </style>
+    <!-- Socket.io dari Web Server Haiwell -->
+    <script>
+        const hostIP = (window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1';
+        const scadaHost = `http://${hostIP}:8888`;
+        document.write('<script src="' + scadaHost + '/socket.io/socket.io.js"><\/script>');
+    </script>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="title-area">
+            <h1>🔴 HAIWELL SCADA RUNTIME - PURE RAW JSON STREAM</h1>
+            <p>Target: <strong>Local WebSocket (Port 8888)</strong> | Handshake: <code>myLocalId</code> | Mode: <strong>100% Dynamic Zero Hardcode</strong></p>
+        </div>
+        <div id="statusBadge" class="badge badge-offline">MENGHUBUNGKAN KE SCADA...</div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+        <!-- Panel 1: Nested JSON Tree (Format untuk Backend IT / Laravel) -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🌳 PURE JSON TREE (HIERARKI GRUP.TAG)</h2>
+                <div>
+                    <button class="btn-copy" onclick="copyJson()">Salin JSON</button>
+                    <span id="tagCountBadge" class="stats-badge">0 Tags</span>
+                </div>
+            </div>
+            <pre id="jsonTreeViewer">{ "status": "Menunggu koneksi dan snapshot variabel dari Haiwell SCADA..." }</pre>
+        </div>
+
+        <!-- Panel 2: Live Variable Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📋 TABEL NILAI REAL-TIME</h2>
+                <span id="lastUpdateBadge" class="stats-badge">Live Updates</span>
+            </div>
+            <div class="table-container">
+                <table id="tagTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>Tag Name (Grup.Nama)</th>
+                            <th style="width: 70px;">Tipe</th>
+                            <th style="width: 100px;">Nilai Realtime</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tagTableBody">
+                        <tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">Memuat daftar tag...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 3: Universal Write Balik ke SCADA -->
+    <div class="write-section">
+        <div class="panel-header" style="margin-bottom: 0.5rem;">
+            <h2>⚡ UJI TULIS BALIK KE HAIWELL SCADA (UNIVERSAL SET VALUE)</h2>
+            <span style="font-size: 0.75rem; color: #64748b;">Pilih tag apa saja dan kirim nilai langsung ke PLC/SCADA</span>
+        </div>
+        <div class="write-controls">
+            <select id="selectTag">
+                <option value="">-- Memuat Tag Terdeteksi --</option>
+            </select>
+            <input type="text" id="inputVal" placeholder="Nilai baru (e.g. 50 / 1 / true)">
+            <button class="btn-blue" onclick="kirimKeScada()">Kirim ke SCADA</button>
+            <button class="btn-blue" style="background: #059669;" onclick="quickToggle()">Toggle Boolean</button>
+        </div>
+
+        <div class="log-box" id="logBox">
+            <div class="log-entry">Siap memantau aktivitas stream...</div>
+        </div>
+    </div>
+
+    <script>
+        const statusBadge = document.getElementById('statusBadge');
+        const jsonTreeViewer = document.getElementById('jsonTreeViewer');
+        const tagTableBody = document.getElementById('tagTableBody');
+        const tagCountBadge = document.getElementById('tagCountBadge');
+        const selectTag = document.getElementById('selectTag');
+        const logBox = document.getElementById('logBox');
+        const inputVal = document.getElementById('inputVal');
+
+        let tagDictionary = {}; // { [id]: { id, name, fullName, dataType, value } }
+        let currentValues = {}; // { [fullName]: value }
+
+        function appendLog(msg, type = '') {
+            const time = new Date().toLocaleTimeString('id-ID');
+            const div = document.createElement('div');
+            div.className = `log-entry ${type}`;
+            div.innerText = `[${time}] ${msg}`;
+            logBox.prepend(div);
+        }
+
+        // Helper: Memecah "grup.tag" menjadi hierarki JSON Tree
+        function buildTree(flatData) {
+            const tree = {};
+            for (const fullKey in flatData) {
+                const val = flatData[fullKey];
+                const parts = fullKey.split('.');
+                let current = tree;
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i];
+                    if (i === parts.length - 1) {
+                        current[part] = val;
+                    } else {
+                        if (!current[part] || typeof current[part] !== 'object') {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                }
+            }
+            return tree;
+        }
+
+        // Render Ulang Tabel & Dropdown
+        function renderTable() {
+            const ids = Object.keys(tagDictionary);
+            tagCountBadge.innerText = `${ids.length} Tags User`;
+
+            // Update Dropdown
+            const selectedBefore = selectTag.value;
+            selectTag.innerHTML = '';
+            ids.forEach(id => {
+                const item = tagDictionary[id];
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = `[ID: ${id}] ${item.fullName} (${item.dataType})`;
+                selectTag.appendChild(opt);
+            });
+            if (selectedBefore && tagDictionary[selectedBefore]) {
+                selectTag.value = selectedBefore;
+            }
+
+            // Update Table Body
+            let html = '';
+            ids.forEach(id => {
+                const item = tagDictionary[id];
+                const val = item.value;
+                let valClass = 'val-number';
+                if (typeof val === 'boolean' || item.dataType === 'BOOL') {
+                    valClass = (val === true || val === 1 || val === '1') ? 'val-bool-true' : 'val-bool-false';
+                }
+                html += `
+                    <tr>
+                        <td style="color: #64748b;">${id}</td>
+                        <td style="font-weight: bold; color: #e2e8f0;">${item.fullName}</td>
+                        <td style="color: var(--accent-cyan); font-size: 0.75rem;">${item.dataType}</td>
+                        <td class="${valClass}" id="cell-val-${id}">${val}</td>
+                    </tr>
+                `;
+            });
+            tagTableBody.innerHTML = html;
+
+            // Update JSON Viewer
+            jsonTreeViewer.innerText = JSON.stringify(buildTree(currentValues), null, 2);
+        }
+
+        // Muat kamus tag awal dari file snapshot
+        fetch('scada_tags.json')
+            .then(res => res.json())
+            .then(data => {
+                tagDictionary = data;
+                for (const id in tagDictionary) {
+                    const item = tagDictionary[id];
+                    currentValues[item.fullName] = item.value;
+                }
+                renderTable();
+                appendLog(`Berhasil memuat kamus ${Object.keys(tagDictionary).length} tag user awal.`, 'success');
+            })
+            .catch(() => {});
+
+        // Koneksi Socket.io ke Haiwell SCADA
+        const socket = (typeof io === 'function') ? io(scadaHost, { reconnection: true }) : null;
+
+        if (!socket) {
+            statusBadge.className = 'badge badge-offline';
+            statusBadge.innerText = 'Gagal memuat Socket.io dari ' + scadaHost;
+        } else {
+            socket.on('connect', () => {
+                statusBadge.className = 'badge badge-online';
+                statusBadge.innerText = '✅ TERHUBUNG KE HAIWELL SCADA RUNTIME';
+                appendLog('Koneksi WebSocket terbuka ke port 8888. Mengirim handshake "myLocalId"...', 'success');
+                
+                socket.emit("conn", "myLocalId");
+                socket.emit("get all variables");
+            });
+
+            socket.on('return var to browser', (payload) => {
+                if (!payload || typeof payload !== 'object') return;
+                let anyChange = false;
+
+                for (const id in payload) {
+                    const idStr = String(id);
+                    const val = payload[id];
+
+                    if (tagDictionary[idStr]) {
+                        const item = tagDictionary[idStr];
+                        if (item.value !== val) {
+                            item.value = val;
+                            currentValues[item.fullName] = val;
+                            anyChange = true;
+
+                            // Update sel tabel jika sudah ada
+                            const cell = document.getElementById(`cell-val-${idStr}`);
+                            if (cell) {
+                                cell.innerText = val;
+                                if (typeof val === 'boolean' || item.dataType === 'BOOL') {
+                                    cell.className = (val === true || val === 1 || val === '1') ? 'val-bool-true' : 'val-bool-false';
+                                }
+                            }
+                            appendLog(`⚡ Tag "${item.fullName}" berubah -> ${val}`, 'change');
+                        }
+                    }
+                }
+
+                if (anyChange) {
+                    jsonTreeViewer.innerText = JSON.stringify(buildTree(currentValues), null, 2);
+                }
+            });
+
+            socket.on('disconnect', () => {
+                statusBadge.className = 'badge badge-offline';
+                statusBadge.innerText = '❌ TERPUTUS DARI SCADA';
+                appendLog('Koneksi ke Haiwell SCADA terputus.', 'log-entry');
+            });
+        }
+
+        window.kirimKeScada = function() {
+            const id = selectTag.value;
+            const val = inputVal.value.trim();
+            if (!id) return alert('Pilih tag terlebih dahulu!');
+            if (val === '') return alert('Masukkan nilai yang ingin dikirim!');
+
+            socket.emit("SetById", Number(id), String(val), "WRITE");
+            const tag = tagDictionary[id];
+            appendLog(`Mengirim nilai "${val}" ke tag ${tag ? tag.fullName : id}...`, 'change');
+        };
+
+        window.quickToggle = function() {
+            const id = selectTag.value;
+            if (!id) return alert('Pilih tag terlebih dahulu!');
+            const item = tagDictionary[id];
+            const current = item ? (item.value === true || item.value === 1 || item.value === '1') : false;
+            const nextVal = current ? "0" : "1";
+            socket.emit("SetById", Number(id), nextVal, "WRITE");
+            appendLog(`Toggle boolean ke ${nextVal === '1'} untuk ${item ? item.fullName : id}...`, 'change');
+        };
+
+        window.copyJson = function() {
+            navigator.clipboard.writeText(jsonTreeViewer.innerText);
+            alert('JSON berhasil disalin ke clipboard!');
+        };
+    </script>
+</body>
+</html>

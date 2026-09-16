@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test & Diagnostik - Haiwell Raw Data Bridge 30 Unit</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 1.5rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .conn-badge {
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .conn-connected {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .conn-connecting {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .conn-disconnected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .dot-amber { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .dot-red { background: #ef4444; }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #0f172a;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Diagnostic Table */
+        .table-wrap {
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 0.65rem 0.85rem;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid #334155;
+            z-index: 10;
+        }
+
+        td {
+            padding: 0.6rem 0.85rem;
+            border-bottom: 1px solid #273549;
+            color: #cbd5e1;
+        }
+
+        tr:hover td {
+            background: #273549;
+        }
+
+        .pv-cell {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            transition: all 0.3s;
+        }
+
+        .pv-updated {
+            color: #34d399 !important;
+            background-color: rgba(16, 185, 129, 0.2);
+            border-radius: 4px;
+        }
+
+        .badge-run {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-stop {
+            background: rgba(148, 163, 184, 0.15);
+            color: #94a3b8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Side Controls & JSON */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-box {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        select, input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: #38bdf8;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        button {
+            padding: 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            grid-column: span 2;
+        }
+        .btn-primary:hover { background: #1d4ed8; }
+
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+
+        pre {
+            background: #090d16;
+            color: #a5f3fc;
+            padding: 0.85rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-text {
+            font-size: 0.75rem;
+            color: #38bdf8;
+            font-family: monospace;
+            min-height: 1.2rem;
+        }
+    </style>
+
+    <!-- 1. Socket.io Native Haiwell -->
+    <script src="http://127.0.0.1:8888/socket.io/socket.io.js"></script>
+    <!-- 2. Haiwell Raw Bridge (Headless) -->
+    <script src="haiwell_raw_bridge.js"></script>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>🛠️ Alat Uji & Diagnostik: Haiwell Raw Data Bridge</h1>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">
+                Memverifikasi apakah data 30 unit Autonics TK4M berhasil di-expose secara realtime ke format JSON
+            </p>
+        </div>
+        <div id="connStatus" class="conn-badge conn-connecting">
+            <span class="dot dot-amber"></span>
+            <span id="connStatusText">Menghubungkan ke Port 8888...</span>
+        </div>
+    </header>
+
+    <div class="layout-grid">
+        <!-- Panel Tabel 30 Unit -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>TABEL EXTERNAL VARIABLES (30 UNIT AUTONICS TK4M)</span>
+                <span id="updateCount" style="font-family: monospace; color: #38bdf8;">Update: 0 event</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Unit</th>
+                            <th>Suhu Aktual (PV)</th>
+                            <th>Target Suhu (SV)</th>
+                            <th>Status Operasi</th>
+                            <th>Update Terakhir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unitRows">
+                        <!-- 30 Baris diisi oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel Kanan: Uji Kirim Perintah & JSON Viewer -->
+        <div class="side-panel">
+            <!-- Form Uji Write Command -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>UJI KIRIM PERINTAH (WRITE TEST)</span>
+                </div>
+                <div class="form-box">
+                    <div class="form-row">
+                        <label for="selectUnit">PILIH NOMOR STEAMBOX:</label>
+                        <select id="selectUnit">
+                            <!-- 1 s.d. 30 -->
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="inputTargetSuhu">SET TARGET SUHU (SV °C):</label>
+                        <input type="number" id="inputTargetSuhu" step="0.1" value="105.0">
+                    </div>
+
+                    <button class="btn-primary" onclick="testSetSuhu()">Kirim Target Suhu</button>
+
+                    <div class="form-row" style="margin-top: 0.5rem;">
+                        <label>KONTROL OPERASI FISIK:</label>
+                        <div class="btn-group">
+                            <button class="btn-success" onclick="testSetRun(0)">▶️ Set RUN (0)</button>
+                            <button class="btn-danger" onclick="testSetRun(1)">⏹️ Set STOP (1)</button>
+                        </div>
+                    </div>
+
+                    <div class="log-text" id="actionLog">--</div>
+                </div>
+            </div>
+
+            <!-- Panel Live JSON Viewer -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>CUPLIKAN JSON OUTPUT (UNTUK TIM IT)</span>
+                    <button style="padding: 0.2rem 0.5rem; font-size: 0.7rem; background: #334155; color: #fff;" onclick="copyJsonSample()">Copy</button>
+                </div>
+                <pre id="jsonPreview">Menunggu data pertama...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Siapkan 30 Baris di Tabel
+        const tbody = document.getElementById('unitRows');
+        const selectEl = document.getElementById('selectUnit');
+
+        for (let i = 1; i <= 30; i++) {
+            const padId = String(i).padStart(2, '0');
+            const tr = document.createElement('tr');
+            tr.id = `row_${i}`;
+            tr.innerHTML = `
+                <td><strong>#${padId}</strong></td>
+                <td><span class="pv-cell" id="pv_val_${i}">--</span> <span style="font-size: 0.75rem; color: #64748b;">°C</span></td>
+                <td id="sv_val_${i}" style="font-family: monospace;">--</td>
+                <td id="status_val_${i}"><span class="badge-stop">--</span></td>
+                <td id="time_val_${i}" style="font-size: 0.75rem; color: #64748b;">--</td>
+            `;
+            tbody.appendChild(tr);
+
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `Steambox Unit #${padId}`;
+            selectEl.appendChild(opt);
+        }
+
+        let totalUpdates = 0;
+        const lastPvValues = {};
+
+        // Pantau status koneksi socket
+        setInterval(() => {
+            const statusBox = document.getElementById('connStatus');
+            const statusText = document.getElementById('connStatusText');
+            const sock = window.activeSocket;
+
+            if (sock && sock.connected) {
+                statusBox.className = 'conn-badge conn-connected';
+                statusBox.innerHTML = '<span class="dot dot-green"></span><span>TERHUBUNG KE HAIWELL RUNTIME (PORT 8888)</span>';
+            } else {
+                statusBox.className = 'conn-badge conn-disconnected';
+                statusBox.innerHTML = '<span class="dot dot-red"></span><span>TERPUTUS / RUNTIME BELUM MENYALA</span>';
+            }
+        }, 1500);
+
+        // Dengarkan Data Mentah dari HaiwellBridge
+        HaiwellBridge.onData(function (unitsData) {
+            totalUpdates++;
+            document.getElementById('updateCount').innerText = `Update: ${totalUpdates} event`;
+
+            // Update ke tabel
+            for (let i = 1; i <= 30; i++) {
+                const u = unitsData[i];
+                if (!u) continue;
+
+                const pvEl = document.getElementById(`pv_val_${i}`);
+                const svEl = document.getElementById(`sv_val_${i}`);
+                const statEl = document.getElementById(`status_val_${i}`);
+                const timeEl = document.getElementById(`time_val_${i}`);
+
+                if (u.pv_suhu !== null && u.pv_suhu !== undefined) {
+                    const formattedPv = Number(u.pv_suhu).toFixed(1);
+                    
+                    // Beri efek highlight hijau sejenak jika nilai berubah
+                    if (lastPvValues[i] !== undefined && lastPvValues[i] !== formattedPv) {
+                        pvEl.classList.add('pv-updated');
+                        setTimeout(() => pvEl.classList.remove('pv-updated'), 600);
+                    }
+                    lastPvValues[i] = formattedPv;
+                    pvEl.innerText = formattedPv;
+                }
+
+                if (u.sv_target !== null && u.sv_target !== undefined) {
+                    svEl.innerText = Number(u.sv_target).toFixed(1) + ' °C';
+                }
+
+                if (u.run_stop !== null && u.run_stop !== undefined) {
+                    if (u.run_stop === 0) {
+                        statEl.innerHTML = '<span class="badge-run">RUN (0)</span>';
+                    } else {
+                        statEl.innerHTML = '<span class="badge-stop">STOP (1)</span>';
+                    }
+                }
+
+                if (u.last_update) {
+                    const d = new Date(u.last_update);
+                    timeEl.innerText = d.toLocaleTimeString('id-ID');
+                }
+            }
+
+            // Tampilkan cuplikan unit 1 & 2 ke JSON preview
+            const sampleJson = {
+                "unit_1": unitsData[1],
+                "unit_2": unitsData[2],
+                "...": "unit 3 s.d. 30"
+            };
+            document.getElementById('jsonPreview').innerText = JSON.stringify(sampleJson, null, 2);
+        });
+
+        // Handler Uji Write
+        window.testSetSuhu = function () {
+            const unit = parseInt(document.getElementById('selectUnit').value, 10);
+            const val = parseFloat(document.getElementById('inputTargetSuhu').value);
+            const ok = HaiwellBridge.setTargetSuhu(unit, val);
+            const logEl = document.getElementById('actionLog');
+            if (ok) {
+                logEl.innerText = `[SUCCESS] Terkirim SV Unit #${unit} -> ${val}°C`;
+                logEl.style.color = "#34d399";
+            } else {
+                logEl.innerText = `[FAILED] Gagal mengirim SV ke Unit #${unit}`;
+                logEl.style.color = "#f87171";
+            }
+        };
+
+        window.testSetRun = function (val) {
+            const unit = parseInt(document.getElementById('selectUnit').value, 10);
+            const ok = HaiwellBridge.setRunStop(unit, val);
+            const logEl = document.getElementById('actionLog');
+            const strVal = val === 0 ? "RUN (0)" : "STOP (1)";
+            if (ok) {
+                logEl.innerText = `[SUCCESS] Terkirim ${strVal} ke Unit #${unit}`;
+                logEl.style.color = "#34d399";
+            } else {
+                logEl.innerText = `[FAILED] Gagal mengirim ${strVal} ke Unit #${unit}`;
+                logEl.style.color = "#f87171";
+            }
+        };
+
+        window.copyJsonSample = function () {
+            const txt = document.getElementById('jsonPreview').innerText;
+            navigator.clipboard.writeText(txt);
+            alert("Cuplikan JSON berhasil disalin!");
+        };
+    </script>
+</body>
+</html>

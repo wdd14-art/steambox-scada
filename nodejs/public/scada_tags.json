@@ -1,0 +1,51 @@
+{
+  "170": {
+    "id": 170,
+    "name": "fault",
+    "fullName": "wwtp.fault",
+    "dataType": "BOOL",
+    "value": false
+  },
+  "171": {
+    "id": 171,
+    "name": "running",
+    "fullName": "wwtp.running",
+    "dataType": "BOOL",
+    "value": false
+  },
+  "172": {
+    "id": 172,
+    "name": "stanby",
+    "fullName": "wwtp.stanby",
+    "dataType": "BOOL",
+    "value": false
+  },
+  "173": {
+    "id": 173,
+    "name": "ready",
+    "fullName": "wwtp.ready",
+    "dataType": "BOOL",
+    "value": false
+  },
+  "177": {
+    "id": 177,
+    "name": "load",
+    "fullName": "coldStorage.load",
+    "dataType": "SHORT",
+    "value": 30
+  },
+  "178": {
+    "id": 178,
+    "name": "frequency",
+    "fullName": "coldStorage.frequency",
+    "dataType": "SHORT",
+    "value": 49
+  },
+  "179": {
+    "id": 179,
+    "name": "speed",
+    "fullName": "coldStorage.speed",
+    "dataType": "SHORT",
+    "value": 1450
+  }
+}

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steambox IoT Dashboard - Preview Frontend Laravel</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-hover: #162033;
+            --border-card: #1f293d;
+            --border-active: #3b82f6;
+            --text-primary: #f9fafb;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-purple: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Navbar */
+        header {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-card);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .brand-title h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .brand-title p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toggle-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-primary);
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        .toggle-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--accent-blue);
+            color: #60a5fa;
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 1700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Metrics Stats */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .metric-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Navigation Filter Bar */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .tab-group {
+            display: flex;
+            background: #111827;
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 0.25rem;
+            gap: 0.25rem;
+        }
+
+        .tab-item {
+            padding: 0.4rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-item.active {
+            background: var(--accent-blue);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Steambox Units Grid */
+        .units-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 1.25rem;
+        }
+
+        /* Individual Steambox Card */
+        .sb-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 1.15rem;
+            position: relative;
+            transition: all 0.25s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .sb-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .sb-card.is-cooking {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, #111827 40%);
+        }
+
+        .sb-card.is-heating {
+            border-color: rgba(245, 158, 11, 0.4);
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, #111827 40%);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .unit-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .unit-number {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+
+        .unit-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-cooking {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-heating {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-standby {
+            background: rgba(100, 116, 139, 0.15);
+            color: #94a3b8;
+            border: 1px solid rgba(100, 116, 139, 0.25);
+        }
+
+        /* Temperature Display Section (Autonics TK4M) */
+        .temp-display-box {
+            background: #0d1320;
+            border: 1px solid #1a2336;
+            border-radius: 10px;
+            padding: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .temp-main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .temp-title {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .temp-value {
+            font-size: 2.1rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
+            margin-top: 0.15rem;
+            color: #ffffff;
+        }
+
+        .temp-unit {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .temp-target-box {
+            text-align: right;
+            border-left: 1px solid #1f2a40;
+            padding-left: 0.85rem;
+        }
+
+        .target-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .target-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-blue);
+        }
+
+        /* Heating Output Indicator */
+        .heater-state {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            justify-content: flex-end;
+        }
+
+        .heater-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #475569;
+        }
+
+        .heater-dot.active {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+            animation: flicker 1s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* Cooking Process / Timer Bar */
+        .process-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-val {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timer-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        /* Progress Bar */
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 0.2rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Card Action Buttons */
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.2rem;
+        }
+
+        .btn-card {
+            padding: 0.45rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+
+        .btn-start {
+            background: #10b981;
+            color: #fff;
+        }
+        .btn-start:hover { background: #059669; }
+
+        .btn-stop {
+            background: #ef4444;
+            color: #fff;
+        }
+        .btn-stop:hover { background: #dc2626; }
+
+        .btn-recipe {
+            background: #1e293b;
+            color: var(--text-primary);
+            border: 1px solid #334155;
+        }
+        .btn-recipe:hover { background: #334155; }
+
+        /* Bottom Floating JSON Inspector (Bukti Raw Data) */
+        .json-inspector {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #334155;
+            transition: transform 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+        }
+
+        .json-inspector.collapsed {
+            transform: translateY(calc(100% - 40px));
+        }
+
+        .inspector-header {
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            background: #1e293b;
+        }
+
+        .inspector-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #38bdf8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .inspector-body {
+            padding: 1rem 1.5rem;
+            max-height: 240px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: #a5f3fc;
+            background: #090d16;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <header>
+        <div class="brand-section">
+            <div class="brand-logo">SB</div>
+            <div class="brand-title">
+                <h1>Steambox SCADA 4.0 </h1>
+                <p>30 Unit Autonics TK4M Modbus Gateway & Laravel Frontend</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="status-pill">
+                <span class="pulse-dot"></span>
+                <span>Haiwell SCADA Backend: Online (Port 8888 Live Streaming)</span>
+            </div>
+            <button class="toggle-btn" id="btnToggleInspector" onclick="toggleInspector()">
+                <span>{ } Raw JSON Stream</span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Top Metrics Overview -->
+        <section class="metrics-grid">
+            <div class="metric-card">
+                <div>
+                    <div class="metric-label">Sedang Memasak (Cooking)</div>
+                    <div class="metric-val" style="color: #34d399;" id="statCooking">12 Unit</div>
+                </div>
+                <div class="metric-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">🔥</div>
+            </div>
+
+            <div class="metric-card">
+                <div>
+                    <div class="metric-label">Sedang Pemanasan (Preheat)</div>
+                    <div class="metric-val" style="color: #fbbf24;" id="statHeating">8 Unit</div>
+                </div>
+                <div class="metric-badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⚡</div>
+            </div>
+
+            <div class="metric-card">
+                <div>
+                    <div class="metric-label">Standby / Siap Masak</div>
+                    <div class="metric-val" style="color: #94a3b8;" id="statStandby">10 Unit</div>
+                </div>
+                <div class="metric-badge" style="background: rgba(100, 116, 139, 0.15); color: #94a3b8;">⏸️</div>
+            </div>
+
+            <div class="metric-card">
+                <div>
+                    <div class="metric-label">Suhu Rata-Rata 30 Tangki</div>
+                    <div class="metric-val" style="color: #38bdf8;" id="statAvgTemp">98.4 °C</div>
+                </div>
+                <div class="metric-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">🌡️</div>
+            </div>
+        </section>
+
+        <!-- Filter Tab -->
+        <div class="filter-bar">
+            <div class="tab-group">
+                <button class="tab-item active" onclick="filterUnits('all', this)">Semua (30 Unit)</button>
+                <button class="tab-item" onclick="filterUnits('1-10', this)">Unit 01 - 10</button>
+                <button class="tab-item" onclick="filterUnits('11-20', this)">Unit 11 - 20</button>
+                <button class="tab-item" onclick="filterUnits('21-30', this)">Unit 21 - 30</button>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                Jam Sinkron SCADA: <strong id="clockText" style="color: #fff; font-family: 'JetBrains Mono', monospace;">--:--:--</strong>
+            </div>
+        </div>
+
+        <!-- 30 Steambox Grid Container -->
+        <section class="units-grid" id="unitsGrid">
+            <!-- Dynamically populated by JS -->
+        </section>
+    </main>
+
+    <!-- Bottom Inspector Drawer (Membuktikan Raw Data JSON Mengalir) -->
+    <div class="json-inspector collapsed" id="inspectorDrawer">
+        <div class="inspector-header" onclick="toggleInspector()">
+            <div class="inspector-title">
+                <span>⚡ LIVE EXTERNAL JSON FEED (Haiwell Socket.io Raw Stream)</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8;">
+                Klik untuk buka/tutup JSON viewer ▼
+            </div>
+        </div>
+        <div class="inspector-body">
+            <pre id="jsonLiveFeed">Connecting to Haiwell Backend...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Simulasi data 30 unit Autonics TK4M (External Variables Murni)
+        const unitsData = {};
+        for (let i = 1; i <= 30; i++) {
+            const isCooking = (i % 3 === 0);
+            const isHeating = (i % 3 === 1);
+            unitsData[i] = {
+                unit_id: i,
+                pv_suhu: isCooking ? (104.0 + (Math.random() * 1.5)) : (isHeating ? (85.0 + (Math.random() * 10)) : 29.5),
+                sv_target: 105.0,
+                heater_out: (isCooking || isHeating) ? 1 : 0,
+                run_stop: (isCooking || isHeating) ? 1 : 0,
+                recipe: isCooking ? "MENTOR 125gr" : (isHeating ? "SURYA 150gr" : "-"),
+                trolly: isCooking ? "Rapat #04" : (isHeating ? "Longgar #01" : "-"),
+                target_menit: 25,
+                detik_berjalan: isCooking ? (800 + Math.floor(Math.random() * 400)) : 0
+            };
+        }
+
+        // Render Units Cards
+        const grid = document.getElementById('unitsGrid');
+
+        function renderCards() {
+            grid.innerHTML = '';
+            for (let i = 1; i <= 30; i++) {
+                const u = unitsData[i];
+                const padId = String(i).padStart(2, '0');
+                
+                let stateClass = 'status-standby';
+                let stateText = 'STANDBY';
+                let cardState = '';
+
+                if (u.run_stop === 1) {
+                    if (u.pv_suhu >= (u.sv_target - 1.5)) {
+                        stateClass = 'status-cooking';
+                        stateText = 'MEMASAK';
+                        cardState = 'is-cooking';
+                    } else {
+                        stateClass = 'status-heating';
+                        stateText = 'PEMANASAN';
+                        cardState = 'is-heating';
+                    }
+                }
+
+                const sisaDetik = Math.max(0, (u.target_menit * 60) - u.detik_berjalan);
+                const sisaMenitStr = `${String(Math.floor(sisaDetik / 60)).padStart(2, '0')}:${String(sisaDetik % 60).padStart(2, '0')}`;
+                const progressPct = Math.min(100, Math.floor((u.detik_berjalan / (u.target_menit * 60)) * 100));
+
+                const card = document.createElement('div');
+                card.className = `sb-card ${cardState}`;
+                card.id = `unitCard_${i}`;
+                card.dataset.unit = i;
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="unit-badge">
+                            <span class="unit-number">#${padId}</span>
+                            <span class="unit-label">Steambox</span>
+                        </div>
+                        <span class="status-badge ${stateClass}" id="badge_${i}">${stateText}</span>
+                    </div>
+
+                    <div class="temp-display-box">
+                        <div class="temp-main">
+                            <span class="temp-title">
+                                <span>SUHU AKTUAL (PV)</span>
+                            </span>
+                            <div class="temp-value">
+                                <span id="pv_${i}">${u.pv_suhu.toFixed(1)}</span><span class="temp-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="temp-target-box">
+                            <div class="target-title">TARGET (SV)</div>
+                            <div class="target-value" id="sv_${i}">${u.sv_target.toFixed(1)}°</div>
+                            <div class="heater-state">
+                                <span class="heater-dot ${u.heater_out ? 'active' : ''}" id="heater_${i}"></span>
+                                <span>HEATER</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="process-info">
+                        <div class="info-row">
+                            <span class="info-label">Resep / Trolly:</span>
+                            <span class="info-val">${u.recipe} (${u.trolly})</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Sisa Waktu Masak:</span>
+                            <span class="info-val timer-val" id="timer_${i}">${u.run_stop ? sisaMenitStr : '--:--'}</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="prog_${i}" style="width: ${u.run_stop ? progressPct : 0}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        ${u.run_stop === 1 
+                            ? `<button class="btn-card btn-stop" onclick="toggleRunStop(${i})">⏹️ STOP</button>`
+                            : `<button class="btn-card btn-start" onclick="toggleRunStop(${i})">▶️ START</button>`
+                        }
+                        <button class="btn-card btn-recipe" onclick="openRecipe(${i})">⚙️ Resep</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        renderCards();
+
+        // Filter Logic
+        window.filterUnits = function(range, btn) {
+            document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            for (let i = 1; i <= 30; i++) {
+                const card = document.getElementById(`unitCard_${i}`);
+                if (!card) continue;
+                if (range === 'all') {
+                    card.style.display = 'flex';
+                } else if (range === '1-10') {
+                    card.style.display = (i >= 1 && i <= 10) ? 'flex' : 'none';
+                } else if (range === '11-20') {
+                    card.style.display = (i >= 11 && i <= 20) ? 'flex' : 'none';
+                } else if (range === '21-30') {
+                    card.style.display = (i >= 21 && i <= 30) ? 'flex' : 'none';
+                }
+            }
+        };
+
+        // Toggle Run Stop
+        window.toggleRunStop = function(id) {
+            const u = unitsData[id];
+            u.run_stop = u.run_stop === 1 ? 0 : 1;
+            u.heater_out = u.run_stop;
+            renderCards();
+        };
+
+        window.openRecipe = function(id) {
+            alert(`Pilih Resep untuk Steambox #${String(id).padStart(2, '0')}`);
+        };
+
+        // Realtime Simulation (Menyimulasikan event streaming varChange dari Haiwell)
+        setInterval(() => {
+            // Update clock
+            const now = new Date();
+            document.getElementById('clockText').innerText = now.toLocaleTimeString('id-ID');
+
+            // Fluktuasi suhu fisik Autonics TK4M
+            for (let i = 1; i <= 30; i++) {
+                const u = unitsData[i];
+                if (u.run_stop === 1) {
+                    u.detik_berjalan += 1;
+                    // Sedikit getaran suhu alami sensor termometer 0.1C
+                    u.pv_suhu += (Math.random() * 0.2) - 0.09;
+                    if (u.pv_suhu > 105.8) u.pv_suhu = 105.2;
+
+                    const pvEl = document.getElementById(`pv_${i}`);
+                    if (pvEl) pvEl.innerText = u.pv_suhu.toFixed(1);
+
+                    const sisaDetik = Math.max(0, (u.target_menit * 60) - u.detik_berjalan);
+                    const timerEl = document.getElementById(`timer_${i}`);
+                    if (timerEl) {
+                        timerEl.innerText = `${String(Math.floor(sisaDetik / 60)).padStart(2, '0')}:${String(sisaDetik % 60).padStart(2, '0')}`;
+                    }
+
+                    const progEl = document.getElementById(`prog_${i}`);
+                    if (progEl) {
+                        const pct = Math.min(100, Math.floor((u.detik_berjalan / (u.target_menit * 60)) * 100));
+                        progEl.style.width = pct + '%';
+                    }
+                }
+            }
+
+            // Update Inspector Live JSON Feed (Sampel 3 Unit)
+            const samplePayload = {
+                timestamp: now.toISOString(),
+                event: "varChange_stream",
+                source: "Haiwell_PC_Runtime_8888",
+                active_units_sample: {
+                    "unit_01": { pv_suhu: parseFloat(unitsData[1].pv_suhu.toFixed(1)), sv_target: unitsData[1].sv_target, run_stop: unitsData[1].run_stop, heater_out: unitsData[1].heater_out },
+                    "unit_02": { pv_suhu: parseFloat(unitsData[2].pv_suhu.toFixed(1)), sv_target: unitsData[2].sv_target, run_stop: unitsData[2].run_stop, heater_out: unitsData[2].heater_out },
+                    "unit_03": { pv_suhu: parseFloat(unitsData[3].pv_suhu.toFixed(1)), sv_target: unitsData[3].sv_target, run_stop: unitsData[3].run_stop, heater_out: unitsData[3].heater_out }
+                }
+            };
+            document.getElementById('jsonLiveFeed').innerText = JSON.stringify(samplePayload, null, 2);
+
+        }, 1000);
+
+        // JSON Inspector Drawer Toggle
+        window.toggleInspector = function() {
+            const drawer = document.getElementById('inspectorDrawer');
+            const btn = document.getElementById('btnToggleInspector');
+            drawer.classList.toggle('collapsed');
+            btn.classList.toggle('active');
+        };
+    </script>
+</body>
+</html>
